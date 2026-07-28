@@ -4,7 +4,7 @@ import type { GetStaticPaths, Page } from "astro";
 import { Icon } from "astro-icon/components";
 import PostPreview from "@/components/blog/PostPreview.astro";
 import Pagination from "@/components/Paginator.astro";
-import { getAllPosts, getUniqueTags, groupPostsByYear } from "@/data/post";
+import { getAllPosts, getUniqueTags, groupPostsByYear } from "@/data/blog";
 import PageLayout from "@/layouts/Base.astro";
 import { collectionDateSort } from "@/utils/date";
 
@@ -27,9 +27,9 @@ export const getStaticPaths = (async ({ paginate }) => {
 }) satisfies GetStaticPaths;
 
 interface Props {
-	page: Page<CollectionEntry<"post">>;
+	page: Page<CollectionEntry<"blog">>;
 	uniqueTags: string[];
-	pinnedPosts: CollectionEntry<"post">[];
+	pinnedPosts: CollectionEntry<"blog">[];
 }
 
 const { page, uniqueTags, pinnedPosts } = Astro.props;

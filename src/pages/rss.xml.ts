@@ -1,5 +1,5 @@
 import rss from "@astrojs/rss";
-import { getAllPosts } from "@/data/post";
+import { getAllPosts } from "@/data/blog";
 import { siteConfig } from "@/site.config";
 
 export const GET = async () => {
@@ -13,7 +13,7 @@ export const GET = async () => {
 			title: post.data.title,
 			description: post.data.description,
 			pubDate: post.data.publishDate,
-			link: `posts/${post.id}/`,
+			link: `blog/${post.id}/`,
 		})),
 	});
 };
