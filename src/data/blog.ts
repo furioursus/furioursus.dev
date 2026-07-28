@@ -1,8 +1,8 @@
 import { type CollectionEntry, getCollection } from "astro:content";
 
 /** filter out draft posts based on the environment */
-export async function getAllPosts(): Promise<CollectionEntry<"post">[]> {
-	return await getCollection("post", ({ data }) => {
+export async function getAllPosts(): Promise<CollectionEntry<"blog">[]> {
+	return await getCollection("blog", ({ data }) => {
 		return import.meta.env.PROD ? !data.draft : true;
 	});
 }
@@ -18,28 +18,28 @@ export async function getTagMeta(tag: string): Promise<CollectionEntry<"tag"> | 
 /** groups posts by year (based on option siteConfig.sortPostsByUpdatedDate), using the year as the key
  *  Note: This function doesn't filter draft posts, pass it the result of getAllPosts above to do so.
  */
-export function groupPostsByYear(posts: CollectionEntry<"post">[]) {
+export function groupPostsByYear(posts: CollectionEntry<"blog">[]) {
 	return Object.groupBy(posts, (post) => post.data.publishDate.getFullYear().toString());
 }
 
 /** returns all tags created from posts (inc duplicate tags)
  *  Note: This function doesn't filter draft posts, pass it the result of getAllPosts above to do so.
  *  */
-export function getAllTags(posts: CollectionEntry<"post">[]) {
+export function getAllTags(posts: CollectionEntry<"blog">[]) {
 	return posts.flatMap((post) => [...post.data.tags]);
 }
 
 /** returns all unique tags created from posts
  *  Note: This function doesn't filter draft posts, pass it the result of getAllPosts above to do so.
  *  */
-export function getUniqueTags(posts: CollectionEntry<"post">[]) {
+export function getUniqueTags(posts: CollectionEntry<"blog">[]) {
 	return [...new Set(getAllTags(posts))];
 }
 
 /** returns a count of each unique tag - [[tagName, count], ...]
  *  Note: This function doesn't filter draft posts, pass it the result of getAllPosts above to do so.
  *  */
-export function getUniqueTagsWithCount(posts: CollectionEntry<"post">[]): [string, number][] {
+export function getUniqueTagsWithCount(posts: CollectionEntry<"blog">[]): [string, number][] {
 	return [
 		...getAllTags(posts).reduce(
 			(acc, t) => acc.set(t, (acc.get(t) ?? 0) + 1),

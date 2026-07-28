@@ -3,14 +3,14 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import PostPreview from "@/components/blog/PostPreview.astro";
 import Note from "@/components/note/Note.astro";
 import SocialList from "@/components/SocialList.astro";
-import { getAllPosts } from "@/data/post";
+import { getAllPosts } from "@/data/blog";
 import PageLayout from "@/layouts/Base.astro";
 import { collectionDateSort } from "@/utils/date";
 
 // Posts
 const MAX_POSTS = 10;
 const allPosts = await getAllPosts();
-const allPostsByDate = allPosts.sort(collectionDateSort) as CollectionEntry<"post">[];
+const allPostsByDate = allPosts.sort(collectionDateSort) as CollectionEntry<"blog">[];
 const latestPosts = allPostsByDate.slice(0, MAX_POSTS);
 
 // Pinned Posts, set to a max of 3;
@@ -31,7 +31,442 @@ const latestNotes = allNotes
 
 <PageLayout meta={{ title: "Home" }}>
 	<section>
-		<h1 class="title mb-12">Hello World!</h1>
+		<h1 class="title mb-12" id="greeting">
+			<span class="waving-hand">👋</span>
+			<span class="title-text" id="greeting-text">Hello, World!</span>
+		</h1>
+		<script is:inline>
+			(function () {
+				const greetings = [
+					{
+						language: "Afrikaans",
+						text: "Hello Wêreld!",
+						langcode: "af",
+						dir: "ltr",
+					},
+					{
+						language: "Albanian",
+						text: "Përshendetje Botë!",
+						langcode: "sq",
+						dir: "ltr",
+					},
+					{
+						language: "Arabic",
+						text: "مرحبا بالعالم!",
+						langcode: "ar",
+						dir: "rtl",
+					},
+					{
+						language: "Armenian",
+						text: "Բարեւ աշխարհ!",
+						langcode: "hy",
+						dir: "ltr",
+					},
+					{
+						language: "Azerbaijani",
+						text: "Salam Dünya",
+						langcode: "az",
+						dir: "ltr",
+					},
+					{
+						language: "Basque/Euskara",
+						text: "Kaixo Mundua!",
+						langcode: "eu",
+						dir: "ltr",
+					},
+					{
+						language: "Belarusian",
+						text: "Прывітанне Сусвет!",
+						langcode: "be",
+						dir: "ltr",
+					},
+					{
+						language: "Bengali",
+						text: "হ্যালো, বিশ্ব!",
+						langcode: "bn",
+						dir: "ltr",
+					},
+					{
+						language: "Bulgarian",
+						text: "Здравей свят!",
+						langcode: "bg",
+						dir: "ltr",
+					},
+					{
+						language: "Czech",
+						text: "Ahoj světe!",
+						langcode: "cs",
+						dir: "ltr",
+					},
+					{
+						language: "Khmer",
+						text: "សួស្តី​ពិភពលោក!",
+						langcode: "km",
+						dir: "ltr",
+					},
+					{
+						language: "Catalan",
+						text: "Hola món!",
+						langcode: "ca",
+						dir: "ltr",
+					},
+					{
+						language: "Chinese",
+						text: "你好世界！",
+						langcode: "zh",
+						dir: "ltr",
+					},
+					{
+						language: "Croatian",
+						text: "Pozdrav svijete!",
+						langcode: "hr",
+						dir: "ltr",
+					},
+					{
+						language: "Danish",
+						text: "Hej, Verden!",
+						langcode: "da",
+						dir: "ltr",
+					},
+					{
+						language: "Dutch",
+						text: "Hallo, wereld!",
+						langcode: "nl",
+						dir: "ltr",
+					},
+					{
+						language: "English",
+						text: "Hello World!",
+						langcode: "en",
+						dir: "ltr",
+					},
+					{
+						language: "Esperanto",
+						text: "Saluton mondo!",
+						langcode: "eo",
+						dir: "ltr",
+					},
+					{
+						language: "Estonian",
+						text: "Tere, Maailm!",
+						langcode: "et",
+						dir: "ltr",
+					},
+					{
+						language: "Finnish",
+						text: "Hei maailma!",
+						langcode: "fi",
+						dir: "ltr",
+					},
+					{
+						language: "French",
+						text: "Salut le Monde!",
+						langcode: "fr",
+						dir: "ltr",
+					},
+					{
+						language: "Frisian",
+						text: "Hallo, wrâld!",
+						langcode: "fy",
+						dir: "ltr",
+					},
+					{
+						language: "Galician",
+						text: "Ola mundo!",
+						langcode: "gl",
+						dir: "ltr",
+					},
+					{
+						language: "German",
+						text: "Hallo Welt!",
+						langcode: "de",
+						dir: "ltr",
+					},
+					{
+						language: "Greek",
+						text: "Γεια, Κόσμος!",
+						langcode: "el",
+						dir: "ltr",
+					},
+					{
+						language: "Hawaiian",
+						text: "Aloha Honua",
+						langcode: "haw",
+						dir: "ltr",
+					},
+					{
+						language: "Hebrew",
+						text: "שלום, עולם!",
+						langcode: "he",
+						dir: "rtl",
+					},
+					{
+						language: "Hindi",
+						text: "नमस्कार, विश्व!",
+						langcode: "hi",
+						dir: "ltr",
+					},
+					{
+						language: "Hmong",
+						text: "Nyob zoo ntiaj teb.",
+						langcode: "hmn",
+						dir: "ltr",
+					},
+					{
+						language: "Hungarian",
+						text: "Helló világ!",
+						langcode: "hu",
+						dir: "ltr",
+					},
+					{
+						language: "Icelandic",
+						text: "Halló heimur!",
+						langcode: "is",
+						dir: "ltr",
+					},
+					{ language: "Igbo", text: "Ndewo Ụwa", langcode: "ig", dir: "ltr" },
+					{
+						language: "Indonesian",
+						text: "Halo Dunia!",
+						langcode: "id",
+						dir: "ltr",
+					},
+					{
+						language: "Irish",
+						text: "Dia dhaoibh, a dhomhain!",
+						langcode: "ga",
+						dir: "ltr",
+					},
+					{
+						language: "Italian",
+						text: "Ciao Mondo!",
+						langcode: "it",
+						dir: "ltr",
+					},
+					{
+						language: "Japanese",
+						text: "こんにちは、世界！",
+						langcode: "ja",
+						dir: "ltr",
+					},
+					{
+						language: "Kannada",
+						text: "ಹಲೋ, ವರ್ಲ್ಡ್!",
+						langcode: "kn",
+						dir: "ltr",
+					},
+					{
+						language: "Kiswahili",
+						text: "Habari dunia!",
+						langcode: "sw",
+						dir: "ltr",
+					},
+					{
+						language: "Kikuyu",
+						text: "Niatia thi!",
+						langcode: "ki",
+						dir: "ltr",
+					},
+					{
+						language: "Korean",
+						text: "안녕하세요, 월드!",
+						langcode: "ko",
+						dir: "ltr",
+					},
+					{
+						language: "Lao",
+						text: "ສະ​ບາຍ​ດີ​ຊາວ​ໂລກ!",
+						langcode: "lo",
+						dir: "ltr",
+					},
+					{
+						language: "Latin",
+						text: "Salve, Mundus!",
+						langcode: "la",
+						dir: "ltr",
+					},
+					{
+						language: "Latvian",
+						text: "Sveika, Pasaule!",
+						langcode: "lv",
+						dir: "ltr",
+					},
+					{
+						language: "Lithuanian",
+						text: "Sveikas, Pasauli",
+						langcode: "lt",
+						dir: "ltr",
+					},
+					{
+						language: "Luxembourgish",
+						text: "Moien Welt!",
+						langcode: "lb",
+						dir: "ltr",
+					},
+					{
+						language: "Malagasy",
+						text: "Manao ahoana ry tany!",
+						langcode: "mg",
+						dir: "ltr",
+					},
+					{
+						language: "Malayalam",
+						text: "Namaskaram, lokame",
+						langcode: "ml",
+						dir: "ltr",
+					},
+					{
+						language: "Maltese",
+						text: "Merhba lid-dinja",
+						langcode: "mt",
+						dir: "ltr",
+					},
+					{
+						language: "Norwegian",
+						text: "Hallo verden!",
+						langcode: "no",
+						dir: "ltr",
+					},
+					{
+						language: "Persian",
+						text: "سلام دنیا!",
+						langcode: "fa",
+						dir: "rtl",
+					},
+					{
+						language: "Polish",
+						text: "Witaj świecie!",
+						langcode: "pl",
+						dir: "ltr",
+					},
+					{
+						language: "Portuguese",
+						text: "Olá, mundo!",
+						langcode: "pt",
+						dir: "ltr",
+					},
+					{
+						language: "Punjabi",
+						text: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਦੁਨਿਆ!",
+						langcode: "pa",
+						dir: "ltr",
+					},
+					{
+						language: "Romanian",
+						text: "Salut lume!",
+						langcode: "ro",
+						dir: "ltr",
+					},
+					{
+						language: "Russian",
+						text: "Привет, мир!",
+						langcode: "ru",
+						dir: "ltr",
+					},
+					{
+						language: "Scots Gaelic",
+						text: "Halò, a Shaoghail!",
+						langcode: "gd",
+						dir: "ltr",
+					},
+					{
+						language: "Serbian",
+						text: "Zdravo Svete!",
+						langcode: "sr",
+						dir: "ltr",
+					},
+					{
+						language: "Slovak",
+						text: "Ahoj, svet!",
+						langcode: "sk",
+						dir: "ltr",
+					},
+					{
+						language: "Slovenian",
+						text: "Pozdravljen svet!",
+						langcode: "sl",
+						dir: "ltr",
+					},
+					{
+						language: "Spanish",
+						text: "¡Hola mundo!",
+						langcode: "es",
+						dir: "ltr",
+					},
+					{
+						language: "Swedish",
+						text: "Hallå världen!",
+						langcode: "sv",
+						dir: "ltr",
+					},
+					{
+						language: "Tagalog",
+						text: "Kumusta, Mundo!",
+						langcode: "tl",
+						dir: "ltr",
+					},
+					{
+						language: "Tamil",
+						text: "வணக்கம், உலகம்!",
+						langcode: "ta",
+						dir: "ltr",
+					},
+					{
+						language: "Telugu",
+						text: "హలో, ప్రపంచం!",
+						langcode: "te",
+						dir: "ltr",
+					},
+					{ language: "Thai", text: "สวัสดีโลก!", langcode: "th", dir: "ltr" },
+					{
+						language: "Turkish",
+						text: "Merhaba Dünya!",
+						langcode: "tr",
+						dir: "ltr",
+					},
+					{
+						language: "Ukrainian",
+						text: "Привіт, Світе!",
+						langcode: "uk",
+						dir: "ltr",
+					},
+					{
+						language: "Urdu",
+						text: "ہیلو دنیا والو",
+						langcode: "ur",
+						dir: "rtl",
+					},
+					{
+						language: "Vietnamese",
+						text: "Xin chào thế giới",
+						langcode: "vi",
+						dir: "ltr",
+					},
+					{ language: "Welsh", text: "S’mae byd!", langcode: "cy", dir: "ltr" },
+					{
+						language: "Yiddish",
+						text: "העלא וועלט!",
+						langcode: "yi",
+						dir: "rtl",
+					},
+					{
+						language: "Zulu",
+						text: "Sawubona Mhlaba",
+						langcode: "zu",
+						dir: "ltr",
+					},
+				];
+
+				const randHello = greetings[Math.floor(Math.random() * greetings.length)];
+				const hello = document.getElementById("greeting-text");
+
+				if (hello) {
+					hello.setAttribute("lang", randHello.langcode);
+					hello.setAttribute("dir", randHello.dir);
+					hello.textContent = randHello.text;
+				}
+			})();
+		</script>
 		<p class="mb-4">
 			Hi, I’m a theme for Astro, a simple starter that you can use to create your website or blog.
 			If you want to know more about how you can customise me, add more posts, and make it your own,
@@ -54,7 +489,7 @@ const latestNotes = allNotes
 		)
 	}
 	<section class="mt-16">
-		<h2 class="title text-accent mb-6 text-xl"><a href="/posts/">Posts</a></h2>
+		<h2 class="title text-accent mb-6 text-xl"><a href="/blog/">Posts</a></h2>
 		<ul class="space-y-4" role="list">
 			{
 				latestPosts.map((p) => (
@@ -82,3 +517,17 @@ const latestNotes = allNotes
 		)
 	}
 </PageLayout>
+
+<style>
+	h1 {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		&:hover {
+			.waving-hand {
+				display: inline-block;
+				animation: wobble 1s infinite;
+			}
+		}
+	}
+</style>
