@@ -1,21 +1,44 @@
 ---
 import { Icon } from "astro-icon/components";
 
-/** 
+/**
 	Uses https://www.astroicon.dev/getting-started/
 	Find icons via guide: https://www.astroicon.dev/guides/customization/#open-source-icon-sets
 	Only installed pack is: @iconify-json/mdi
 */
-const socialLinks: {
-	friendlyName: string;
-	isWebmention?: boolean;
-	link: string;
+const socialLinks: Array<{
 	name: string;
-}[] = [
+	friendlyName: string;
+	link: string;
+	isWebmention?: boolean;
+}> = [
 	{
-		friendlyName: "Github",
-		link: "https://github.com/chrismwilliams/astro-cactus",
 		name: "mdi:github",
+		friendlyName: "Github",
+		link: "https://github.com/furioursus",
+		isWebmention: true,
+	},
+	{
+		name: "bluesky",
+		friendlyName: "Bluesky",
+		link: "https://bsky.app/profile/furioursus.dev",
+		isWebmention: true,
+	},
+	{
+		name: "mdi:mastodon",
+		friendlyName: "Mastodon",
+		link: "https://elk.zone/woof.group/@furioursus",
+	},
+	{
+		name: "mdi:linkedin",
+		friendlyName: "LinkedIn",
+		link: "https://www.linkedin.com/in/christopherkennedy-nunez",
+	},
+	{
+		name: "mdi:email",
+		friendlyName: "email",
+		link: "mailto:yo@furioursus.dev",
+		isWebmention: true,
 	},
 ];
 ---

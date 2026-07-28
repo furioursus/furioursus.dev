@@ -1,0 +1,20 @@
+---
+interface Props {
+	id?: string;
+	title: string;
+}
+
+const { id, title } = Astro.props;
+
+const headingId =
+	id ??
+	title
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/(^-|-$)/g, "");
+---
+
+<section class="cv-section">
+	<h2 id={headingId}>{title}</h2>
+	<slot />
+</section>

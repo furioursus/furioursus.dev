@@ -1,0 +1,46 @@
+---
+interface Props {
+	/** Renders the title & subtitle both bold (e.g. "Role — Company"). Set to false for entries like Education, where only the title should be bold. */
+	boldSubtitle?: boolean;
+	dates: string;
+	subtitle: string;
+	title: string;
+	url?: string;
+	urlExpired?: boolean;
+}
+
+const { boldSubtitle = true, dates, subtitle, title, url, urlExpired } = Astro.props;
+
+const hasHighlights = Astro.slots.has("highlights");
+---
+
+<div class="cv-entry">
+	<h3>
+		{
+			boldSubtitle ? (
+				<strong>
+					{title} — {subtitle}
+				</strong>
+			) : (
+				<Fragment>
+					<strong>{title}</strong> — {subtitle}
+				</Fragment>
+			)
+		}{" "}
+	</h3>
+	<p class="flex gap-4">
+		<em>{dates}</em>{url && <a href={url}>{url}</a>}{
+			urlExpired && <span class="text-red-500">— no longer active</span>
+		}
+	</p>
+	<p>
+		<slot />
+	</p>
+</div>
+{
+	hasHighlights && (
+		<ul class="cv-entry-highlights">
+			<slot name="highlights" />
+		</ul>
+	)
+}

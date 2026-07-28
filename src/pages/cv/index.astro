@@ -1,0 +1,273 @@
+---
+import EntryItem from "@/components/cv/EntryItem.astro";
+import Section from "@/components/cv/Section.astro";
+import SkillGroup from "@/components/cv/SkillGroup.astro";
+import PageLayout from "@/layouts/Base.astro";
+
+const meta = {
+	description: "Curriculum Vitae for Christopher Kennedy-Nuñez",
+	title: "CV",
+};
+---
+
+<PageLayout meta={meta}>
+	<div class="prose prose-sm">
+		<h1>Christopher Kennedy-Nuñez</h1>
+		<p class="cv-contact">
+			Frontend Web Developer — Astoria, New York, US
+			<br />Email: <a href="mailto:yo@furioursus.dev">yo@furioursus.dev</a>
+			<br />Bluesky: <a href="https://bsky.app/profile/furioursus.dev">@furioursus.dev</a>
+		</p>
+
+		<Section title="Summary">
+			<p>
+				Front-end web developer with 14+ years of industry experience across web and print design,
+				specializing in accessible HTML/CSS, WordPress, Craft CMS, and ExpressionEngine content
+				management systems. A lifelong learner passionate about JavaScript, CSS, and HTML, driven to
+				make the web — and the knowledge it carries — more accessible, and to leave the internet a
+				better place. Believes in empowering the people around them to reach their goals through
+				empathy and clear communication.
+			</p>
+		</Section>
+
+		<Section title="Experience">
+			<EntryItem
+				title="Frontend Developer"
+				subtitle="Fingerpaint Group"
+				dates="Mar 2026–Present"
+				url="https://fingerpaint.com"
+			>
+				Build pharmaceutical marketing websites using Astro and Vue. Leverage agentic LLM editors to
+				build products such as dosing calculators and nurse/provider locators.
+			</EntryItem>
+
+			<EntryItem
+				title="Front-End Web Developer & Owner"
+				subtitle="One Bright Light / Furioursus"
+				dates="2009–Present"
+			>
+				Design and develop websites using Craft CMS, ExpressionEngine, and e-commerce solutions,
+				working with teams ranging from small 3-person startups to national agencies. Integrate
+				third-party services to create more engaging website experiences, and heavily involved in
+				developing information architecture for client sites, often acting as liaison between
+				engineering and marketing teams.
+			</EntryItem>
+
+			<EntryItem
+				title="Frontend Web Developer (Consultant, via Exygy)"
+				subtitle="City of Oakland"
+				dates="Feb 2022–Jul 2024"
+				url="https://exygy.com"
+			>
+				Returned to the same oaklandca.gov project as an external consultant contracted through
+				Exygy, continuing the modernization work from the earlier direct-employment tenure below.
+			</EntryItem>
+
+			<EntryItem
+				title="Frontend Web Developer and Craft CMS Specialist (Business Analyst IV)"
+				subtitle="City of Oakland"
+				dates="Jul 2018–Feb 2021"
+				url="https://oaklandca.gov"
+			>
+				Started as a contractor (Jul 2018–Feb 2019) before converting to staff as Business Analyst
+				IV. Developed and maintained oaklandca.gov alongside a team of UX researchers and designers;
+				civic tech work that emboldened a drive to serve the community.
+				<Fragment slot="highlights">
+					<li>
+						Oversaw a Craft 2 to Craft 4 CMS conversion and migration, moving and retooling tens of
+						thousands of entries that required content massaging mid-migration.
+					</li>
+					<li>
+						Aggregated and analyzed staff feedback to build custom page content builders that
+						maintained WCAG 2.0/2.1 compliance and preserved the City's brand guidelines; led staff
+						training sessions and previewed upcoming technology to build staff buy-in.
+					</li>
+					<li>
+						Served as point of contact for the City Administrator's office on accessibility
+						requirements set by City Council; worked with external vendors contracted through other
+						departments to ensure delivered code met compliance.
+					</li>
+					<li>Implemented a new realtime search tool, increasing on-site search traffic by 43%.</li>
+					<li>
+						Optimized web application performance with new caching guidelines after the start of the
+						COVID-19 pandemic, increasing page speed 25-63%.
+					</li>
+					<li>
+						Worked with the finance department to research, test, and implement third-party chatbot
+						functionality, helping increase payment processing after city office closures.
+					</li>
+				</Fragment>
+			</EntryItem>
+
+			<EntryItem
+				title="Craft and Frontend Web Developer"
+				subtitle="Societyone"
+				dates="Aug 2017–Mar 2018"
+				url="https://societyone.com.au"
+			>
+				6-month contract with SocietyOne, a FinTech company in Australia, managing the project
+				across a 17-hour timezone difference.
+				<Fragment slot="highlights">
+					<li>
+						Maintained a large Craft CMS codebase and delivered new site features on quick
+						turnaround for the marketing department.
+					</li>
+					<li>
+						Integrated partner APIs for credit score information, increasing customer conversions by
+						24%.
+					</li>
+					<li>
+						Prototyped low-fidelity proofs of concept and implemented the design team's updates for
+						production sites on tight deadlines.
+					</li>
+				</Fragment>
+			</EntryItem>
+
+			<EntryItem
+				title="Front End Web Developer"
+				subtitle="Blue State Digital"
+				dates="Dec 2016–Mar 2017"
+				url="https://bluestate.com"
+			>
+				3-month contract position working with BSD NYC and the City of New York.
+				<Fragment slot="highlights">
+					<li>
+						Built AccessNYC (access.nyc.gov), an online tool helping New York City residents access
+						food, money, housing, work, and other benefits/programs.
+					</li>
+					<li>Created the timeline and content structure for the CMS migration.</li>
+					<li>
+						Integrated the City's GatherContent headless CMS to sync and distribute content across
+						the website and future systems.
+					</li>
+				</Fragment>
+			</EntryItem>
+
+			<EntryItem
+				title="Lead Developer & Ad Campaign Manager"
+				subtitle="Gaytravel"
+				dates="May 2012–Oct 2014"
+				url="https://gaytravel.com"
+			>
+				Maintained GayTravel.com's membership and content-driven website of over 10,000 users.
+				Provided support and troubleshooting for the site, team, customers, and advertisers. Rebuilt
+				the website from scratch with a cleaner design and implemented a responsive layout to meet
+				the needs of a growing mobile user base.
+			</EntryItem>
+
+			<EntryItem
+				title="Web Designer & ExpressionEngine Developer"
+				subtitle="The Shotwell Company"
+				dates="Nov 2010–Dec 2011"
+				url="https://shotwellcompany.com"
+			>
+				Worked for a San Francisco-based web design and development studio building ExpressionEngine
+				and Magento sites for nonprofits, NGOs, triple-bottom-line companies, and entrepreneurs,
+				with clients including the United Nations, ShoreTel, BetterPlace.com, Cisco WebEx, the
+				Cancer Prevention Institute of California, and the European Federation of Biotechnology.
+			</EntryItem>
+
+			<EntryItem
+				title="Lead Designer"
+				subtitle="Pwl Studio"
+				dates="Jun 2007–Nov 2010"
+				url="https://pwlstudio.com"
+			>
+				Houston-based full-service creative and marketing agency offering branding, web design and
+				development, photography/video, and marketing automation across retail/luxury, energy,
+				sports/media, nonprofit, and higher-education clients, including Tiffany & Co., Halliburton,
+				ESPN, Neiman Marcus, the American Red Cross, and the University of Houston. Brought
+				ExpressionEngine into the company's toolkit.
+			</EntryItem>
+
+			<EntryItem
+				title="Graphic Designer"
+				subtitle="copydotcom Inc"
+				dates="May 2005–Jun 2007"
+				url="https://copydotcom.com"
+			>
+				Served as web development liaison and managed and coordinated offset print orders, working
+				with clients from conception to production across each stage.
+			</EntryItem>
+
+			<EntryItem
+				title="Marketing Web Designer"
+				subtitle="Adv Films"
+				dates="2004–2005"
+				url="https://advfilms.com"
+				urlExpired
+			>
+				North American anime distribution and localization company (A.D. Vision). During this period
+				ADV released titles including <em>Super Milk-chan</em> (July 2004-January 2005), <em
+					>GetBackers</em
+				> (August 2004-November 2005), and <em>Gantz</em> (2005), and ran the "Anime ADVocates" marketing
+				program, which distributed free screening material and promotional content to nearly 3,000 anime
+				clubs across North America.
+			</EntryItem>
+
+			<EntryItem
+				title="Web & Graphic Designer"
+				subtitle="iTechLabs"
+				dates="Jan 2003–Jul 2004"
+				url="https://itechlabs.com"
+				urlExpired
+			>
+				First web-related job; in charge of developing interactive websites.
+			</EntryItem>
+		</Section>
+
+		<Section title="Education">
+			<EntryItem
+				boldSubtitle={false}
+				title="Associate of Arts and Sciences (AAS), Multimedia & Web Design"
+				subtitle="Art Institute of Houston"
+				dates="Jan 2001–Jan 2004"
+			/>
+		</Section>
+
+		<Section title="Skills">
+			<SkillGroup
+				label="Technical"
+				items={[
+					"3rd Party Integrations",
+					"Accessibility",
+					"Agentic Development",
+					"APIs",
+					"Astro",
+					"Content Management Systems (CMS)",
+					"Craft CMS",
+					"CSS",
+					"Drupal",
+					"ExpressionEngine",
+					"Front-end Development",
+					"Git",
+					"Google Analytics",
+					"HAML",
+					"HTML",
+					"Information Architecture",
+					"JavaScript",
+					"PHP",
+					"SASS",
+					"User Experience",
+					"Vue.js",
+					"Web Development",
+					"Web Standards",
+					"WordPress",
+					"XML",
+				]}
+			/>
+			<SkillGroup
+				label="Creative"
+				items={[
+					"Adobe Creative Suite",
+					"Graphic Design",
+					"Illustrator",
+					"InDesign",
+					"Photoshop",
+					"User Interface Design",
+					"Web Design",
+				]}
+			/>
+		</Section>
+	</div>
+</PageLayout>

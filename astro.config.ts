@@ -3,7 +3,7 @@ import { satteri, satteriHeadingIdsPlugin } from "@astrojs/markdown-satteri";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@tailwindcss/vite";
-import { defineConfig, envField } from "astro/config";
+import { defineConfig, envField, fontProviders } from "astro/config";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
 import robotsTxt from "astro-robots-txt";
@@ -24,10 +24,35 @@ export default defineConfig({
 	site: siteConfig.url,
 	image: {
 		domains: ["webmention.io"],
-	},
-	integrations: [
+  },
+	compressHTML: true,
+	fonts: [{
+    provider: fontProviders.local(),
+    name: "MonoLisa",
+    cssVariable: "--font-monolisa",
+    options: {
+      variants: [
+        {
+          src: ['./src/assets/fonts/MonoLisaNormal.woff2'],
+          weight: '100 900',
+          style: 'normal'
+        },
+        {
+          src: ['./src/assets/fonts/MonoLisaItalic.woff2'],
+          weight: '100 900',
+          style: 'italic'
+        }
+      ]
+    }
+  }],
+  integrations: [
 		expressiveCode(expressiveCodeOptions),
-		icon(),
+		icon({
+      iconDir: "src/assets/icons",
+      include: {
+        mdi: ["*"],
+      },
+    }),
 		sitemap(),
 		mdx(),
 		robotsTxt(),
@@ -83,7 +108,7 @@ export default defineConfig({
 		}),
 	},
 	vite: {
-		plugins: [tailwind(), rawFonts([".ttf", ".woff"])],
+		plugins: [tailwind(), rawFonts([".ttf", ".woff", ".woff2"])],
 	},
 	env: {
 		schema: {
