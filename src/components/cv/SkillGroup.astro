@@ -1,0 +1,10 @@
+---
+interface Props {
+	items: string[];
+	label: string;
+}
+
+const { items, label } = Astro.props;
+---
+
+<p class="cv-skill-group"><strong>{label}:</strong> {items.join(", ")}</p>
