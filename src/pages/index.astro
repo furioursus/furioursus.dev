@@ -32,7 +32,7 @@ const latestNotes = allNotes
 <PageLayout meta={{ title: "Home" }}>
 	<section>
 		<h1 class="title mb-4" id="greeting">
-			<span class="waving-hand">👋</span>
+			<button class="waving-hand">👋</button>
 			<span class="title-text" id="greeting-text">Hello, World!</span>
 		</h1>
 		<script is:inline>
@@ -457,14 +457,28 @@ const latestNotes = allNotes
 					},
 				];
 
-				const randHello = greetings[Math.floor(Math.random() * greetings.length)];
-				const hello = document.getElementById("greeting-text");
+				function setRandomGreeting() {
+					const hello = document.getElementById("greeting-text");
+					if (!hello) return;
 
-				if (hello) {
+					const currentLangcode = hello.getAttribute("lang");
+					const choices = greetings.filter((g) => g.langcode !== currentLangcode);
+					const randHello = choices[Math.floor(Math.random() * choices.length)];
+
 					hello.setAttribute("lang", randHello.langcode);
 					hello.setAttribute("dir", randHello.dir);
 					hello.textContent = randHello.text;
+
+					// restart the rubberBand animation (from animate.css) even if it's already running
+					hello.style.animation = "none";
+					const reflow = hello.offsetHeight;
+					hello.style.animation = "rubberBand 500ms";
 				}
+
+				setRandomGreeting();
+
+				const greetingEl = document.getElementById("greeting");
+				greetingEl?.addEventListener("click", setRandomGreeting);
 			})();
 		</script>
 		<p class="mb-4">
@@ -523,11 +537,18 @@ const latestNotes = allNotes
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		cursor: pointer;
 		&:hover {
 			.waving-hand {
 				display: inline-block;
-				animation: wobble 1s infinite;
+				animation: wobble 1s 5;
 			}
 		}
+	}
+	.waving-hand {
+		background: none;
+		border: none;
+		padding: 0;
+		margin: 0;
 	}
 </style>
