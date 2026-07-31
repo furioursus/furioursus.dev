@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: furioursus/furioursus.dev-cactus # owner/repo
+  repo: furioursus/furioursus.dev # owner/repo
   branch: main
 
 # Fallback default, only used by collections/fields that don't override it below.
