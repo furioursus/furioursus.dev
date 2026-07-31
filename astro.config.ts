@@ -22,9 +22,6 @@ import { expressiveCodeOptions, siteConfig } from "./src/site.config";
 // https://astro.build/config
 export default defineConfig({
 	site: siteConfig.url,
-	image: {
-		domains: ["webmention.io"],
-  },
 	compressHTML: true,
 	fonts: [{
     provider: fontProviders.local(),
@@ -113,6 +110,8 @@ export default defineConfig({
 	env: {
 		schema: {
 			WEBMENTION_API_KEY: envField.string({ context: "server", access: "secret", optional: true }),
+			// Domain registered with webmention.io, if it differs from the `site` hostname above (e.g. a verified `www.` subdomain).
+			WEBMENTION_DOMAIN: envField.string({ context: "server", access: "public", optional: true }),
 			WEBMENTION_URL: envField.string({ context: "client", access: "public", optional: true }),
 			WEBMENTION_PINGBACK: envField.string({ context: "client", access: "public", optional: true }),
 		},

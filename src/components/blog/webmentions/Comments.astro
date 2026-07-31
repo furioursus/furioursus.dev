@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import type { WebmentionsChildren } from "@/types";
 
@@ -34,19 +33,23 @@ const comments = mentions.filter(
 									target="_blank"
 									title={mention.author.name}
 								>
-									<Image
+									<img
 										alt={mention.author?.name}
 										class="u-photo my-0 h-12 w-12"
+										decoding="async"
 										height={48}
+										loading="lazy"
 										src={mention.author?.photo}
 										width={48}
 									/>
 								</a>
 							) : (
-								<Image
+								<img
 									alt={mention.author?.name}
 									class="u-photo my-0 h-12 w-12 rounded-full"
+									decoding="async"
 									height={48}
+									loading="lazy"
 									src={mention.author?.photo}
 									width={48}
 								/>
