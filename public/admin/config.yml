@@ -1,0 +1,69 @@
+backend:
+  name: github
+  repo: furioursus/furioursus.dev-cactus # owner/repo
+  branch: main
+
+# Fallback default, only used by collections/fields that don't override it below.
+# Astro serves everything under `public/` directly at the site root, so this
+# is a safe, working default for any future non-colocated media.
+media_folder: "public/uploads"
+public_folder: "/uploads"
+
+collections:
+  - name: "blog"
+    label: "Blog"
+    folder: "content/blog"
+    create: true
+    slug: "{{slug}}"
+    path: "{{slug}}/index" # only matches the folder+index.md posts
+    extension: "md"
+    # Colocate uploads with the entry (content/blog/<slug>/), matching this
+    # collection's existing convention, and matching what Astro's `image()`
+    # schema helper expects: a path relative to the markdown file itself.
+    media_folder: ""
+    public_folder: ""
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - label: "Cover Image"
+        name: "coverImage"
+        widget: "object"
+        required: false
+        fields:
+          - { label: "Alt", name: "alt", widget: "string" }
+          - { label: "Image", name: "src", widget: "image" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: false }
+      - { label: "OG Image", name: "ogImage", widget: "string", required: false }
+      - { label: "Tags", name: "tags", widget: "list", default: [] }
+      - { label: "Publish Date", name: "publishDate", widget: "datetime" }
+      - { label: "Updated Date", name: "updatedDate", widget: "datetime", required: false }
+      - { label: "Pinned", name: "pinned", widget: "boolean", default: false }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  - name: "notes"
+    label: "Notes"
+    folder: "content/notes"
+    create: true
+    slug: "{{slug}}"
+    path: "{{slug}}/index" # matches the folder+index.md notes
+    extension: "md"
+    media_folder: ""
+    public_folder: ""
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "description", widget: "text", required: false }
+      - { label: "Publish Date", name: "publishDate", widget: "datetime" }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  - name: "tags"
+    label: "Tags"
+    folder: "content/tags"
+    create: true
+    slug: "{{slug}}"
+    path: "{{slug}}/index" # matches the folder+index.md tags
+    extension: "md"
+    media_folder: ""
+    public_folder: ""
+    fields:
+      - { label: "Title", name: "title", widget: "string", required: false }
+      - { label: "Description", name: "description", widget: "text", required: false }

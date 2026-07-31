@@ -41,7 +41,13 @@ export async function GET(context: APIContext) {
 			month: "long",
 			weekday: "long",
 		});
-		const svg = await satori(ogMarkup(title, postDate), ogOptions);
+		// satori-html's `VNode` type doesn't structurally match satori's `ReactNode` param type
+		// once a real `@types/react` is present in the dependency graph (e.g. via an unrelated
+		// package like decap-cms-app) — harmless cast to satori's own declared param type.
+		const svg = await satori(
+			ogMarkup(title, postDate) as Parameters<typeof satori>[0],
+			ogOptions,
+		);
 		pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer();
 		writeToCache(title, pubDate, pngBuffer);
 	}
