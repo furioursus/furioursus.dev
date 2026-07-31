@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import type { WebmentionsChildren } from "@/types";
 
 interface Props {
@@ -34,10 +33,12 @@ const likesToShow = likes
 								title={like.author?.name}
 							>
 								<span class="p-author h-card">
-									<Image
+									<img
 										alt={like.author!.name}
 										class="u-photo my-0 inline-block h-12 w-12"
+										decoding="async"
 										height={48}
+										loading="lazy"
 										src={like.author!.photo}
 										width={48}
 									/>
