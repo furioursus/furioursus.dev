@@ -1,4 +1,4 @@
-backend:
+a backend:
   name: github
   repo: furioursus/furioursus.dev # owner/repo
   branch: main
@@ -32,8 +32,14 @@ collections:
         fields:
           - { label: "Alt", name: "alt", widget: "string" }
           - { label: "Image", name: "src", widget: "image" }
-      - { label: "Draft", name: "draft", widget: "boolean", default: false }
-      - { label: "OG Image", name: "ogImage", widget: "string", required: false }
+          - { label: "Draft", name: "draft", widget: "boolean", default: false }
+      - label: "OG Image"
+        name: "ogImage"
+        widget: "object"
+        required: false
+        fields:
+          - { label: "Alt", name: "alt", widget: "string" }
+          - { label: "Image", name: "src", widget: "image" }
       - { label: "Tags", name: "tags", widget: "list", default: [] }
       - { label: "Publish Date", name: "publishDate", widget: "datetime" }
       - { label: "Updated Date", name: "updatedDate", widget: "datetime", required: false }
