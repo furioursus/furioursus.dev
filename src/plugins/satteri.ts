@@ -65,6 +65,75 @@ export function satteriUnwrapImagesPlugin(): MdastPluginDefinition {
 	};
 }
 
+// A caption paragraph, built fresh on each call — the trigger and dialog each
+// need their own node instance, not two references to the same object.
+function lightboxCaptionNode(text: string) {
+	return {
+		type: "element" as const,
+		tagName: "p",
+		properties: { className: ["lightbox-caption"] },
+		children: [{ type: "text" as const, value: text }],
+	};
+}
+
+export function satteriLightboxImagesPlugin(): HastPluginDefinition {
+	return {
+		name: "site-lightbox-images",
+		element: {
+			filter: ["img"],
+			visit(node) {
+				// Markdown's optional image title (`![alt](src "caption")`) is
+				// otherwise unused here — its presence doubles as the per-image
+				// opt-in for a visible caption, since plain markdown has no other
+				// way to pass a flag per image. `alt` isn't used as a fallback:
+				// it's required on every image already, so defaulting to it would
+				// force a caption onto every image rather than making it optional.
+				const caption =
+					typeof node.properties?.title === "string" && node.properties.title
+						? node.properties.title
+						: undefined;
+
+				return {
+					type: "element",
+					tagName: "lightbox-image",
+					properties: { className: ["not-prose", "lightbox"] },
+					children: [
+						{
+							type: "element",
+							tagName: "button",
+							properties: {
+								type: "button",
+								className: ["lightbox-trigger"],
+								"aria-haspopup": "dialog",
+							},
+							children: [{ ...node }],
+						},
+						...(caption ? [lightboxCaptionNode(caption)] : []),
+						{
+							type: "element",
+							tagName: "dialog",
+							properties: { className: ["lightbox-dialog"] },
+							children: [
+								{
+									type: "element",
+									tagName: "button",
+									properties: {
+										type: "button",
+										className: ["lightbox-close"],
+										"aria-label": "Close image",
+									},
+									children: [],
+								},
+								...(caption ? [lightboxCaptionNode(caption)] : []),
+							],
+						},
+					],
+				};
+			},
+		},
+	};
+}
+
 export function satteriFootnoteLabelPlugin(): HastPluginDefinition {
 	return {
 		name: "site-footnote-label",

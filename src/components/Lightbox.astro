@@ -1,0 +1,61 @@
+<script>
+	// Registers the <lightbox-image> custom element used by both:
+	//  - the satteriLightboxImagesPlugin hast transform (src/plugins/satteri.ts),
+	//    which auto-wraps every markdown body image
+	//  - LightboxImage.astro, for explicit/customized use in .astro or .mdx
+	// Included once, globally, in src/layouts/Base.astro.
+	class LightboxImage extends HTMLElement {
+		connectedCallback() {
+			const trigger = this.querySelector<HTMLButtonElement>(":scope > .lightbox-trigger");
+			const dialog = this.querySelector<HTMLDialogElement>(":scope > dialog.lightbox-dialog");
+			const closeButton = dialog?.querySelector<HTMLButtonElement>(".lightbox-close");
+			const triggerImg = trigger?.querySelector("img");
+			// Usually the dialog starts with no <img> of its own — the trigger's
+			// gets moved in on open (see below). But when the thumbnail is a real
+			// crop (LightboxImage's fit="cover" + width/height — see its comments),
+			// the dialog is pre-rendered with its own separate, uncropped <img>
+			// instead: cropping happens in the generated file, not just via CSS, so
+			// there's no way to "un-crop" the trigger's image by moving it. In that
+			// case leave it alone; there's nothing to move either way.
+			const dialogOwnImg = dialog?.querySelector("img");
+
+			if (!trigger || !dialog || !triggerImg) {
+				console.warn("Lightbox: missing trigger, dialog, or image element");
+				return;
+			}
+
+			trigger.addEventListener("click", () => {
+				if (!dialogOwnImg) {
+					// move (not clone) the image into the dialog — same element, same
+					// already-loaded src/srcset, no extra request. Inserted before the
+					// dialog's own caption (if any) so the image renders above it, not
+					// below.
+					const dialogCaption = dialog.querySelector(".lightbox-caption");
+					if (dialogCaption) {
+						dialog.insertBefore(triggerImg, dialogCaption);
+					} else {
+						dialog.appendChild(triggerImg);
+					}
+				}
+				dialog.showModal();
+			});
+
+			closeButton?.addEventListener("click", () => dialog.close());
+
+			// click on the backdrop (outside the image) closes the dialog
+			dialog.addEventListener("click", (e) => {
+				if (e.target === dialog) dialog.close();
+			});
+
+			// fires uniformly for Escape, the close button, and backdrop clicks
+			dialog.addEventListener("close", () => {
+				if (!dialogOwnImg) {
+					trigger.appendChild(triggerImg);
+				}
+				trigger.focus();
+			});
+		}
+	}
+
+	customElements.define("lightbox-image", LightboxImage);
+</script>

@@ -1,7 +1,7 @@
 ---
-import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 import FormattedDate from "@/components/FormattedDate.astro";
+import LightboxImage from "@/components/LightboxImage.astro";
 
 interface Props {
 	content: CollectionEntry<"blog">;
@@ -12,20 +12,34 @@ const {
 	content: { data },
 	readingTime,
 } = Astro.props;
+
+// Default is `alt`, shown unless explicitly opted out — the opposite of the
+// lightbox's opt-in captions (see LightboxImage.astro / satteri.ts), since
+// alt text is already required on a cover image, so showing it costs nothing.
+const rawCaption = data.coverImage?.caption;
+const coverCaption =
+	rawCaption === false || rawCaption === null || rawCaption === ""
+		? undefined // explicit opt-out
+		: rawCaption === true || rawCaption === undefined
+			? data.coverImage?.alt // default
+			: rawCaption; // explicit override
 ---
 
 {
 	data.coverImage && (
-		<div class="mb-6 aspect-video">
-			<Image
-				alt={data.coverImage.alt}
-				layout="constrained"
-				width={748}
-				height={420}
-				priority
-				src={data.coverImage.src}
-			/>
-		</div>
+		<LightboxImage
+			src={data.coverImage.src}
+			alt={data.coverImage.alt}
+			caption={coverCaption}
+			fit="cover"
+			aspectRatio="16/9"
+			thumbWidth="100%"
+			thumbHeight="none"
+			width={948}
+			height={533}
+			priority
+			class="mb-6 block md:-ms-[100px] md:-me-[100px]"
+		/>
 	)
 }
 {data.draft ? <span class="text-base text-red-500">(Draft)</span> : null}

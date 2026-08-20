@@ -21,6 +21,10 @@ const blog = defineCollection({
 				.object({
 					alt: z.string(),
 					src: image(),
+					// Caption shown below the image. Omitted/true → shows `alt`
+					// (the default). A string → shows that instead, overriding `alt`.
+					// null/false → no caption at all, opting out of the default.
+					caption: z.union([z.string(), z.boolean(), z.null()]).optional(),
 				})
 				.optional(),
 			draft: z.boolean().default(false),

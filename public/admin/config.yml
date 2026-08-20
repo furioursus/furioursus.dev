@@ -32,6 +32,13 @@ collections:
         fields:
           - { label: "Alt", name: "alt", widget: "string" }
           - { label: "Image", name: "src", widget: "image" }
+          - {
+              label: "Caption",
+              name: "caption",
+              widget: "string",
+              required: false,
+              hint: "Shown below the image. Leave blank to show the Alt text above as the caption. To hide the caption entirely, edit the post's file directly and set `caption: null`.",
+            }
           - { label: "Draft", name: "draft", widget: "boolean", default: false }
       - label: "OG Image"
         name: "ogImage"

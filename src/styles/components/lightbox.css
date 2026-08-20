@@ -1,0 +1,76 @@
+lightbox-image {
+	display: inline-block;
+}
+
+.lightbox-trigger {
+	@apply block w-full cursor-zoom-in appearance-none border-0 bg-transparent p-0;
+
+	img {
+		@apply m-0 block rounded-md;
+		width: var(--lightbox-thumb-width, auto);
+		max-height: var(--lightbox-thumb-max-h, 24rem);
+		aspect-ratio: var(--lightbox-thumb-aspect, auto);
+		object-fit: var(--lightbox-thumb-fit, contain);
+	}
+}
+
+.lightbox-dialog {
+	@apply m-auto max-h-[90vh] max-w-[90vw] border-0 bg-transparent p-0;
+	/* Shrink-wrap to its content's own rendered size (up to the max-* caps
+	   above) rather than a fixed 90vh/90vw box — otherwise the box can be much
+	   larger than the letterboxed photo inside it, stranding the close button
+	   (anchored to this box's corner) far from the image, and swallowing
+	   clicks in that empty margin before they reach ::backdrop. */
+	width: fit-content;
+	height: fit-content;
+
+	&::backdrop {
+		@apply bg-global-bg/80 backdrop-blur-sm;
+	}
+
+	img {
+		@apply m-0 block max-w-[90vw] cursor-zoom-out rounded-md object-contain;
+		/* Without an explicit width/height here, the browser falls back to the
+		   image's own width/height HTML attributes as real declared values —
+		   which defeats the ratio-preserving max-width/max-height algorithm and
+		   leaves the box's own size mismatched to the (correctly letterboxed)
+		   photo inside it. Forcing both to auto is what makes the box itself
+		   hug the photo's real aspect ratio, not just the pixels drawn in it. */
+		width: auto;
+		height: auto;
+		/* Capped below the dialog's own 90vh so an optional caption (below)
+		   always has room to render without pushing the total stack past the
+		   viewport. (A flexbox shrink-to-fit version of this was tried instead
+		   — letting the image size dynamically around whatever caption height
+		   is actually present — but `fit-content` sizing on the dialog plus a
+		   shrinking, aspect-ratio-linked flex item collapsed the image to 0×0
+		   in testing. This fixed-headroom version is less exact for a very long,
+		   multi-line caption, but reliable.) */
+		max-height: calc(90vh - 3rem);
+	}
+}
+
+.lightbox-caption {
+	@apply text-muted mt-2 text-center text-sm;
+	/* A long caption's own preferred (unwrapped) text width would otherwise
+	   count toward the shrink-to-fit width of its container — the dialog
+	   (width: fit-content, above) or the trigger's inline-block wrapper — and
+	   drag the whole box wider than the image itself, stranding the close
+	   button off to the side. `width: 0` removes the caption from that
+	   calculation entirely, so only the image determines the box's width;
+	   `min-width: 100%` then snaps the caption back to match once that width
+	   is settled, so it still visually spans (and wraps within) the image's
+	   full width rather than shrinking to nothing. */
+	width: 0;
+	min-width: 100%;
+}
+
+.lightbox-close {
+	@apply bg-global-bg/80 absolute top-2 right-2 z-10 h-8 w-8 cursor-pointer appearance-none rounded-full border-0 p-1.5;
+
+	&:before {
+		@apply bg-global-text block h-full w-full content-[''];
+		mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z'/%3E%3C/svg%3E")
+			center / 60% no-repeat;
+	}
+}
