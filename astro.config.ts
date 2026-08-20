@@ -14,6 +14,7 @@ import {
 	satteriAutolinkHeadingsPlugin,
 	satteriExternalLinksPlugin,
 	satteriFootnoteLabelPlugin,
+	satteriLightboxImagesPlugin,
 	satteriReadingTimePlugin,
 	satteriUnwrapImagesPlugin,
 } from "./src/plugins/satteri";
@@ -23,33 +24,35 @@ import { expressiveCodeOptions, siteConfig } from "./src/site.config";
 export default defineConfig({
 	site: siteConfig.url,
 	compressHTML: true,
-	fonts: [{
-    provider: fontProviders.local(),
-    name: "MonoLisa",
-    cssVariable: "--font-monolisa",
-    options: {
-      variants: [
-        {
-          src: ['./src/assets/fonts/MonoLisaNormal.woff2'],
-          weight: '100 900',
-          style: 'normal'
-        },
-        {
-          src: ['./src/assets/fonts/MonoLisaItalic.woff2'],
-          weight: '100 900',
-          style: 'italic'
-        }
-      ]
-    }
-  }],
-  integrations: [
+	fonts: [
+		{
+			provider: fontProviders.local(),
+			name: "MonoLisa",
+			cssVariable: "--font-monolisa",
+			options: {
+				variants: [
+					{
+						src: ["./src/assets/fonts/MonoLisaNormal.woff2"],
+						weight: "100 900",
+						style: "normal",
+					},
+					{
+						src: ["./src/assets/fonts/MonoLisaItalic.woff2"],
+						weight: "100 900",
+						style: "italic",
+					},
+				],
+			},
+		},
+	],
+	integrations: [
 		expressiveCode(expressiveCodeOptions),
 		icon({
-      iconDir: "src/assets/icons",
-      include: {
-        mdi: ["*"],
-      },
-    }),
+			iconDir: "src/assets/icons",
+			include: {
+				mdi: ["*"],
+			},
+		}),
 		sitemap(),
 		mdx(),
 		robotsTxt(),
@@ -101,6 +104,7 @@ export default defineConfig({
 				satteriAutolinkHeadingsPlugin(),
 				satteriFootnoteLabelPlugin(),
 				satteriExternalLinksPlugin(),
+				satteriLightboxImagesPlugin(),
 			],
 		}),
 	},

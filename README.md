@@ -4,6 +4,10 @@
 
 <p align="center">Personal blog of Christopher Kennedy-Nuñez, built with <a href="https://astro.build">Astro</a>.</p>
 
+This README covers setup, commands, and deploying. For how individual features are built —
+the markdown/lightbox pipeline, theming, search, webmentions, OG images, the CMS — see
+[`docs/`](./docs/README.md).
+
 ## Table Of Contents
 
 1. [Key Features](#key-features)
