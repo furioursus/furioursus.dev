@@ -1,0 +1,105 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+// Explicit, customizable counterpart to the automatic satteriLightboxImagesPlugin
+// markdown transform (src/plugins/satteri.ts) — import and use this directly in
+// .astro files or .mdx posts when a specific image needs a crop/size the default
+// doesn't give you. Renders the same markup/classes, so it's driven by the same
+// globally-registered <lightbox-image> behavior (see Lightbox.astro).
+interface Props {
+	src: ImageMetadata;
+	alt: string;
+	/** Max height of the inline thumbnail. Any CSS length. @default "24rem" */
+	thumbHeight?: string;
+	/** Thumbnail width — pair with `fit="cover"` for a true crop instead of a shrink. */
+	thumbWidth?: string;
+	/** How the thumbnail fits its box. @default "contain" (shrinks, keeps the full photo) */
+	fit?: "contain" | "cover";
+	/** Force a crop shape when `fit="cover"`, e.g. "1/1", "4/3". */
+	aspectRatio?: string;
+	/** `true` shows `alt` as a caption below the image; a string shows that
+	 * instead; omitted/false/undefined shows no caption. Shown under both the
+	 * thumbnail and the enlarged dialog view. */
+	caption?: string | boolean | undefined;
+	/** Intrinsic display width/height for the generated responsive srcset —
+	 * pass both to get an appropriately-sized set of images (via
+	 * layout="constrained") instead of Astro serving the source's full
+	 * resolution just to shrink it with CSS. Omit both to let astro:assets
+	 * infer natural size from the source file, as before. */
+	width?: number;
+	height?: number;
+	/** Forwarded to astro:assets Image — set for an above-the-fold image
+	 * (e.g. a post's cover image) so it loads eagerly instead of lazily.
+	 * @default false */
+	priority?: boolean;
+	class?: string;
+}
+
+const {
+	src,
+	alt,
+	thumbHeight,
+	thumbWidth,
+	fit,
+	aspectRatio,
+	caption,
+	width,
+	height,
+	priority,
+	class: className,
+} = Astro.props;
+
+const captionText = caption === true ? alt : caption || undefined;
+
+// `fit="cover"` + explicit width/height that don't match the source's own
+// aspect ratio doesn't just *style* a crop — astro:assets actually generates
+// a file physically cropped to those dimensions (verified: the output .webp
+// is a real WxH pixel file, not the source's natural size). The trigger and
+// dialog normally share one <img>, moved back and forth by Lightbox.astro —
+// but there's no way to "un-crop" that file for the enlarged view, so when a
+// real crop is happening, the dialog gets its own separate, uncropped <Image>
+// instead (see Lightbox.astro: it leaves a dialog-with-its-own-image alone
+// rather than trying to move the trigger's cropped one into it).
+const sourceRatio = src.width / src.height;
+const targetRatio = width && height ? width / height : undefined;
+const isCropped =
+	fit === "cover" && targetRatio !== undefined && Math.abs(sourceRatio - targetRatio) > 0.01;
+
+// Only set the custom properties a caller actually overrode — everything else
+// falls back to the defaults in src/styles/components/lightbox.css, which is
+// what the automatic transform's markup uses too.
+const style = Object.fromEntries(
+	Object.entries({
+		"--lightbox-thumb-max-h": thumbHeight,
+		"--lightbox-thumb-width": thumbWidth,
+		"--lightbox-thumb-fit": fit,
+		"--lightbox-thumb-aspect": aspectRatio,
+	}).filter(([, value]) => value !== undefined),
+);
+---
+
+<lightbox-image class:list={["not-prose", "lightbox", className]} style={style}>
+	<button type="button" class="lightbox-trigger" aria-haspopup="dialog">
+		{
+			width && height ? (
+				<Image
+					src={src}
+					alt={alt}
+					layout="constrained"
+					width={width}
+					height={height}
+					priority={priority ?? false}
+				/>
+			) : (
+				<Image src={src} alt={alt} priority={priority ?? false} />
+			)
+		}
+	</button>
+	{captionText && <p class="lightbox-caption">{captionText}</p>}
+	<dialog class="lightbox-dialog">
+		<button type="button" class="lightbox-close" aria-label="Close image"></button>
+		{isCropped && <Image src={src} alt={alt} width={Math.min(src.width, 1600)} />}
+		{captionText && <p class="lightbox-caption">{captionText}</p>}
+	</dialog>
+</lightbox-image>
