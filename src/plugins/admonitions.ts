@@ -25,7 +25,7 @@ function serializeDirective(node: Parameters<typeof toMarkdown>[0]): string {
 
 export function satteriAdmonitionsPlugin(): MdastPluginDefinition {
 	return {
-		name: "cactus-admonitions",
+		name: "site-admonitions",
 		textDirective(node) {
 			if (node.data !== undefined) return;
 			return { type: "text", value: serializeDirective(node) } as const;

@@ -5,7 +5,7 @@ const DIRECTIVE_NAME = "github";
 
 export function satteriGithubCardPlugin(): MdastPluginDefinition {
 	return {
-		name: "cactus-github-card",
+		name: "site-github-card",
 		leafDirective(node) {
 			if (node.name !== DIRECTIVE_NAME) return;
 
@@ -60,7 +60,7 @@ export function satteriGithubCardPlugin(): MdastPluginDefinition {
 
 				const hTitle = h("div", { class: "gh-title title" }, [
 					h("span", { class: "gh-avatar" }),
-					h("a", { class: "gh-text not-prose cactus-link", href: realUrl }, [
+					h("a", { class: "gh-text not-prose site-link", href: realUrl }, [
 						{ type: "text", value: `${repoParts[0]}/${repoParts[1]}` },
 					]),
 					h("span", { class: "gh-icon" }),
@@ -115,7 +115,7 @@ export function satteriGithubCardPlugin(): MdastPluginDefinition {
 				return h("div", { id: simpleUUID, class: "github-card gh-simple gh-loading" }, [
 					h("div", { class: "gh-title title" }, [
 						h("span", { class: "gh-avatar" }),
-						h("a", { class: "gh-text not-prose cactus-link", href: realUrl }, [
+						h("a", { class: "gh-text not-prose site-link", href: realUrl }, [
 							{ type: "text", value: repoParts[0] },
 						]),
 						h("span", { class: "gh-icon" }),
