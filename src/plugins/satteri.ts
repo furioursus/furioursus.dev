@@ -5,7 +5,7 @@ import type { HastPluginDefinition, MdastPluginDefinition } from "satteri";
 
 export function satteriAutolinkHeadingsPlugin(): HastPluginDefinition {
 	return {
-		name: "cactus-autolink-headings",
+		name: "site-autolink-headings",
 		element: {
 			filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
 			visit(node) {
@@ -31,7 +31,7 @@ export function satteriReadingTimePlugin(): () => MdastPluginDefinition {
 	return () => {
 		let done = false;
 		return {
-			name: "cactus-reading-time",
+			name: "site-reading-time",
 			text(node, ctx) {
 				if (done) return;
 
@@ -54,7 +54,7 @@ export function satteriReadingTimePlugin(): () => MdastPluginDefinition {
 
 export function satteriUnwrapImagesPlugin(): MdastPluginDefinition {
 	return {
-		name: "cactus-unwrap-images",
+		name: "site-unwrap-images",
 		paragraph(node): Image | undefined {
 			const child = node.children[0];
 			if (node.children.length === 1 && child?.type === "image") {
@@ -67,7 +67,7 @@ export function satteriUnwrapImagesPlugin(): MdastPluginDefinition {
 
 export function satteriFootnoteLabelPlugin(): HastPluginDefinition {
 	return {
-		name: "cactus-footnote-label",
+		name: "site-footnote-label",
 		element: {
 			filter: ["h2"],
 			visit(node, ctx) {
@@ -80,7 +80,7 @@ export function satteriFootnoteLabelPlugin(): HastPluginDefinition {
 
 export function satteriExternalLinksPlugin(): HastPluginDefinition {
 	return {
-		name: "cactus-external-links",
+		name: "site-external-links",
 		element: {
 			filter: ["a"],
 			visit(node, ctx) {

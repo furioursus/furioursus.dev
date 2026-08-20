@@ -120,7 +120,7 @@
 	@import "./components/admonition.css";
 	@import "./components/github-card.css";
 
-	.cactus-link {
+	.site-link {
 		@apply hover:decoration-link underline underline-offset-2 hover:decoration-2;
 	}
 
