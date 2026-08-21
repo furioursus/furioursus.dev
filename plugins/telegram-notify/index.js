@@ -43,9 +43,11 @@ export async function onSuccess() {
 	const branch = process.env.BRANCH ?? "unknown";
 
 	await sendTelegramMessage(
-		`✅ <b>${site}</b> deploy succeeded\n` +
+		"🐾💨 <i>ZOOMIES</i> — " +
+			`<b>${site}</b> deployed clean and the tail will not stop waggin'!\n` +
 			`${context} · <code>${branch}</code>\n` +
-			(url ? url : ""),
+			(url ? `${url}\n` : "") +
+			"\ngood build. good pup. 🦴",
 	);
 }
 
@@ -58,8 +60,10 @@ export async function onError({ error }) {
 	const message = (error?.message ?? String(error)).slice(0, 500);
 
 	await sendTelegramMessage(
-		`❌ <b>${site}</b> deploy failed\n` +
+		"🐾😖 <i>whimpers</i> — " +
+			`<b>${site}</b> tripped over its own paws and faceplanted.\n` +
 			`${context} · <code>${branch}</code>\n` +
-			`<pre>${message}</pre>`,
+			`<pre>${message}</pre>\n` +
+			"\ngo sniff out the leash (the deploy log) before more zoomies happen 🐕",
 	);
 }
