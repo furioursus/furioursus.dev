@@ -95,6 +95,25 @@ Three pieces:
     captions won't expose this — it only shows up once a caption's unwrapped length exceeds the
     image's own rendered width.
 
+### Open/close animation
+
+`.lightbox-dialog` bounces open and fades closed via native `<dialog>` + `@starting-style` — no
+JS, `Lightbox.astro`'s script is unchanged. `showModal()`/`close()` toggle the `open` attribute;
+the CSS transitions off that. Open uses an overshoot `cubic-bezier(0.34, 1.56, 0.64, 1)` for the
+bounce; close stays a plain quick ease so it doesn't wobble on the way out. `prefers-reduced-motion:
+reduce` disables both.
+
+- **`transition-behavior: allow-discrete` on `overlay`/`display`** is load-bearing for the close
+  half specifically. Both properties are normally discrete — they can't animate, they just snap.
+  Without `allow-discrete`, the UA's `display: none` (applied the instant `.close()` runs) removes
+  the dialog before the opacity/transform transition gets a chance to play at all, so closing looks
+  instant no matter what the `transition` line says.
+- **`@starting-style { &[open] { ... } }`** supplies the "from" state for the *opening* animation.
+  Without it there's no starting point to transition from, so the dialog would just appear at its
+  final opacity/scale — same instant-snap symptom, but on open instead of close.
+- Unsupported browsers (`@starting-style`/`allow-discrete` need a roughly 2024-or-later engine) fall
+  back to the old instant show/hide — this is pure progressive enhancement, nothing to guard in JS.
+
 ## Using it explicitly — `LightboxImage.astro`
 
 ```astro
