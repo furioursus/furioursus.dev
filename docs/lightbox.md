@@ -108,7 +108,7 @@ reduce` disables both.
   Without `allow-discrete`, the UA's `display: none` (applied the instant `.close()` runs) removes
   the dialog before the opacity/transform transition gets a chance to play at all, so closing looks
   instant no matter what the `transition` line says.
-- **`@starting-style { &[open] { ... } }`** supplies the "from" state for the *opening* animation.
+- **`@starting-style { &[open] { ... } }`** supplies the "from" state for the _opening_ animation.
   Without it there's no starting point to transition from, so the dialog would just appear at its
   final opacity/scale — same instant-snap symptom, but on open instead of close.
 - Unsupported browsers (`@starting-style`/`allow-discrete` need a roughly 2024-or-later engine) fall
