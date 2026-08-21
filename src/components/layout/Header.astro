@@ -8,7 +8,10 @@ import { siteConfig } from "../../site.config";
 <!-- <div data-netlify-identity-menu></div>
 <div data-netlify-identity-button>Login with Netlify Identity</div> -->
 <header
-	class:list={["group relative mb-28 flex items-center", siteConfig.showLogo && "sm:ps-18"]}
+	class:list={[
+		"group relative mb-12 flex items-center md:mb-28",
+		siteConfig.showLogo && "sm:ps-18",
+	]}
 	id="main-header"
 >
 	<div class="flex sm:flex-col sm:items-start">
