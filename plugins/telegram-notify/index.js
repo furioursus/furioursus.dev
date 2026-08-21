@@ -38,7 +38,11 @@ async function sendTelegramMessage(text) {
 // see https://docs.netlify.com/configure-builds/environment-variables/.
 export async function onSuccess() {
 	const site = process.env.SITE_NAME ?? "site";
-	const url = process.env.DEPLOY_PRIME_URL ?? process.env.URL;
+	// `URL` is the site's actual domain (custom domain if verified), constant across every
+	// deploy regardless of context. `DEPLOY_PRIME_URL` varies by context instead — it's the
+	// custom domain only for a genuine production deploy, but a `<branch>--sitename.netlify.app`
+	// link for a branch deploy — so it's the fallback here, not the primary.
+	const url = process.env.URL ?? process.env.DEPLOY_PRIME_URL;
 	const context = process.env.CONTEXT ?? "unknown";
 	const branch = process.env.BRANCH ?? "unknown";
 

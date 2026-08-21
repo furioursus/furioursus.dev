@@ -42,6 +42,15 @@ Nothing else to wire up — the plugin picks up both vars from `process.env` at 
 - **Message length.** Telegram caps messages at 4096 characters; `onError` truncates the error
   text to 500 chars so a long stack trace doesn't dump illegibly into a chat notification — check
   the Netlify deploy log for the full error, the Telegram message is a pointer, not a substitute.
-- **`SITE_NAME`/`DEPLOY_PRIME_URL`/`CONTEXT`/`BRANCH`** are [standard Netlify build environment
+- **`SITE_NAME`/`URL`/`CONTEXT`/`BRANCH`** are [standard Netlify build environment
   variables](https://docs.netlify.com/configure-builds/environment-variables/) — no extra config
   needed for the plugin to read them, they're already present in every build's `process.env`.
+- **`URL`, not `DEPLOY_PRIME_URL`, for the link in the message.** `DEPLOY_PRIME_URL` looks like the
+  obvious choice but varies by deploy context — it's only the real custom domain for a genuine
+  production deploy; for a branch deploy it's `<branch>--sitename.netlify.app` instead, and it's
+  always populated either way, so a `DEPLOY_PRIME_URL ?? URL` fallback never actually falls
+  through. `URL` is the one Netlify documents as constant across every deploy regardless of
+  context — use that as primary, `DEPLOY_PRIME_URL` only as a defensive fallback if `URL` is ever
+  unset. (If you see a `<branch>--sitename.netlify.app`-shaped URL anywhere you expected the real
+  domain, it's usually a sign the site's Production branch isn't set to match what you're pushing
+  to — check Site settings → Build & deploy → Branches.)
