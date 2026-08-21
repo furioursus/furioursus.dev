@@ -34,6 +34,62 @@ async function sendTelegramMessage(text) {
 	}
 }
 
+function pick(variants) {
+	return variants[Math.floor(Math.random() * variants.length)];
+}
+
+// Each variant is [opening line, closing line] — the info line between them (context/branch,
+// url or error) stays fixed across all of them, only the flavor text varies. `${site}` is
+// interpolated into the opener at call time, not baked into these arrays, so it stays in one
+// place rather than duplicated per variant.
+const SUCCESS_VARIANTS = [
+	[
+		"🐾💨 <i>ZOOMIES</i> — {site} deployed clean and the tail will not stop waggin'!",
+		"good build. good pup. 🦴",
+	],
+	[
+		"🐕✨ {site} shipped without a hitch — ears up, tail up, all paws on deck!",
+		"<i>happy borks</i> — nailed it.",
+	],
+	[
+		"🦴🐾 {site} just fetched a clean deploy on the first throw.",
+		"who's a good build? this build.",
+	],
+	["🐕💨 {site} deployed so smooth even the floof didn't ruffle.", "10/10, would deploy again."],
+	[
+		"🐾🌟 {site} rolled over, played dead, and still shipped perfect.",
+		"good pup energy all around.",
+	],
+	["🐕🎾 {site} chased the deploy and CAUGHT it.", "proud tail wags incoming."],
+];
+
+const ERROR_VARIANTS = [
+	[
+		"🐾😖 <i>whimpers</i> — {site} tripped over its own paws and faceplanted.",
+		"go sniff out the leash (the deploy log) before more zoomies happen 🐕",
+	],
+	[
+		"🐕💢 ruh-roh — {site} dug a hole instead of a deploy.",
+		"time to sniff around the build log for what got buried.",
+	],
+	[
+		"🦴😬 {site} chased its tail and never caught the deploy.",
+		"check the log — might need a treat and a nap first.",
+	],
+	[
+		"🐾🚨 {site} got spooked mid-fetch and dropped the build.",
+		"the deploy log has the scent, go track it down.",
+	],
+	[
+		"🐕💥 {site} zoomied straight into a wall this time.",
+		"shake it off and check what broke in the log.",
+	],
+	[
+		"🐾😵 {site} rolled in something it shouldn't have — build's a mess.",
+		"bath time (a.k.a. check the deploy log).",
+	],
+];
+
 // SITE_NAME/URL/CONTEXT/BRANCH/COMMIT_REF are standard Netlify build environment variables —
 // see https://docs.netlify.com/configure-builds/environment-variables/.
 export async function onSuccess() {
@@ -45,13 +101,13 @@ export async function onSuccess() {
 	const url = process.env.URL ?? process.env.DEPLOY_PRIME_URL;
 	const context = process.env.CONTEXT ?? "unknown";
 	const branch = process.env.BRANCH ?? "unknown";
+	const [open, close] = pick(SUCCESS_VARIANTS);
 
 	await sendTelegramMessage(
-		"🐾💨 <i>ZOOMIES</i> — " +
-			`<b>${site}</b> deployed clean and the tail will not stop waggin'!\n` +
+		`${open.replace("{site}", `<b>${site}</b>`)}\n` +
 			`${context} · <code>${branch}</code>\n` +
 			(url ? `${url}\n` : "") +
-			"\ngood build. good pup. 🦴",
+			`\n${close}`,
 	);
 }
 
@@ -62,12 +118,12 @@ export async function onError({ error }) {
 	// Telegram caps messages at 4096 chars; keep this well under that so it stays skimmable in a
 	// chat notification rather than dumping a full stack trace.
 	const message = (error?.message ?? String(error)).slice(0, 500);
+	const [open, close] = pick(ERROR_VARIANTS);
 
 	await sendTelegramMessage(
-		"🐾😖 <i>whimpers</i> — " +
-			`<b>${site}</b> tripped over its own paws and faceplanted.\n` +
+		`${open.replace("{site}", `<b>${site}</b>`)}\n` +
 			`${context} · <code>${branch}</code>\n` +
 			`<pre>${message}</pre>\n` +
-			"\ngo sniff out the leash (the deploy log) before more zoomies happen 🐕",
+			`\n${close}`,
 	);
 }
