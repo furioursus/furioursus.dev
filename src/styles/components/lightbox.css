@@ -24,8 +24,77 @@ lightbox-image {
 	width: fit-content;
 	height: fit-content;
 
+	/* Open/close bounce — native <dialog> + @starting-style, no JS. `overlay`
+	   and `display` are normally discrete (can't animate, snap instantly);
+	   `allow-discrete` is what lets the *closing* half work at all — without
+	   it the dialog's `display: none` (set by the UA the instant .close() is
+	   called) would remove it before the opacity/transform transition gets a
+	   chance to run, and you'd see nothing. Unsupported browsers (pre-~2024)
+	   just fall back to the old instant show/hide — nothing breaks. */
+	opacity: 0;
+	transform: scale(0.92);
+	transition:
+		opacity 0.15s ease-in,
+		transform 0.15s ease-in,
+		overlay 0.15s allow-discrete,
+		display 0.15s allow-discrete;
+
+	&[open] {
+		opacity: 1;
+		transform: scale(1);
+		/* Overshoot easing is what makes this a "bounce" rather than a plain
+		   scale-in — only applied on open; close stays a quick plain ease so
+		   the dialog doesn't wobble on its way out. */
+		transition:
+			opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+			transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+			overlay 0.3s allow-discrete,
+			display 0.3s allow-discrete;
+	}
+
+	/* The pre-transition state for the *opening* animation specifically —
+	   without this, the browser has no "from" value to animate out of and
+	   the dialog would just appear at its final opacity/scale instantly. */
+	@starting-style {
+		&[open] {
+			opacity: 0;
+			transform: scale(0.92);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+
+		&[open] {
+			transition: none;
+		}
+	}
+
 	&::backdrop {
 		@apply bg-global-bg/80 backdrop-blur-sm;
+		opacity: 0;
+		transition:
+			opacity 0.15s ease-in,
+			overlay 0.15s allow-discrete,
+			display 0.15s allow-discrete;
+	}
+
+	&[open]::backdrop {
+		opacity: 1;
+		transition: opacity 0.3s ease-out;
+	}
+
+	@starting-style {
+		&[open]::backdrop {
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&::backdrop,
+		&[open]::backdrop {
+			transition: none;
+		}
 	}
 
 	img {
