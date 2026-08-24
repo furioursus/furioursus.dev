@@ -11,7 +11,10 @@ const year = new Date().getFullYear();
 		<div>&copy; {siteConfig.author}</div>
 		{year}.
 	</div>
-	<nav aria-label="Footer" class="sm:divide-muted flex gap-x-2 sm:gap-x-0 sm:divide-x">
+	<nav
+		aria-label="Footer"
+		class="sm:divide-muted flex flex-wrap justify-center gap-x-2 sm:gap-x-0 sm:divide-x"
+	>
 		{
 			menuLinks.map((link) => (
 				<a class="hover:text-global-text px-4 py-2 hover:underline sm:py-0" href={link.path}>
