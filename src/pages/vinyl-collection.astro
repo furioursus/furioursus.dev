@@ -1,0 +1,257 @@
+---
+import RecordCard from "@/components/RecordCard.astro";
+import PageLayout from "@/layouts/Base.astro";
+import {
+	loadCollection,
+	queryCollection,
+	summarize,
+	uniqueSorted,
+} from "astro-discogs-collection/collection";
+
+const { releases, missingConfig, error } = await loadCollection();
+const sorted = queryCollection(releases, { sortBy: "artist" });
+const stats = summarize(releases);
+const formats = uniqueSorted(releases.flatMap((release) => release.formats));
+
+const meta = {
+	description: missingConfig
+		? "A searchable, filterable list of my vinyl collection."
+		: `Browse my ${stats.totalRecords}-record vinyl collection — searchable by artist and title, filterable by genre and format.`,
+	title: "Record Collection",
+};
+---
+
+<PageLayout meta={meta}>
+	<h1 class="title mb-6">Record Collection</h1>
+
+	{
+		missingConfig && (
+			<p class="prose prose-sm max-w-none">
+				Set <code>DISCOGS_USERNAME</code> and <code>DISCOGS_TOKEN</code> in <code>.env</code> to
+				populate this page.
+			</p>
+		)
+	}
+
+	{error && <p class="prose prose-sm max-w-none">Couldn't load from Discogs: {error}</p>}
+
+	{
+		!missingConfig && !error && (
+			<record-collection>
+				<p class="text-muted mb-6 text-sm">
+					<span data-count>{stats.totalRecords}</span> of {stats.totalRecords} records &middot;{" "}
+					{stats.uniqueArtists} artists
+				</p>
+
+				<div class="breakout-container">
+					<div class="mx-auto max-w-5xl px-4 sm:px-8">
+						<div class="controls">
+							<label class="control">
+								<span class="sr-only">Search by artist or title</span>
+								<input
+									autocomplete="off"
+									data-search-input
+									placeholder="Search artist or title…"
+									type="search"
+								/>
+							</label>
+
+							<label class="control">
+								<span class="sr-only">Filter by genre</span>
+								<select data-genre-select>
+									<option value="">All genres</option>
+									{stats.genres.map((genre) => (
+										<option value={genre}>{genre}</option>
+									))}
+								</select>
+							</label>
+
+							<label class="control">
+								<span class="sr-only">Filter by format</span>
+								<select data-format-select>
+									<option value="">All formats</option>
+									{formats.map((format) => (
+										<option value={format}>{format}</option>
+									))}
+								</select>
+							</label>
+
+							<label class="control">
+								<span class="sr-only">Sort by</span>
+								<select data-sort-select>
+									<option value="artist">Artist (A–Z)</option>
+									<option value="title">Title (A–Z)</option>
+									<option value="year-desc">Year (newest)</option>
+									<option value="year-asc">Year (oldest)</option>
+									<option value="added-desc">Recently added</option>
+								</select>
+							</label>
+
+							<button data-reset-button type="button">
+								Reset
+							</button>
+						</div>
+						<p class="empty" data-empty hidden>
+							No records match your filters.
+						</p>
+
+						<ul class="grid" role="list">
+							{sorted.map((release) => (
+								<li
+									class="record-item"
+									data-artist={release.artist.toLowerCase()}
+									data-date-added={release.dateAdded ?? ""}
+									data-formats={release.formats.join("|").toLowerCase()}
+									data-genres={release.genres.join("|").toLowerCase()}
+									data-search={`${release.artist} ${release.title} ${release.labels.join(" ")}`.toLowerCase()}
+									data-title={release.title.toLowerCase()}
+									data-year={release.year}
+								>
+									<RecordCard release={release} />
+								</li>
+							))}
+						</ul>
+					</div>
+				</div>
+			</record-collection>
+		)
+	}
+</PageLayout>
+
+<style>
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.control {
+		display: block;
+	}
+
+	input[type="search"],
+	select,
+	button[data-reset-button] {
+		font: inherit;
+		font-size: 0.875rem;
+		color: var(--color-global-text);
+		background: var(--color-global-bg);
+		border: 1px dashed var(--color-muted);
+		border-radius: 2px;
+		padding: 0.4rem 0.6rem;
+	}
+
+	input[type="search"] {
+		min-width: 14rem;
+	}
+
+	button[data-reset-button] {
+		cursor: pointer;
+		border-style: solid;
+	}
+
+	button[data-reset-button]:hover {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+	}
+
+	input[type="search"]:focus-visible,
+	select:focus-visible,
+	button[data-reset-button]:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 1px;
+	}
+
+	.empty {
+		opacity: 0.7;
+	}
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+		gap: 1rem;
+		padding: 0;
+		margin: 0;
+		list-style: none;
+	}
+
+	.record-item[hidden] {
+		display: none;
+	}
+</style>
+
+<script>
+	type SortKey = "artist" | "title" | "year-desc" | "year-asc" | "added-desc";
+
+	const sortComparators: Record<SortKey, (a: HTMLElement, b: HTMLElement) => number> = {
+		artist: (a, b) => (a.dataset.artist ?? "").localeCompare(b.dataset.artist ?? ""),
+		title: (a, b) => (a.dataset.title ?? "").localeCompare(b.dataset.title ?? ""),
+		"year-desc": (a, b) => Number(b.dataset.year ?? 0) - Number(a.dataset.year ?? 0),
+		"year-asc": (a, b) => Number(a.dataset.year ?? 0) - Number(b.dataset.year ?? 0),
+		"added-desc": (a, b) => (b.dataset.dateAdded ?? "").localeCompare(a.dataset.dateAdded ?? ""),
+	};
+
+	class RecordCollection extends HTMLElement {
+		#items: HTMLLIElement[] = [];
+		#list: HTMLUListElement | null = null;
+
+		connectedCallback() {
+			this.#list = this.querySelector<HTMLUListElement>(".grid");
+			this.#items = Array.from(this.querySelectorAll<HTMLLIElement>(".record-item"));
+
+			const searchInput = this.querySelector<HTMLInputElement>("[data-search-input]");
+			const genreSelect = this.querySelector<HTMLSelectElement>("[data-genre-select]");
+			const formatSelect = this.querySelector<HTMLSelectElement>("[data-format-select]");
+			const sortSelect = this.querySelector<HTMLSelectElement>("[data-sort-select]");
+			const resetButton = this.querySelector<HTMLButtonElement>("[data-reset-button]");
+
+			searchInput?.addEventListener("input", () => this.#applyFilters());
+			genreSelect?.addEventListener("change", () => this.#applyFilters());
+			formatSelect?.addEventListener("change", () => this.#applyFilters());
+			sortSelect?.addEventListener("change", () => this.#applySort(sortSelect.value as SortKey));
+
+			resetButton?.addEventListener("click", () => {
+				if (searchInput) searchInput.value = "";
+				if (genreSelect) genreSelect.value = "";
+				if (formatSelect) formatSelect.value = "";
+				this.#applyFilters();
+			});
+		}
+
+		#applyFilters() {
+			const search =
+				this.querySelector<HTMLInputElement>("[data-search-input]")?.value.trim().toLowerCase() ??
+				"";
+			const genre =
+				this.querySelector<HTMLSelectElement>("[data-genre-select]")?.value.toLowerCase() ?? "";
+			const format =
+				this.querySelector<HTMLSelectElement>("[data-format-select]")?.value.toLowerCase() ?? "";
+
+			let visible = 0;
+			for (const item of this.#items) {
+				const matchesSearch = !search || (item.dataset.search ?? "").includes(search);
+				const matchesGenre = !genre || (item.dataset.genres ?? "").split("|").includes(genre);
+				const matchesFormat = !format || (item.dataset.formats ?? "").split("|").includes(format);
+				const show = matchesSearch && matchesGenre && matchesFormat;
+				item.hidden = !show;
+				if (show) visible++;
+			}
+
+			const countEl = this.querySelector("[data-count]");
+			if (countEl) countEl.textContent = String(visible);
+
+			const emptyEl = this.querySelector<HTMLElement>("[data-empty]");
+			if (emptyEl) emptyEl.hidden = visible !== 0;
+		}
+
+		#applySort(key: SortKey) {
+			const comparator = sortComparators[key] ?? sortComparators.artist;
+			const sorted = [...this.#items].sort(comparator);
+			for (const item of sorted) this.#list?.append(item);
+			this.#items = sorted;
+		}
+	}
+
+	customElements.define("record-collection", RecordCollection);
+</script>
