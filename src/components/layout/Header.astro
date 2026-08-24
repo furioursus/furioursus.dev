@@ -87,15 +87,20 @@ import { siteConfig } from "../../site.config";
 			id="navigation-menu"
 		>
 			{
-				menuLinks.map((link) => (
-					<a
-						aria-current={Astro.url.pathname === link.path ? "page" : false}
-						class="text-accent px-2 py-4 font-semibold sm:px-4 sm:py-0 sm:underline-offset-2 sm:hover:underline"
-						href={link.path}
-					>
-						{link.title}
-					</a>
-				))
+				// "/" is excluded: the logo link right before this nav already goes home, so a
+				// "Home" item here would be an adjacent link to the same page (WAVE flags this).
+				// The footer's copy of menuLinks keeps "Home" — it has no adjacent logo link.
+				menuLinks
+					.filter((link) => link.path !== "/")
+					.map((link) => (
+						<a
+							aria-current={Astro.url.pathname === link.path ? "page" : false}
+							class="text-accent px-2 py-4 font-semibold sm:px-4 sm:py-0 sm:underline-offset-2 sm:hover:underline"
+							href={link.path}
+						>
+							{link.title}
+						</a>
+					))
 			}
 		</nav>
 	</div>

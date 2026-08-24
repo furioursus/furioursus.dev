@@ -68,8 +68,13 @@
 		scrollbar-gutter: stable;
 		/* iOS Safari's rubber-band/touch scroll treats <html>, not <body>, as the scroll
 		   container — `overflow-x: hidden` on body (see Base.astro) only clips what's painted,
-		   it doesn't stop the drag gesture. Needs to be set here too. */
-		overflow-x: hidden;
+		   it doesn't stop the drag gesture. Needs to be set here too.
+		   Use `clip`, not `hidden`: with `hidden` on both html and body, Safari treats each as
+		   its own scroll container and the momentum-scroll thread has to reconcile the two —
+		   causes an intermittent mid-scroll freeze, most visible over the .breakout-container's
+		   transformed, oversized element (see below). `clip` still blocks the rubber-band
+		   overscroll without making html a competing scroll container. */
+		overflow-x: clip;
 
 		&[data-theme="light"] {
 			color-scheme: light;
