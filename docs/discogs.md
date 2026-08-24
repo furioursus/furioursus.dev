@@ -17,7 +17,13 @@ filterable grid of my vinyl collection, pulled from Discogs at build time via th
   the total/artist counts and the sorted, deduped genre list used to populate the genre `<select>`.
 - Cover art is served locally when available — `getLocalCoverImage()` (from
   `astro-discogs-collection/images`) in `src/components/RecordCard.astro` looks up a cached image by
-  release ID and falls back to the Discogs-hosted `coverImageUrl`, then a text placeholder.
+  release ID and falls back to the Discogs-hosted `coverImageUrl`, then a text placeholder. Cover
+  art is decorative (`alt=""`) since the artist/title render as visible text right below it in the
+  same link.
+- `RecordCard`'s title renders as an `<h2>` by default, via a `titleLevel?: 1 | 2 | 3 | 4 | 5 | 6 |
+  false` prop (`false` renders a plain `<p>` instead). `h2` is correct as long as the card sits
+  directly under the page's one `<h1>`, as it does on `/vinyl-collection/` today — reach for the
+  prop if `RecordCard` ever gets reused somewhere with a different heading structure.
 
 ## Search/filter/sort is all client-side, no re-fetch
 

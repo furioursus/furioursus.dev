@@ -6,21 +6,33 @@ import type { DiscogsRelease } from "astro-discogs-collection/collection";
 
 interface Props {
 	release: DiscogsRelease;
+	/**
+	 * Heading level for the title, or `false` to render it as a plain `<p>` instead of a
+	 * heading. Defaults to `2` — callers stacking multiple cards under their own heading (e.g.
+	 * a future non-list layout) can pass a deeper level, or `false` where a heading would be
+	 * redundant/invalid in context.
+	 */
+	titleLevel?: 1 | 2 | 3 | 4 | 5 | 6 | false;
 }
 
-const { release } = Astro.props;
+const { release, titleLevel = 2 } = Astro.props;
 const localImage = getLocalCoverImage(release.id);
+const TitleTag = titleLevel === false ? "p" : (`h${titleLevel}` as const);
 ---
 
 <a class="record" href={release.releaseUrl} target="_blank" rel="noopener">
 	{
+		// alt="": the card is a single link and the cover art is immediately followed by the
+		// artist/title as visible text below, so a spoken alt would just repeat them. The
+		// placeholder div is the one exception — it has no adjacent text, so it keeps its own
+		// accessible text via its content instead.
 		localImage ? (
-			<Image class="cover" src={localImage} alt={release.title} width={500} height={500} />
+			<Image class="cover" src={localImage} alt="" width={500} height={500} />
 		) : release.coverImageUrl ? (
 			<img
 				class="cover"
 				src={release.coverImageUrl}
-				alt={release.title}
+				alt=""
 				loading="lazy"
 				width="500"
 				height="500"
@@ -31,7 +43,7 @@ const localImage = getLocalCoverImage(release.id);
 	}
 	<div class="info">
 		<p class="artist">{release.artist}</p>
-		<p class="title">{release.title}</p>
+		<TitleTag class="title">{release.title}</TitleTag>
 		<p class="meta">{release.year || ""} {release.formats.join(", ")}</p>
 	</div>
 </a>

@@ -46,19 +46,20 @@ const meta = {
 				<div class="breakout-container">
 					<div class="mx-auto max-w-5xl px-4 sm:px-8">
 						<div class="controls">
-							<label class="control">
+							<label class="control" for="vinyl-search">
 								<span class="sr-only">Search by artist or title</span>
 								<input
 									autocomplete="off"
 									data-search-input
+									id="vinyl-search"
 									placeholder="Search artist or title…"
 									type="search"
 								/>
 							</label>
 
-							<label class="control">
+							<label class="control" for="vinyl-genre">
 								<span class="sr-only">Filter by genre</span>
-								<select data-genre-select>
+								<select data-genre-select id="vinyl-genre">
 									<option value="">All genres</option>
 									{stats.genres.map((genre) => (
 										<option value={genre}>{genre}</option>
@@ -66,9 +67,9 @@ const meta = {
 								</select>
 							</label>
 
-							<label class="control">
+							<label class="control" for="vinyl-format">
 								<span class="sr-only">Filter by format</span>
-								<select data-format-select>
+								<select data-format-select id="vinyl-format">
 									<option value="">All formats</option>
 									{formats.map((format) => (
 										<option value={format}>{format}</option>
@@ -76,9 +77,9 @@ const meta = {
 								</select>
 							</label>
 
-							<label class="control">
+							<label class="control" for="vinyl-sort">
 								<span class="sr-only">Sort by</span>
-								<select data-sort-select>
+								<select data-sort-select id="vinyl-sort">
 									<option value="artist">Artist (A–Z)</option>
 									<option value="title">Title (A–Z)</option>
 									<option value="year-desc">Year (newest)</option>
