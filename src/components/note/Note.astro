@@ -2,6 +2,7 @@
 import { type CollectionEntry, render } from "astro:content";
 import type { HTMLTag, Polymorphic } from "astro/types";
 import FormattedDate from "@/components/FormattedDate.astro";
+import { siteConfig } from "@/site.config";
 
 type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
 	note: CollectionEntry<"note">;
@@ -10,6 +11,12 @@ type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
 
 const { as: Tag = "div", note, isPreview = false } = Astro.props;
 const { Content } = await render(note);
+
+// note.data.bskyPostUri is an at:// URI (e.g. at://did:plc:.../app.bsky.feed.post/<rkey>) —
+// the rkey (last path segment) is all that's needed to build the bsky.app web link.
+const bskyUrl = note.data.bskyPostUri
+	? `https://bsky.app/profile/${siteConfig.bskyHandle}/post/${note.data.bskyPostUri.split("/").pop()}`
+	: undefined;
 ---
 
 <article
@@ -43,4 +50,13 @@ const { Content } = await render(note);
 	>
 		<Content />
 	</div>
+	{
+		bskyUrl && !isPreview && (
+			<p class="mt-4 text-sm">
+				<a class="hover:text-link" href={bskyUrl} rel="noreferrer" target="_blank">
+					Originally posted on Bluesky →
+				</a>
+			</p>
+		)
+	}
 </article>

@@ -21,6 +21,8 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
 - [Theming](./theming.md) — the dark/light mode system and design tokens.
 - [Search](./search.md) — Pagefind static search integration.
 - [Webmentions](./webmentions.md) — likes/reposts/replies pulled from webmention.io.
+- [Bluesky → notes sync](./bluesky-notes-sync.md) — imports top-level Bluesky posts as notes on a
+  schedule.
 - [OG images](./og-images.md) — per-post social card images generated at build time.
 - [CMS](./cms.md) — Decap CMS + Netlify Identity, for editing content without a local checkout.
 - [Deploy notifications](./deploy-notifications.md) — a local Netlify Build Plugin that posts

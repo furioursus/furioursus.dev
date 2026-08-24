@@ -13,6 +13,8 @@ export const siteConfig: SiteConfig = {
 	title: "furioursus",
 	// Used as both a meta property (src/components/BaseHead.astro L:31 + L:49) & the generated satori png (src/pages/og-image/[slug].png.ts)
 	author: "Christopher Kennedy-Nuñez",
+	// Used to build bsky.app links for notes synced from Bluesky (src/components/note/Note.astro)
+	bskyHandle: "furioursus.dev",
 	// Used as the default description meta property and webmanifest description
 	description: "Personal Blog of NYC-based web developer, Christopher Kennedy-Nuñez",
 	// HTML lang property, found in src/layouts/Base.astro L:18 & astro.config.ts L:48

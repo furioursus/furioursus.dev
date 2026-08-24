@@ -1,5 +1,8 @@
 export interface SiteConfig {
 	author: string;
+	// Bluesky handle (no leading @), used to build bsky.app links — the "originally posted on
+	// Bluesky" link on synced notes (see docs/bluesky-notes-sync.md) and scripts/sync-bluesky-notes.mjs.
+	bskyHandle: string;
 	date: {
 		options: Intl.DateTimeFormatOptions;
 	};

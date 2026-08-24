@@ -67,6 +67,13 @@ collections:
       - { label: "Description", name: "description", widget: "text", required: false }
       - { label: "Publish Date", name: "publishDate", widget: "datetime" }
       - { label: "Body", name: "body", widget: "markdown" }
+      - {
+          label: "Bluesky Post URI",
+          name: "bskyPostUri",
+          widget: "string",
+          required: false,
+          hint: "Set automatically by the Bluesky sync (scripts/sync-bluesky-notes.mjs) for notes imported from Bluesky — leave blank for hand-written notes.",
+        }
 
   - name: "tags"
     label: "Tags"

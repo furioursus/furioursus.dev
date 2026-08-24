@@ -70,6 +70,15 @@ Safe to remove when touching a post, not urgent.
 Just `title`, optional `description`, and `publishDate`. No tags, no cover image, no draft flag —
 notes are meant to be short/disposable enough not to need the full post apparatus.
 
+```yaml
+bskyPostUri: string # optional — set by scripts/sync-bluesky-notes.mjs, not by hand
+```
+
+`bskyPostUri` is only present on notes imported from Bluesky (see
+[bluesky-notes-sync.md](./bluesky-notes-sync.md)) — an `at://` URI pointing back at the source
+post, which `src/components/note/Note.astro` turns into a "Originally posted on Bluesky →" link.
+Absent on hand-written notes.
+
 ## Tag pages
 
 A tag doesn't need an entry in `content/tags/` to work — any string in a post's `tags` array

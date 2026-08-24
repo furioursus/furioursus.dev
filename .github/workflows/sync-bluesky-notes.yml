@@ -1,0 +1,46 @@
+name: Sync Bluesky posts to notes
+
+on:
+  schedule:
+    # Every 6 hours, offset from the top of the hour to avoid the GitHub Actions cron rush.
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "Paginate through the full author feed instead of just the newest page"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync new posts from Bluesky into content/notes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Sync Bluesky posts
+        env:
+          BSKY_SYNC_ALL: ${{ github.event.inputs.backfill }}
+        run: node scripts/sync-bluesky-notes.mjs
+
+      - name: Commit and push new notes
+        run: |
+          if [ -n "$(git status --porcelain content/notes)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add content/notes
+            git commit -m "chore(notes): Sync new Bluesky posts"
+            git push
+          else
+            echo "No new Bluesky posts to sync."
+          fi
