@@ -1,0 +1,46 @@
+<!--
+	Site-wide prop-for-that integration point — included once in Base.astro.
+
+	1. Registers the declarative `auto` entry (see the <script> below). From here on, any
+	   element anywhere in the site can opt into a live JS→CSS source just by adding
+	   `data-props-for="<key>"` (and `data-props-to="<selector>"` to hoist the write to an
+	   ancestor) — no further JS wiring needed. Plugin sources beyond the core
+	   viewport/size/visibility/range set are lazy-loaded on first reference. Full source/plugin
+	   catalog: node_modules/prop-for-that/README.md (or
+	   https://github.com/argyleink/prop-for-that).
+
+	2. Provides one shared, invisible, full-viewport pointer-tracking surface (below), hoisted
+	   onto `<body>`. `pointerLocal` maths the cursor's position against *its bound element's*
+	   `getBoundingClientRect()` — bind it to something document-sized (`<body>`, `<html>`) and
+	   the ratio gets compressed/inaccurate on any page taller than one screen, since the box
+	   being measured is the whole scrollable document, not what's actually on screen. A
+	   `position: fixed; inset: 0` div's rect *is* the viewport, exactly, at all scroll
+	   positions — so this element exists purely to give `pointerLocal` a correctly-sized
+	   surface to measure against; `data-props-to="body"` is what makes the properties it writes
+	   actually reach the rest of the page (custom properties only inherit to descendants, and
+	   this div is a sibling of the real content, not an ancestor of it — see prop-for-that's own
+	   "Custom properties inherit downward only" gotcha).
+
+	   Result: `--live-local-pointer-x-ratio`/`-y-ratio` (0–1 across the whole viewport) and
+	   `--live-local-pointer-inside` (1/0, cursor anywhere in the browser window) are available
+	   from `<body>`'s inherited custom properties anywhere on the page. The header logo's
+	   cursor-tracking glance (`logo.css`) is the first consumer; any future feature that wants
+	   "where's the cursor, roughly" can read the same three properties instead of standing up
+	   its own tracking element.
+
+	   `pointer-events: none` is safe here specifically because `pointerLocal` listens on
+	   `window` and only uses the element for its rect — it doesn't need real pointer events
+	   delivered to this div itself (confirmed by reading prop-for-that's source directly, not
+	   assumed).
+-->
+<div
+	aria-hidden="true"
+	class="pointer-events-none fixed inset-0"
+	data-props-for="pointer-local"
+	data-props-to="body"
+>
+</div>
+
+<script>
+	import "prop-for-that/auto";
+</script>

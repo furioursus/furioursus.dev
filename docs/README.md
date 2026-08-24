@@ -18,6 +18,7 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   reading time, admonitions, GitHub cards, external-link handling, and more.
 - [Lightbox](./lightbox.md) — click-to-enlarge images, automatic in markdown bodies or explicit via
   a customizable component.
+- [Logo idle animation](./logo.md) — the header bear mark's blink/ear-twitch/look-around loop.
 - [Theming](./theming.md) — the dark/light mode system and design tokens.
 - [Search](./search.md) — Pagefind static search integration.
 - [Webmentions](./webmentions.md) — likes/reposts/replies pulled from webmention.io.
@@ -41,3 +42,8 @@ HTMLElement`) defined in a `<script>` tag, either colocated with their markup (e
   `ThemeToggle.astro`) or registered once globally in `src/layouts/Base.astro` when the markup
   they operate on doesn't have a natural `.astro` file to live in (e.g. `Lightbox.astro`, whose
   markup mostly comes from a markdown transform, not a component template).
+- **Runtime state CSS needs but can't see (pointer position, viewport size, and more) goes through
+  `prop-for-that`.** `PropsForAuto.astro`, included once in `Base.astro`, registers it site-wide —
+  any element can opt in with a `data-props-for="<key>"` attribute, no further JS. First (and so
+  far only) consumer is the header logo's cursor-tracking glance, see [Logo idle
+  animation](./logo.md#cursor-tracking).
