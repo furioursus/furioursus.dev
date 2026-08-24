@@ -1,0 +1,63 @@
+---
+// src/components/RecordCard.astro
+import { Image } from "astro:assets";
+import { getLocalCoverImage } from "astro-discogs-collection/images";
+import type { DiscogsRelease } from "astro-discogs-collection/collection";
+
+interface Props {
+	release: DiscogsRelease;
+}
+
+const { release } = Astro.props;
+const localImage = getLocalCoverImage(release.id);
+---
+
+<a class="record" href={release.releaseUrl} target="_blank" rel="noopener">
+	{
+		localImage ? (
+			<Image src={localImage} alt={release.title} width={280} height={280} />
+		) : release.coverImageUrl ? (
+			<img
+				src={release.coverImageUrl}
+				alt={release.title}
+				loading="lazy"
+				width="280"
+				height="280"
+			/>
+		) : (
+			<div class="placeholder">{release.title}</div>
+		)
+	}
+	<p class="artist">{release.artist}</p>
+	<p class="title">{release.title}</p>
+	<p class="meta">{release.year || ""} {release.formats.join(", ")}</p>
+</a>
+
+<style>
+	.record {
+		display: block;
+		text-decoration: none;
+		color: inherit;
+	}
+	.record img,
+	.placeholder {
+		width: 100%;
+		aspect-ratio: 1;
+		object-fit: cover;
+		border-radius: 0.25rem;
+	}
+	.artist {
+		font-size: 0.8rem;
+		opacity: 0.7;
+		margin: 0.5rem 0 0;
+	}
+	.title {
+		margin: 0.1rem 0;
+		font-weight: 600;
+	}
+	.meta {
+		font-size: 0.8rem;
+		opacity: 0.6;
+		margin: 0;
+	}
+</style>

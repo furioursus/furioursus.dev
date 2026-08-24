@@ -3,3 +3,4 @@ declare module "@pagefind/default-ui" {
 		constructor(arg: unknown);
 	}
 }
+/// <reference types="astro-discogs-collection/client" />

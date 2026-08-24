@@ -35,6 +35,9 @@ importers:
       astro:
         specifier: 7.0.4
         version: 7.0.4(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@26.0.1)(jiti@2.7.0)(yaml@2.9.0)
+      astro-discogs-collection:
+        specifier: github:furioursus/astro-discogs-collection
+        version: https://codeload.github.com/furioursus/astro-discogs-collection/tar.gz/065662d7942c1324a36c560ebf576072e8ec71a7(astro@7.0.4(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@26.0.1)(jiti@2.7.0)(yaml@2.9.0))
       astro-expressive-code:
         specifier: ^0.44.0
         version: 0.44.0(astro@7.0.4(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@26.0.1)(jiti@2.7.0)(yaml@2.9.0))
@@ -1571,6 +1574,12 @@ packages:
   astring@1.9.0:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
+
+  astro-discogs-collection@https://codeload.github.com/furioursus/astro-discogs-collection/tar.gz/065662d7942c1324a36c560ebf576072e8ec71a7:
+    resolution: {gitHosted: true, integrity: sha512-V9EoZoYAICzDtVWt2W3AlXiMFbdeiFpijwRMRcolB3Ao6zak4Jab2WJZYH0gJxQ4kXWiiGbZtRQq2UMgQYyPSw==, tarball: https://codeload.github.com/furioursus/astro-discogs-collection/tar.gz/065662d7942c1324a36c560ebf576072e8ec71a7}
+    version: 0.1.0
+    peerDependencies:
+      astro: ^7.0.0
 
   astro-expressive-code@0.44.0:
     resolution: {integrity: sha512-b1wN/ZvbJprzxlGKIpIes2kQrCY5KRLwys2tWbZAZyjGZcW5ZtgneZnBwzNRiBna9/48d4mQl19KLjcRuhO1hw==}
@@ -6649,6 +6658,10 @@ snapshots:
   array-move@4.0.0: {}
 
   astring@1.9.0: {}
+
+  astro-discogs-collection@https://codeload.github.com/furioursus/astro-discogs-collection/tar.gz/065662d7942c1324a36c560ebf576072e8ec71a7(astro@7.0.4(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@26.0.1)(jiti@2.7.0)(yaml@2.9.0)):
+    dependencies:
+      astro: 7.0.4(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@26.0.1)(jiti@2.7.0)(yaml@2.9.0)
 
   astro-expressive-code@0.44.0(astro@7.0.4(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@26.0.1)(jiti@2.7.0)(yaml@2.9.0)):
     dependencies:

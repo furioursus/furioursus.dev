@@ -4,6 +4,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@tailwindcss/vite";
 import { defineConfig, envField, fontProviders } from "astro/config";
+import discogsCollection from 'astro-discogs-collection';
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
 import robotsTxt from "astro-robots-txt";
@@ -19,6 +20,16 @@ import {
 	satteriUnwrapImagesPlugin,
 } from "./src/plugins/satteri";
 import { expressiveCodeOptions, siteConfig } from "./src/site.config";
+
+// Vite 6+ no longer copies `.env` values onto `process.env` — it only exposes them via
+// `import.meta.env`. `astro-discogs-collection` reads `process.env.DISCOGS_*` directly (see its
+// README), so without this it always reports missingConfig even with a populated `.env`. Node's
+// built-in loader populates process.env for us; it's a no-op if the vars are already set (CI, etc).
+try {
+	process.loadEnvFile();
+} catch {
+	// no .env file present (e.g. CI providing real env vars directly) — fine, ignore.
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -52,7 +63,8 @@ export default defineConfig({
 			include: {
 				mdi: ["*"],
 			},
-		}),
+    }),
+		discogsCollection(),
 		sitemap(),
 		mdx(),
 		robotsTxt(),
