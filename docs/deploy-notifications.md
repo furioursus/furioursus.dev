@@ -45,6 +45,14 @@ Nothing else to wire up — the plugin picks up both vars from `process.env` at 
 - **`SITE_NAME`/`URL`/`CONTEXT`/`BRANCH`** are [standard Netlify build environment
   variables](https://docs.netlify.com/configure-builds/environment-variables/) — no extra config
   needed for the plugin to read them, they're already present in every build's `process.env`.
+- **Commit message isn't one of those env vars** — Netlify exposes `COMMIT_REF` (the SHA) but not
+  the message, so `getCommitMessage()` shells out to `git log -1 --pretty=%s` instead, reading it
+  straight from the repo the plugin is already running inside. Subject line only, wrapped in
+  try/catch so a shallow clone or any other git hiccup drops the line rather than the build.
+  Freeform text like a commit subject (or the error message in `onError`) gets `escapeHtml()`'d
+  before going into the message — `parse_mode: "HTML"` treats `<`/`>`/`&` as markup, and an
+  unescaped commit message or stack trace containing any of those could otherwise mangle or
+  truncate the notification.
 - **`URL`, not `DEPLOY_PRIME_URL`, for the link in the message.** `DEPLOY_PRIME_URL` looks like the
   obvious choice but varies by deploy context — it's only the real custom domain for a genuine
   production deploy; for a branch deploy it's `<branch>--sitename.netlify.app` instead, and it's
