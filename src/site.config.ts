@@ -53,6 +53,10 @@ export const menuLinks: { path: string; title: string }[] = [
 		path: "/cv/",
 		title: "CV",
 	},
+	{
+		path: "/vinyl-collection/",
+		title: "Vinyl",
+	},
 ];
 
 // https://expressive-code.com/reference/configuration/

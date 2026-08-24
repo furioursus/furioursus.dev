@@ -116,6 +116,12 @@
 	}
 }
 
+.breakout-container {
+	width: 100vw;
+	margin-left: 50%;
+	transform: translateX(-50%);
+}
+
 @layer components {
 	@import "./components/admonition.css";
 	@import "./components/github-card.css";
