@@ -107,6 +107,11 @@ Y stays shared across all three (7px, unstaggered) — only X differs:
   much-larger-percentage-wise squish below. The eyes' own movement is the primary "looking down"
   cue; the muzzle's extra push and foreshortening (next) are reinforcing detail on top of it, not
   the only visible signal.
+- **Downcast squint.** `#Eye1`/`#Eye2` also narrow vertically the further down the glance goes —
+  `scale: 1 calc(1 - max(0, --y - 0.5) * 0.3)`, the same downward-only `max(0, --y - 0.5)` guard as
+  the muzzle's foreshortening below, riding on the standalone `scale` property so it composes with
+  the blink's own `transform: scaleY()` (see the `translate`-vs-`transform` reasoning below) rather
+  than fighting it.
 
 `translate` (the standalone CSS property, not `transform: translate()`) is what makes per-element
 rates possible without fighting anything else already animating those elements: `#Eye1`/`#Eye2`
@@ -145,15 +150,29 @@ looking up), ramping 0→0.5 across the bottom half. `transform-origin: 50% 0%` 
 the muzzle's own top (nearest the eyes), so the compression reads as the tip tucking under while
 the base stays put — anatomically the right cue, but on its own (without the bigger shared Y
 amplitude, and without its own extra push) it just looked like the shape shrinking in place, not
-heading toward the bottom of the head.
+heading toward the bottom of the head. The push (6px) and squish (widen 0.3, compress 0.68) were
+tuned up from an earlier, subtler pass (4px/0.24/0.56) to sell "looking down" harder — 0.68 is
+close to the ceiling before the compression starts reading as the muzzle inverting rather than
+tucking under, at `--y`'s max of 1.
 
-**`linear`, not `ease-out`, and 0.3s.** These transitions get retargeted on every `pointermove`,
+**Ear droop.** `#Ear1`/`#Ear2` pick up a downward-only-in-spirit (actually signed both ways) `rotate`
+tied to the same `--y`: `calc((--y - 0.5) * -12deg)` on `#Ear1`, `calc((--y - 0.5) * 12deg)` on
+`#Ear2` — looking down tips both ears forward, looking up lifts them back, mirrored signs to match
+each ear's own idle-twitch keyframes' dominant first step. This layers on top of, not instead of,
+each ear's ongoing `logo-ear-twitch-left`/`-right` loop (unlike `#Eyes`/`#Muzzle`, the ears' idle
+`animation` is never set to `none` during tracking) — `rotate` is a standalone Individual Transform
+property independent of `transform`, so the keyframes' `transform: rotate()` and the tracking
+`rotate:` value just add together rather than one clobbering the other. The exact sign was picked
+by matching each ear's own twitch direction, not by watching the artwork rotate — worth a visual
+check if the ears ever look like they're lifting instead of drooping on the way down.
+
+**`linear`, not `ease-out`, and 0.1s.** These transitions get retargeted on every `pointermove`,
 often faster than any one transition ever finishes. `ease-out` starts fast and decelerates on
 _each_ leg, so retargeting it mid-flight repeatedly cuts that deceleration off and restarts a
 fresh fast start — a string of velocity discontinuities that reads as choppy rather than one
 continuous motion. `linear`'s constant velocity per leg blends far more smoothly across repeated
-retargets; 0.3s (up from an earlier 0.2s/0.25s) gives it a bit more room to act as a smoothing
-filter over the discrete pointermove samples, at a small cost in immediacy.
+retargets. 0.1s prioritizes immediacy over smoothing — tight enough that the mark reads as
+following the cursor directly rather than catching up to it a beat later.
 
 **Reusing this for something else:** any future feature that wants "where's the cursor, roughly"
 can read the same three `--live-local-pointer-*` properties directly — no need to stand up another

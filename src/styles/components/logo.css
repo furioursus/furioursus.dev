@@ -78,7 +78,9 @@
 		   comes through. Declared once here, read by the separate #Muzzle rule below too
 		   (same target element, same cascade — no need to redeclare there). */
 		& #Eyes,
-		& #Muzzle {
+		& #Muzzle,
+		& #Ear1,
+		& #Ear2 {
 			--x: clamp(0, var(--live-local-pointer-x-ratio, 0.5), 1);
 			--y: clamp(0, var(--live-local-pointer-y-ratio, 0.5), 1);
 		}
@@ -111,14 +113,25 @@
 		   deceleration off and restarts a fresh fast start — a string of velocity
 		   discontinuities that reads as choppy rather than one continuous motion. `linear`'s
 		   constant velocity per leg blends far more smoothly across repeated retargets. */
+		/* Downward-only narrowing on top of the existing translate — a slight downcast squint
+		   as the glance drops, via the standalone `scale` property so it composes with the
+		   blink's own `transform: scaleY()` (same independent-property trick as `translate`
+		   above) instead of fighting it. max(0, --y - 0.5) keeps it at 1 (no narrowing) for
+		   the whole top half, same guard as the muzzle's foreshortening below. */
 		& #Eye1 {
-			transition: translate 0.1s linear;
+			transition:
+				translate 0.1s linear,
+				scale 0.1s linear;
 			translate: calc((var(--x) - 0.5) * 2 * 4px) calc((var(--y) - 0.5) * 2 * 7px);
+			scale: 1 calc(1 - max(0, var(--y) - 0.5) * 0.3);
 		}
 
 		& #Eye2 {
-			transition: translate 0.1s linear;
+			transition:
+				translate 0.1s linear,
+				scale 0.1s linear;
 			translate: calc((var(--x) - 0.5) * 2 * 6px) calc((var(--y) - 0.5) * 2 * 7px);
+			scale: 1 calc(1 - max(0, var(--y) - 0.5) * 0.3);
 		}
 
 		/* Foreshortening, folded into the muzzle's own baseline-rate translate (5px — the
@@ -130,18 +143,38 @@
 		   --y - 0.5) is 0 for the whole top half (no effect looking up) and ramps 0→0.5
 		   across the bottom half; scale's origin is anchored at the muzzle's own top (nearest
 		   the eyes) so the compression reads as the tip tucking under while the base stays
-		   put — anatomically the right cue, but on its own (without the bigger shared Y
-		   amplitude, and without its own extra push) it just looked like the shape shrinking
-		   in place, not heading toward the bottom of the head. `linear` timing for the same
-		   retargeting reason as #Eye1/#Eye2 above. */
+		   put — anatomically the right cue. Push and squish were bumped up (6px/0.3/0.68,
+		   from 4px/0.24/0.56) to sell "looking down" harder without the compression fully
+		   inverting the shape at y=1. `linear` timing for the same retargeting reason as
+		   #Eye1/#Eye2 above. */
 		& #Muzzle {
 			transform-origin: 50% 0%;
 			transition:
 				translate 0.1s linear,
 				scale 0.1s linear;
 			translate: calc((var(--x) - 0.5) * 2 * 5px)
-				calc((var(--y) - 0.5) * 2 * 7px + max(0, var(--y) - 0.5) * 4px);
-			scale: calc(1 + max(0, var(--y) - 0.5) * 0.24) calc(1 - max(0, var(--y) - 0.5) * 0.56);
+				calc((var(--y) - 0.5) * 2 * 7px + max(0, var(--y) - 0.5) * 6px);
+			scale: calc(1 + max(0, var(--y) - 0.5) * 0.3) calc(1 - max(0, var(--y) - 0.5) * 0.68);
+		}
+
+		/* Ear droop rides the same vertical glance as the eyes/muzzle — a head tilting down
+		   tips the ears forward with it; looking up lifts them back slightly. Layered on TOP
+		   of each ear's own idle twitch (`logo-ear-twitch-left/right`, still running via
+		   `transform: rotate()` — untouched here and not stopped like #Eyes/#Muzzle's
+		   `logo-look-around` above) rather than replacing it: `rotate` is a standalone
+		   Individual Transform property independent of `transform`, so the two rotations
+		   just add. Signs are mirrored between the two ears to match each one's own twitch
+		   keyframes' dominant first step (Ear1 goes negative first, Ear2 positive first) —
+		   this is a best guess at "forward" without eyeballing the actual artwork; check the
+		   direction in-browser and flip both signs if it reads backwards. */
+		& #Ear1 {
+			transition: rotate 0.1s linear;
+			rotate: calc((var(--y) - 0.5) * -12deg);
+		}
+
+		& #Ear2 {
+			transition: rotate 0.1s linear;
+			rotate: calc((var(--y) - 0.5) * 12deg);
 		}
 	}
 
