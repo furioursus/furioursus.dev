@@ -1,0 +1,165 @@
+/* Idle animation for the header bear logo (`.logo-mark`, `Header.astro`) — a blink, an
+   occasional ear twitch on each side, and a casual side-to-side glance, all looping forever
+   while the mark just sits there. Static everywhere else `icon.svg` is used (the favicon copy in
+   `public/`): browsers don't run CSS animations in a favicon, so there's nothing to gain there. */
+.logo-mark {
+	/* The percentage transform-origins below are relative to each element's own rendered
+	   bounding box (its ear or eye shape), not the SVG viewport. SVG geometry elements default
+	   to `view-box` for that calculation instead — `fill-box` is what makes "50% 50%" mean "the
+	   center of this shape" rather than "the center of the whole 68.31×64.71 viewBox". */
+	& #Ear1,
+	& #Ear2,
+	& #Eyes,
+	& #Eye1,
+	& #Eye2 {
+		transform-box: fill-box;
+	}
+
+	/* Pivots sit at the base of each ear, where it meets the head, so the twitch hinges the ear
+	   in place instead of swinging the whole shape through space. Found by inspecting each
+	   group's getBBox() in the browser and picking the corner nearest the skull; re-derive these
+	   if the ear paths themselves ever move. Left and right run on different, non-overlapping
+	   cycle lengths (9s vs. 11s starting 3s in) so the two ears don't twitch in lockstep. */
+	& #Ear1 {
+		animation: logo-ear-twitch-left 9s ease-in-out infinite;
+		transform-origin: 82% 92%;
+	}
+
+	& #Ear2 {
+		animation: logo-ear-twitch-right 11s ease-in-out infinite;
+		animation-delay: 3s;
+		transform-origin: 9% 90%;
+	}
+
+	/* `#Eyes` is the group wrapping both eye shapes — animating it moves them together for the
+	   "looking around" glance. Each eye also blinks independently on its own loop, scaled from
+	   its own center, which composes fine since the blink transform lives on the child, not the
+	   group doing the glance. `#Muzzle` is a sibling of `#Eyes` in the SVG (not nested inside
+	   it), so it needs the same animation put on it directly, not inherited — same keyframes,
+	   same duration, no offsetting delay, so it shifts in exact lockstep with the eyes rather
+	   than trailing them. That's what sells it as the whole face turning instead of just a pair
+	   of eyes sliding around on a static head. */
+	& #Eyes,
+	& #Muzzle {
+		animation: logo-look-around 13s ease-in-out infinite;
+	}
+
+	& #Eye1,
+	& #Eye2 {
+		animation: logo-blink 7s ease-in-out infinite;
+		transform-origin: 50% 50%;
+	}
+
+	/* 7s/9s/11s/13s are pairwise coprime, so the four loops take a very long time to realign —
+	   long enough that the mark reads as idly alive rather than visibly looping. */
+
+	/* Cursor tracking, driven off the whole page rather than just the header — see
+	   `PropsForAuto.astro` for the shared full-viewport tracking surface this reads from and
+	   why it's sized the way it is. `<body>` (an ancestor of `.logo-mark`) carries
+	   `--live-local-pointer-x-ratio`/`-y-ratio` (0–1 across the *viewport*) and
+	   `--live-local-pointer-inside` (1/0, cursor anywhere in the browser window). Custom
+	   properties inherit downward, so `.logo-mark` reads them for free — no hoisting needed
+	   here. The container style query below matches because `@container style()` looks at the
+	   *nearest ancestor* carrying the property, and every element qualifies as a style-query
+	   container without any `container-type` opt-in.
+
+	   This is pure CSS from here — no mousemove/rAF/cleanup JS, no class toggling. Swaps back
+	   to the idle loop the instant `--live-local-pointer-inside` drops to `0` (cursor leaves
+	   the browser window). */
+	@container style(--live-local-pointer-inside: 1) {
+		& #Eyes,
+		& #Muzzle {
+			animation: none;
+			transition: transform 0.1s ease-out;
+			transform: translate(
+				calc((var(--live-local-pointer-x-ratio, 0.5) - 0.5) * 2 * 3.2px),
+				calc((var(--live-local-pointer-y-ratio, 0.5) - 0.5) * 2 * 2.4px)
+			);
+		}
+	}
+
+	/* Only the autonomous idle loops are decorative motion in the sense this preference cares
+	   about — cursor tracking is 1:1 direct-manipulation feedback (it only ever moves because
+	   the reader's own pointer just moved), not autoplaying animation, so it's deliberately
+	   left running here rather than disabled alongside the loops. */
+	@media (prefers-reduced-motion: reduce) {
+		& #Ear1,
+		& #Ear2,
+		& #Eyes,
+		& #Eye1,
+		& #Eye2,
+		& #Muzzle {
+			animation: none;
+		}
+	}
+}
+
+@keyframes logo-ear-twitch-left {
+	0%,
+	55%,
+	100% {
+		transform: rotate(0deg);
+	}
+	57% {
+		transform: rotate(-9deg);
+	}
+	59% {
+		transform: rotate(5deg);
+	}
+	61% {
+		transform: rotate(-2deg);
+	}
+	63% {
+		transform: rotate(0deg);
+	}
+}
+
+@keyframes logo-ear-twitch-right {
+	0%,
+	40%,
+	100% {
+		transform: rotate(0deg);
+	}
+	42% {
+		transform: rotate(8deg);
+	}
+	44% {
+		transform: rotate(-4deg);
+	}
+	46% {
+		transform: rotate(0deg);
+	}
+}
+
+@keyframes logo-blink {
+	0%,
+	4%,
+	92%,
+	100% {
+		transform: scaleY(1);
+	}
+	2%,
+	94% {
+		transform: scaleY(0.08);
+	}
+	96% {
+		transform: scaleY(1);
+	}
+}
+
+@keyframes logo-look-around {
+	0%,
+	25%,
+	75%,
+	100% {
+		transform: translateX(0);
+	}
+	30%,
+	40% {
+		transform: translateX(-1.4px);
+	}
+	60%,
+	70% {
+		transform: translateX(1.4px);
+	}
+}

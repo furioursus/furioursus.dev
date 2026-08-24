@@ -35,6 +35,7 @@
 		"mdast-util-directive": "^3.0.0",
 		"mdast-util-to-markdown": "^2.1.2",
 		"mdast-util-to-string": "^4.0.0",
+		"prop-for-that": "^0.7.12",
 		"satori": "0.26.0",
 		"satori-html": "^0.3.2",
 		"satteri": "^0.9.4",

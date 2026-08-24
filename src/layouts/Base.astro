@@ -4,6 +4,7 @@ import BaseHead from "@/components/BaseHead.astro";
 import Lightbox from "@/components/Lightbox.astro";
 import Footer from "@/components/layout/Footer.astro";
 import Header from "@/components/layout/Header.astro";
+import PropsForAuto from "@/components/PropsForAuto.astro";
 import SkipLink from "@/components/SkipLink.astro";
 import ThemeProvider from "@/components/ThemeProvider.astro";
 import { siteConfig } from "@/site.config";
@@ -29,6 +30,7 @@ const {
 		></script>
 	</head>
 	<body class="bg-global-bg text-global-text relative overflow-x-clip">
+		<PropsForAuto />
 		<div
 			class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 pt-8 font-mono text-sm font-normal antialiased sm:px-8 md:pt-16"
 		>
