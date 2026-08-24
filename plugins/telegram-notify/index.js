@@ -5,6 +5,27 @@
 // variables (Site settings → Environment variables) — never hardcode them here or in
 // netlify.toml, both of which are committed to this public repo.
 
+import { execSync } from "node:child_process";
+
+// Netlify's standard build env vars expose COMMIT_REF (the SHA) but not the message itself — the
+// plugin runs inside the checked-out repo, so `git log` reads it straight from there. Subject
+// line only (%s), not the full body, to keep the notification skimmable. Never throws: a shallow
+// clone, a detached-HEAD edge case, or any other git hiccup should drop this line, not the build.
+function getCommitMessage() {
+	try {
+		return execSync("git log -1 --pretty=%s", { encoding: "utf8" }).trim() || null;
+	} catch {
+		return null;
+	}
+}
+
+// Telegram's `parse_mode: "HTML"` treats <, >, and & as markup — a commit subject is freeform
+// text and can contain any of them (e.g. a stray "<" in a description), which would otherwise
+// break the message's formatting or silently swallow part of it.
+function escapeHtml(text) {
+	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 async function sendTelegramMessage(text) {
 	const token = process.env.TELEGRAM_BOT_TOKEN;
 	const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -101,11 +122,13 @@ export async function onSuccess() {
 	const url = process.env.URL ?? process.env.DEPLOY_PRIME_URL;
 	const context = process.env.CONTEXT ?? "unknown";
 	const branch = process.env.BRANCH ?? "unknown";
+	const commitMessage = getCommitMessage();
 	const [open, close] = pick(SUCCESS_VARIANTS);
 
 	await sendTelegramMessage(
 		`${open.replace("{site}", `<b>${site}</b>`)}\n` +
 			`${context} · <code>${branch}</code>\n` +
+			(commitMessage ? `💬 ${escapeHtml(commitMessage)}\n` : "") +
 			(url ? `${url}\n` : "") +
 			`\n${close}`,
 	);
@@ -115,6 +138,7 @@ export async function onError({ error }) {
 	const site = process.env.SITE_NAME ?? "site";
 	const context = process.env.CONTEXT ?? "unknown";
 	const branch = process.env.BRANCH ?? "unknown";
+	const commitMessage = getCommitMessage();
 	// Telegram caps messages at 4096 chars; keep this well under that so it stays skimmable in a
 	// chat notification rather than dumping a full stack trace.
 	const message = (error?.message ?? String(error)).slice(0, 500);
@@ -123,7 +147,8 @@ export async function onError({ error }) {
 	await sendTelegramMessage(
 		`${open.replace("{site}", `<b>${site}</b>`)}\n` +
 			`${context} · <code>${branch}</code>\n` +
-			`<pre>${message}</pre>\n` +
+			(commitMessage ? `💬 ${escapeHtml(commitMessage)}\n` : "") +
+			`<pre>${escapeHtml(message)}</pre>\n` +
 			`\n${close}`,
 	);
 }
