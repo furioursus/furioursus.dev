@@ -15,14 +15,14 @@ const localImage = getLocalCoverImage(release.id);
 <a class="record" href={release.releaseUrl} target="_blank" rel="noopener">
 	{
 		localImage ? (
-			<Image src={localImage} alt={release.title} width={280} height={280} />
+			<Image src={localImage} alt={release.title} width={500} height={500} />
 		) : release.coverImageUrl ? (
 			<img
 				src={release.coverImageUrl}
 				alt={release.title}
 				loading="lazy"
-				width="280"
-				height="280"
+				width="500"
+				height="500"
 			/>
 		) : (
 			<div class="placeholder">{release.title}</div>

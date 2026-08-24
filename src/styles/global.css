@@ -66,6 +66,10 @@
 		color-scheme: light dark;
 		accent-color: var(--color-accent);
 		scrollbar-gutter: stable;
+		/* iOS Safari's rubber-band/touch scroll treats <html>, not <body>, as the scroll
+		   container — `overflow-x: hidden` on body (see Base.astro) only clips what's painted,
+		   it doesn't stop the drag gesture. Needs to be set here too. */
+		overflow-x: hidden;
 
 		&[data-theme="light"] {
 			color-scheme: light;
@@ -117,7 +121,12 @@
 }
 
 .breakout-container {
+	/* `100vw` is the *largest possible* viewport width — on iOS Safari that's the width with
+	   the address-bar chrome collapsed, wider than what's usually rendered, so this box is
+	   actually wider than the screen most of the time. `100dvw` tracks the viewport Safari is
+	   currently showing; keep the `vw` line first as a fallback for browsers without `dvw`. */
 	width: 100vw;
+	width: 100dvw;
 	margin-left: 50%;
 	transform: translateX(-50%);
 }
