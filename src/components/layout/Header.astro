@@ -119,7 +119,7 @@ import { siteConfig } from "../../site.config";
 				</a>
 				<nav
 					aria-label="Main"
-					class="bg-global-bg absolute -inset-x-4 top-12 hidden flex-col divide-y px-2 py-4 group-[.menu-open]:z-50 group-[.menu-open]:flex sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0"
+					class="bg-global-bg absolute -inset-x-4 top-[var(--mobile-nav-top,4.5rem)] flex-col divide-y px-2 py-4 group-[.menu-open]:z-50 sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0"
 					id="navigation-menu"
 				>
 					{
@@ -131,7 +131,7 @@ import { siteConfig } from "../../site.config";
 							.map((link) => (
 								<a
 									aria-current={Astro.url.pathname === link.path ? "page" : false}
-									class="text-accent px-2 py-4 font-semibold sm:px-4 sm:py-0 sm:underline-offset-2 sm:hover:underline"
+									class="text-accent px-4 py-4 font-semibold sm:py-0 sm:underline-offset-2 sm:hover:underline"
 									href={link.path}
 								>
 									{link.title}
@@ -184,21 +184,86 @@ import { siteConfig } from "../../site.config";
 	</div>
 </header>
 
+<style>
+	/* Mobile-only: the desktop nav is always-visible (sm:flex, unconditional) so none of this
+	   display-toggling/animation applies there — bounded to the same breakpoint Tailwind's sm:
+	   variant uses, so the two never fight over the same viewport width. */
+	@media (width < 40rem) {
+		#navigation-menu {
+			display: none;
+			opacity: 0;
+			transform: scale(0.92) translateY(-0.5rem);
+			transition:
+				opacity 0.15s ease-in,
+				transform 0.15s ease-in,
+				display 0.15s allow-discrete;
+		}
+
+		/* .menu-open is toggled on <header> by MobileNavBtn's script below — same-file scoped
+		   styles reach across that ancestor/descendant pair fine, no :global() needed. */
+		.menu-open #navigation-menu {
+			display: flex;
+			opacity: 1;
+			transform: scale(1) translateY(0);
+			/* Overshoot easing for the open bounce, same curve lightbox.css uses for its dialog —
+			   close stays a plain quick ease so it doesn't wobble on the way out. */
+			transition:
+				opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+				transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+				display 0.3s allow-discrete;
+		}
+
+		/* The pre-transition state for the *opening* animation — without this there's no "from"
+		   value, so the menu would just appear at full opacity/scale instead of bouncing in. */
+		@starting-style {
+			.menu-open #navigation-menu {
+				opacity: 0;
+				transform: scale(0.92) translateY(-0.5rem);
+			}
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#navigation-menu {
+			transition: none;
+		}
+	}
+</style>
+
 <script>
 	import { toggleClass } from "@/utils/domElement";
 
 	class MobileNavBtn extends HTMLElement {
 		#menuOpen: boolean = false;
+		#headerResizeObserver?: ResizeObserver;
 
 		connectedCallback() {
 			const headerEl = document.getElementById("main-header")!;
 			const mobileButtonEl = this.querySelector<HTMLButtonElement>("button");
+
+			// The mobile dropdown's top offset needs to match the header's actual rendered
+			// height — a hardcoded value (the old top-12) silently drifts out of sync the next
+			// time the header's own height changes (it already has once, when the header went
+			// sticky and shrank). --mobile-nav-top's `var(..., 4.5rem)` fallback covers the
+			// instant before this runs (or if JS is unavailable); ResizeObserver keeps it
+			// correct afterward too, not just on this initial measurement, since the header's
+			// height isn't guaranteed to stay static as more animated/moving pieces land on it.
+			const syncMobileNavTop = () => {
+				headerEl.style.setProperty("--mobile-nav-top", `${headerEl.offsetHeight}px`);
+			};
+			syncMobileNavTop();
+			this.#headerResizeObserver = new ResizeObserver(syncMobileNavTop);
+			this.#headerResizeObserver.observe(headerEl);
 
 			mobileButtonEl?.addEventListener("click", () => {
 				if (headerEl) toggleClass(headerEl, "menu-open");
 				this.#menuOpen = !this.#menuOpen;
 				mobileButtonEl.setAttribute("aria-expanded", this.#menuOpen.toString());
 			});
+		}
+
+		disconnectedCallback() {
+			this.#headerResizeObserver?.disconnect();
 		}
 	}
 
