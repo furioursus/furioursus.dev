@@ -26,7 +26,10 @@ interface Props {
 	 * pass both to get an appropriately-sized set of images (via
 	 * layout="constrained") instead of Astro serving the source's full
 	 * resolution just to shrink it with CSS. Omit both to let astro:assets
-	 * infer natural size from the source file, as before. */
+	 * infer natural size from the source file, as before. Passing both also
+	 * makes the dialog render its own separate, full-resolution `<Image>`
+	 * instead of reusing the (deliberately smaller) thumbnail — see
+	 * `needsSeparateDialogImage` below. */
 	width?: number;
 	height?: number;
 	/** Forwarded to astro:assets Image — set for an above-the-fold image
@@ -52,19 +55,18 @@ const {
 
 const captionText = caption === true ? alt : caption || undefined;
 
-// `fit="cover"` + explicit width/height that don't match the source's own
-// aspect ratio doesn't just *style* a crop — astro:assets actually generates
-// a file physically cropped to those dimensions (verified: the output .webp
-// is a real WxH pixel file, not the source's natural size). The trigger and
-// dialog normally share one <img>, moved back and forth by Lightbox.astro —
-// but there's no way to "un-crop" that file for the enlarged view, so when a
-// real crop is happening, the dialog gets its own separate, uncropped <Image>
-// instead (see Lightbox.astro: it leaves a dialog-with-its-own-image alone
-// rather than trying to move the trigger's cropped one into it).
-const sourceRatio = src.width / src.height;
-const targetRatio = width && height ? width / height : undefined;
-const isCropped =
-	fit === "cover" && targetRatio !== undefined && Math.abs(sourceRatio - targetRatio) > 0.01;
+// Explicit width/height doesn't just *style* a smaller thumbnail — astro:assets
+// actually generates a real file at those pixel dimensions (verified: the
+// output .webp is a real WxH pixel file, not the source's natural size),
+// physically cropped too when the requested ratio doesn't match the source's
+// own. The trigger and dialog normally share one <img>, moved back and forth
+// by Lightbox.astro — but there's no way to "un-shrink" (or "un-crop") a file
+// that was never generated at full size in the first place. So whenever a
+// caller passes explicit dimensions, the dialog gets its own separate <Image>
+// instead, uncapped by the requested display size (see Lightbox.astro: it
+// leaves a dialog-with-its-own-image alone rather than trying to move the
+// trigger's smaller one into it).
+const needsSeparateDialogImage = width !== undefined && height !== undefined;
 
 // Only set the custom properties a caller actually overrode — everything else
 // falls back to the defaults in src/styles/components/lightbox.css, which is
@@ -99,7 +101,7 @@ const style = Object.fromEntries(
 	{captionText && <p class="lightbox-caption">{captionText}</p>}
 	<dialog class="lightbox-dialog">
 		<button type="button" class="lightbox-close" aria-label="Close image"></button>
-		{isCropped && <Image src={src} alt={alt} width={Math.min(src.width, 1600)} />}
+		{needsSeparateDialogImage && <Image src={src} alt={alt} width={Math.min(src.width, 1600)} />}
 		{captionText && <p class="lightbox-caption">{captionText}</p>}
 	</dialog>
 </lightbox-image>

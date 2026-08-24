@@ -157,26 +157,43 @@ natural size — fine for a body photo shrunk down with CSS. For a large, promin
 _displayed_ size is much smaller than the source's full resolution, pass `width`+`height` matching
 the intended display size to get an appropriately-sized `layout="constrained"` srcset instead of
 shipping the full-resolution original just to crop it down with CSS — this is exactly what
-`Masthead.astro`'s cover image does (see [content-model.md](./content-model.md)).
+`Masthead.astro`'s cover image does (see [content-model.md](./content-model.md)) and what
+`RecordCard.astro`'s vinyl cover art does (see [discogs.md](./discogs.md)).
 
-**When `fit="cover"` and `width`/`height` don't match the source's own aspect ratio, two separate
-images get rendered, not one.** `layout="constrained"` with an explicit width/height doesn't just
-apply `object-fit: cover` as a style — astro:assets actually generates the output file physically
-cropped to those pixel dimensions (confirmed by inspecting the built `.webp` files directly; this
-isn't documented behavior, just observed). The trigger and dialog normally share a single `<img>`,
-moved back and forth by `Lightbox.astro` on open/close — but there's no way to "un-crop" a file that
-was never generated with the missing pixels in the first place. So when the component detects a real
-crop is happening (comparing `src.width`/`src.height` against the requested ratio), the dialog gets
-its own second `<Image>` instead — same source, no forced dimensions, capped at a sensible max width
-(1600px) rather than the source's full resolution. `Lightbox.astro` checks for this at connect time
+**Passing explicit `width`/`height` renders two separate images, not one.** `layout="constrained"`
+with an explicit width/height doesn't just apply a CSS size or `object-fit: cover` as a style —
+astro:assets actually generates the output file physically resized (and, if the requested ratio
+doesn't match the source's own, cropped) to those pixel dimensions (confirmed by inspecting the
+built `.webp` files directly; this isn't documented behavior, just observed). The trigger and dialog
+normally share a single `<img>`, moved back and forth by `Lightbox.astro` on open/close — but
+there's no way to "un-shrink" (or "un-crop") a file that was never generated at full size in the
+first place. So whenever a caller passes both `width` and `height`, the dialog gets its own second
+`<Image>` instead — same source, no forced dimensions, capped at a sensible max width (1600px)
+rather than the source's full resolution. `Lightbox.astro` checks for this at connect time
 (`dialog.querySelector("img")` already present) and leaves it alone rather than trying to move the
-trigger's cropped image into it. This is exactly what `Masthead.astro`'s cover image needs — a
-16:9-cropped thumbnail, but click-to-enlarge shows the full photo.
+trigger's smaller image into it. Two call sites need exactly this: `Masthead.astro`'s cover image
+(a 16:9-cropped thumbnail that enlarges to the full photo) and `RecordCard.astro`'s vinyl cover art
+(a 500×500 square thumbnail that enlarges to the release's full-resolution cover, even when the
+source happens to already be roughly square — the point isn't just undoing a crop, it's always
+showing the largest version of the asset available).
 
 Only usable in `.astro`/`.mdx` — this repo's actual blog posts are plain `.md` (Content Collections'
 `glob()` loader picks up both, but MDX component imports only work inside `.mdx` files). The
 automatic transform exists specifically so plain `.md` posts don't need converting just to get a
 lightbox.
+
+### A third, hand-rolled path — for images `astro:assets` can't optimize
+
+`Lightbox.astro`'s `<lightbox-image>` custom element works off markup shape (a `.lightbox-trigger`
+button, a `.lightbox-dialog`, a `.lightbox-close` button), not off `LightboxImage.astro` specifically
+— so a caller that can't use `astro:assets Image` (a remote URL with no configured `image.domains`,
+for example) can still get a working lightbox by hand-writing that same structure around a plain
+`<img>`. `RecordCard.astro` does this for the rare case where a Discogs cover hasn't been cached
+locally yet: `release.coverImageUrl` is already Discogs's full-size art with no local resize
+applied, so there's no separate higher-res version to fetch — the trigger and dialog just share one
+plain `<img>`, moved back and forth like the automatic transform's output, styled via the same
+`--lightbox-thumb-*` custom properties `LightboxImage.astro` would otherwise set for you. Reach for
+`LightboxImage.astro` first; this is only for when astro:assets genuinely isn't an option.
 
 ## Captions
 
