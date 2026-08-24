@@ -1,8 +1,9 @@
 ---
 // src/components/RecordCard.astro
-import { Image } from "astro:assets";
-import { getLocalCoverImage } from "astro-discogs-collection/images";
 import type { DiscogsRelease } from "astro-discogs-collection/collection";
+import { getLocalCoverImage } from "astro-discogs-collection/images";
+import LightboxImage from "@/components/LightboxImage.astro";
+import coverAltData from "@/data/discogs-cover-alt.json";
 
 interface Props {
 	release: DiscogsRelease;
@@ -18,35 +19,68 @@ interface Props {
 const { release, titleLevel = 2 } = Astro.props;
 const localImage = getLocalCoverImage(release.id);
 const TitleTag = titleLevel === false ? "p" : (`h${titleLevel}` as const);
+// Generated alt describes the cover's actual imagery (see scripts/generate-cover-alt.mjs /
+// docs/discogs.md) — falls back to plain metadata for any release that hasn't been
+// backfilled yet, so a fresh checkout with an empty cache still gets *something* accessible.
+const generatedAlt = (coverAltData as Record<string, { alt: string }>)[String(release.id)]?.alt;
+const coverAlt = generatedAlt ?? `${release.artist} – ${release.title}`;
 ---
 
-<a class="record" href={release.releaseUrl} target="_blank" rel="noopener">
+<div class="record">
 	{
-		// alt="": the card is a single link and the cover art is immediately followed by the
-		// artist/title as visible text below, so a spoken alt would just repeat them. The
-		// placeholder div is the one exception — it has no adjacent text, so it keeps its own
-		// accessible text via its content instead.
+		// The cover art is its own click target (opens the enlarged view) rather than living
+		// inside the link below — a <button>, which the lightbox trigger renders as, can't
+		// legally nest inside an <a>. So the card has two separate interactive pieces: the
+		// image opens the lightbox, the text links out to the Discogs release page.
 		localImage ? (
-			<Image class="cover" src={localImage} alt="" width={500} height={500} />
-		) : release.coverImageUrl ? (
-			<img
+			// width/height downsize the on-page thumbnail (astro:assets really does generate a
+			// smaller physical file, not just a CSS-cropped view) — passing them also makes
+			// LightboxImage render the dialog's own separate, full-resolution <Image> instead of
+			// reusing that thumbnail, so the enlarged view is the largest cover art we have, not
+			// just the 500×500 crop. See LightboxImage.astro's `needsSeparateDialogImage`.
+			<LightboxImage
 				class="cover"
-				src={release.coverImageUrl}
-				alt=""
-				loading="lazy"
-				width="500"
-				height="500"
+				src={localImage}
+				alt={coverAlt}
+				fit="cover"
+				aspectRatio="1/1"
+				thumbWidth="100%"
+				thumbHeight="none"
+				width={500}
+				height={500}
 			/>
+		) : release.coverImageUrl ? (
+			// No local cache yet (e.g. before the first image-cache run) — coverImageUrl is
+			// already Discogs's full-size art with no local resize applied, so a hand-rolled
+			// lightbox around a plain <img> just needs to move that same already-loaded element
+			// into the dialog on click; there's no larger version to separately fetch. This
+			// mirrors the trigger/dialog/close structure LightboxImage.astro renders (see
+			// docs/lightbox.md) without astro:assets, which can't optimize a remote URL here.
+			<lightbox-image
+				class="cover"
+				style={{
+					"--lightbox-thumb-width": "100%",
+					"--lightbox-thumb-fit": "cover",
+					"--lightbox-thumb-aspect": "1/1",
+				}}
+			>
+				<button type="button" class="lightbox-trigger" aria-haspopup="dialog">
+					<img src={release.coverImageUrl} alt={coverAlt} loading="lazy" width="500" height="500" />
+				</button>
+				<dialog class="lightbox-dialog">
+					<button type="button" class="lightbox-close" aria-label="Close image" />
+				</dialog>
+			</lightbox-image>
 		) : (
 			<div class="placeholder">{release.title}</div>
 		)
 	}
-	<div class="info">
+	<a class="info" href={release.releaseUrl} target="_blank" rel="noopener">
 		<p class="artist">{release.artist}</p>
 		<TitleTag class="title">{release.title}</TitleTag>
 		<p class="meta">{release.year || ""} {release.formats.join(", ")}</p>
-	</div>
-</a>
+	</a>
+</div>
 
 <style>
 	/* Mobile-first: a compact row — thumbnail left, text right. */
@@ -54,31 +88,43 @@ const TitleTag = titleLevel === false ? "p" : (`h${titleLevel}` as const);
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		text-decoration: none;
-		color: inherit;
 		padding: 0.4rem 0;
 		border-bottom: 1px solid var(--color-muted);
 	}
-	.record .cover,
+	/* .cover is now the lightbox's own <lightbox-image> wrapper (either
+	   LightboxImage.astro's, or the hand-rolled one for the remote-URL
+	   fallback below) — it sizes/crops itself via the --lightbox-thumb-*
+	   custom properties, so this just controls the wrapper's box size.
+	   LightboxImage.astro renders that wrapper (and the <img> inside it)
+	   itself, so neither ever picks up this file's own scope hash — every
+	   selector reaching past `.record` needs :global(), or it silently
+	   matches nothing (which is exactly what made mobile thumbnails balloon
+	   to inconsistent sizes: this width rule wasn't applying at all). */
+	.record :global(.cover),
 	.record .placeholder {
 		flex: none;
 		width: 3.5rem;
-		aspect-ratio: 1;
-		object-fit: cover;
+	}
+	.record :global(.cover img) {
 		border-radius: 0.25rem;
 	}
 	.placeholder {
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		aspect-ratio: 1;
 		font-size: 0.6rem;
 		text-align: center;
 		padding: 0.25rem;
 		background: var(--color-global-bg);
 		border: 1px dashed var(--color-muted);
+		border-radius: 0.25rem;
 	}
 	.info {
+		display: block;
 		min-width: 0;
+		text-decoration: none;
+		color: inherit;
 	}
 	.artist {
 		font-size: 0.8rem;
@@ -105,7 +151,7 @@ const TitleTag = titleLevel === false ? "p" : (`h${titleLevel}` as const);
 			padding: 0;
 			border-bottom: none;
 		}
-		.record .cover,
+		.record :global(.cover),
 		.record .placeholder {
 			width: 100%;
 		}
