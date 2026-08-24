@@ -68,17 +68,63 @@ them with a container style query:
 @container style(--live-local-pointer-inside: 1) {
 	& #Eyes,
 	& #Muzzle {
+		--x: clamp(0, var(--live-local-pointer-x-ratio, 0.5), 1);
+		--y: clamp(0, var(--live-local-pointer-y-ratio, 0.5), 1);
+	}
+
+	& #Eyes,
+	& #Muzzle {
 		animation: none;
-		transform: translate(
-			calc((var(--live-local-pointer-x-ratio, 0.5) - 0.5) * 2 * 3.2px),
-			calc((var(--live-local-pointer-y-ratio, 0.5) - 0.5) * 2 * 2.4px)
-		);
+	}
+
+	& #Eye1 {
+		translate: calc((var(--x) - 0.5) * 2 * 4px) calc((var(--y) - 0.5) * 2 * 7px);
+	}
+	& #Eye2 {
+		translate: calc((var(--x) - 0.5) * 2 * 6px) calc((var(--y) - 0.5) * 2 * 7px);
+	}
+	& #Muzzle {
+		translate: calc((var(--x) - 0.5) * 2 * 5px) calc((var(--y) - 0.5) * 2 * 7px);
 	}
 }
 ```
 
-Two things make this work without a `container-type` opt-in anywhere or any hoisting inside
-`logo.css` itself:
+(transitions, the muzzle's foreshortening `scale`, and its extra downward push are trimmed from
+that snippet for clarity — see the real file for the complete rule.)
+
+Every element positions itself individually now, each with its own horizontal rate —
+`--x`/`--y` are clamped (more on that below) and declared once on `#Eyes`/`#Muzzle`, then read by
+`#Eye1`/`#Eye2` too since custom properties inherit downward and both eyes are `#Eyes`' children.
+Y stays shared across all three (7px, unstaggered) — only X differs:
+
+- **Depth parallax.** `#Eye2` (right eye) moves horizontally fastest (6px), `#Muzzle` at the
+  baseline rate (5px), `#Eye1` (left eye) slowest (4px) — each a little quicker than the next, so
+  the face reads as layers panning past at different rates rather than one rigid plane sliding as
+  a block.
+- **Y range deliberately much bigger than X's baseline** (7px vs. 5px, against a ~72px-tall mark).
+  At an earlier, smaller Y amplitude this was under 5% of the logo's own height — "looking down"
+  never actually read as the eyes moving, completely upstaged by the muzzle's own
+  much-larger-percentage-wise squish below. The eyes' own movement is the primary "looking down"
+  cue; the muzzle's extra push and foreshortening (next) are reinforcing detail on top of it, not
+  the only visible signal.
+
+`translate` (the standalone CSS property, not `transform: translate()`) is what makes per-element
+rates possible without fighting anything else already animating those elements: `#Eye1`/`#Eye2`
+keep blinking throughout tracking via their own `transform: scaleY()` (from the `logo-blink`
+keyframes, untouched by any of this — `animation: none` above is scoped to `#Eyes`/`#Muzzle`, not
+the individual eyes), and `translate` composes with that `transform` automatically since Individual
+Transform properties are independent of each other. Same reasoning lets `#Muzzle` add its
+foreshortening `scale` without needing to fold it into a bigger `transform` expression.
+
+**Clamped defensively, not just conceptually.** prop-for-that's `pointerLocal` doesn't clamp
+`--live-local-pointer-x/y-ratio` to `[0, 1]` — confirmed by reading its source directly, it maths
+raw `clientX`/`clientY` against the tracking element's rect with no cap. The last `pointermove`
+right as the cursor exits the window can land slightly outside the viewport, so `--x`/`--y` clamp
+every value before it reaches any `calc()` below — the muzzle can't overshoot past its
+edge-of-screen extreme no matter what raw value comes through.
+
+Two things make the container style query itself work without a `container-type` opt-in anywhere
+or any hoisting inside `logo.css`:
 
 - **Custom properties inherit downward.** `<body>` is an ancestor of `.logo-mark`, so
   `.logo-mark`'s descendants read `--live-local-pointer-*` for free.
@@ -88,6 +134,19 @@ Two things make this work without a `container-type` opt-in anywhere or any hois
 
 Reverts to the idle loop automatically the instant `--live-local-pointer-inside` drops back to
 `0` (cursor leaves the browser window) — same mechanism, just the other branch of the query.
+
+`#Muzzle`'s foreshortening — a downward-only extra push folded into its own `translate` (since
+`translate` can only be declared once per element, this is combined with its baseline 5px rate
+rather than layered as a separate declaration) plus a downward-only compress-and-widen `scale` —
+both derived from the same `--y` driving its translate. Together they read as the muzzle tilting
+away/under as it moves toward the bottom half of the screen, rather than just sliding down flat.
+`max(0, --y - 0.5)` is what makes both downward-only: zero for the whole top half (no effect
+looking up), ramping 0→0.5 across the bottom half. `transform-origin: 50% 0%` anchors the scale at
+the muzzle's own top (nearest the eyes), so the compression reads as the tip tucking under while
+the base stays put — anatomically the right cue, but on its own (without the bigger shared Y
+amplitude, and without its own extra push) it just looked like the shape shrinking in place, not
+heading toward the bottom of the head. Transitions are 0.2s/0.25s rather than something snappier —
+fast enough to feel responsive, slow enough to actually read as easing rather than a snap.
 
 **Reusing this for something else:** any future feature that wants "where's the cursor, roughly"
 can read the same three `--live-local-pointer-*` properties directly — no need to stand up another
