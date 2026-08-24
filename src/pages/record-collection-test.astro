@@ -1,0 +1,47 @@
+---
+import BaseLayout from "@/layouts/Base.astro";
+import { loadCollection, queryCollection, summarize } from "astro-discogs-collection/collection";
+import RecordCard from "../components/RecordCard.astro";
+
+const { releases, missingConfig, error } = await loadCollection();
+const sorted = queryCollection(releases, { sortBy: "artist" });
+const stats = summarize(releases);
+---
+
+<BaseLayout meta={{ title: "Record Collection" }}>
+	<h1>Record Collection</h1>
+
+	{
+		missingConfig && (
+			<p>
+				Set <code>DISCOGS_USERNAME</code> and <code>DISCOGS_TOKEN</code> in <code>.env</code> to
+				populate this page.
+			</p>
+		)
+	}
+
+	{error && <p>Couldn't load from Discogs: {error}</p>}
+
+	{
+		!missingConfig && !error && (
+			<>
+				<p>
+					{stats.totalRecords} records &middot; {stats.uniqueArtists} artists
+				</p>
+				<div class="grid">
+					{sorted.map((release) => (
+						<RecordCard release={release} />
+					))}
+				</div>
+			</>
+		)
+	}
+</BaseLayout>
+
+<style>
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+		gap: 1rem;
+	}
+</style>
