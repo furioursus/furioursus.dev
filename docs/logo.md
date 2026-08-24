@@ -145,8 +145,15 @@ looking up), ramping 0→0.5 across the bottom half. `transform-origin: 50% 0%` 
 the muzzle's own top (nearest the eyes), so the compression reads as the tip tucking under while
 the base stays put — anatomically the right cue, but on its own (without the bigger shared Y
 amplitude, and without its own extra push) it just looked like the shape shrinking in place, not
-heading toward the bottom of the head. Transitions are 0.2s/0.25s rather than something snappier —
-fast enough to feel responsive, slow enough to actually read as easing rather than a snap.
+heading toward the bottom of the head.
+
+**`linear`, not `ease-out`, and 0.3s.** These transitions get retargeted on every `pointermove`,
+often faster than any one transition ever finishes. `ease-out` starts fast and decelerates on
+_each_ leg, so retargeting it mid-flight repeatedly cuts that deceleration off and restarts a
+fresh fast start — a string of velocity discontinuities that reads as choppy rather than one
+continuous motion. `linear`'s constant velocity per leg blends far more smoothly across repeated
+retargets; 0.3s (up from an earlier 0.2s/0.25s) gives it a bit more room to act as a smoothing
+filter over the discrete pointermove samples, at a small cost in immediacy.
 
 **Reusing this for something else:** any future feature that wants "where's the cursor, roughly"
 can read the same three `--live-local-pointer-*` properties directly — no need to stand up another

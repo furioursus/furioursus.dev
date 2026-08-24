@@ -103,14 +103,21 @@
 		   range (7px) is deliberately much bigger than X's baseline (5px, against a ~72px-tall
 		   mark) — at an earlier, smaller Y amplitude this was under 5% of the logo's own
 		   height, so "looking down" never actually read as the eyes moving; it was completely
-		   upstaged by the muzzle's own (much larger, percentage-wise) squish below. */
+		   upstaged by the muzzle's own (much larger, percentage-wise) squish below.
+
+		   `linear`, not `ease-out` — these transitions get retargeted on every pointermove,
+		   often faster than any one transition ever finishes. `ease-out` starts fast and
+		   decelerates on *each* leg, so retargeting it mid-flight repeatedly cuts that
+		   deceleration off and restarts a fresh fast start — a string of velocity
+		   discontinuities that reads as choppy rather than one continuous motion. `linear`'s
+		   constant velocity per leg blends far more smoothly across repeated retargets. */
 		& #Eye1 {
-			transition: translate 0.2s ease-out;
+			transition: translate 0.3s linear;
 			translate: calc((var(--x) - 0.5) * 2 * 4px) calc((var(--y) - 0.5) * 2 * 7px);
 		}
 
 		& #Eye2 {
-			transition: translate 0.2s ease-out;
+			transition: translate 0.3s linear;
 			translate: calc((var(--x) - 0.5) * 2 * 6px) calc((var(--y) - 0.5) * 2 * 7px);
 		}
 
@@ -125,14 +132,13 @@
 		   the eyes) so the compression reads as the tip tucking under while the base stays
 		   put — anatomically the right cue, but on its own (without the bigger shared Y
 		   amplitude, and without its own extra push) it just looked like the shape shrinking
-		   in place, not heading toward the bottom of the head. 0.2s/0.25s transitions, not
-		   0.1s — fast enough to feel responsive, slow enough to actually read as easing
-		   rather than a snap. */
+		   in place, not heading toward the bottom of the head. `linear` timing for the same
+		   retargeting reason as #Eye1/#Eye2 above. */
 		& #Muzzle {
 			transform-origin: 50% 0%;
 			transition:
-				translate 0.2s ease-out,
-				scale 0.25s ease-out;
+				translate 0.3s linear,
+				scale 0.3s linear;
 			translate: calc((var(--x) - 0.5) * 2 * 5px)
 				calc((var(--y) - 0.5) * 2 * 7px + max(0, var(--y) - 0.5) * 4px);
 			scale: calc(1 + max(0, var(--y) - 0.5) * 0.24) calc(1 - max(0, var(--y) - 0.5) * 0.56);
