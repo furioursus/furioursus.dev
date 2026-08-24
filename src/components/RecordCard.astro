@@ -15,9 +15,10 @@ const localImage = getLocalCoverImage(release.id);
 <a class="record" href={release.releaseUrl} target="_blank" rel="noopener">
 	{
 		localImage ? (
-			<Image src={localImage} alt={release.title} width={500} height={500} />
+			<Image class="cover" src={localImage} alt={release.title} width={500} height={500} />
 		) : release.coverImageUrl ? (
 			<img
+				class="cover"
 				src={release.coverImageUrl}
 				alt={release.title}
 				loading="lazy"
@@ -28,36 +29,79 @@ const localImage = getLocalCoverImage(release.id);
 			<div class="placeholder">{release.title}</div>
 		)
 	}
-	<p class="artist">{release.artist}</p>
-	<p class="title">{release.title}</p>
-	<p class="meta">{release.year || ""} {release.formats.join(", ")}</p>
+	<div class="info">
+		<p class="artist">{release.artist}</p>
+		<p class="title">{release.title}</p>
+		<p class="meta">{release.year || ""} {release.formats.join(", ")}</p>
+	</div>
 </a>
 
 <style>
+	/* Mobile-first: a compact row — thumbnail left, text right. */
 	.record {
-		display: block;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
 		text-decoration: none;
 		color: inherit;
+		padding: 0.4rem 0;
+		border-bottom: 1px solid var(--color-muted);
 	}
-	.record img,
-	.placeholder {
-		width: 100%;
+	.record .cover,
+	.record .placeholder {
+		flex: none;
+		width: 3.5rem;
 		aspect-ratio: 1;
 		object-fit: cover;
 		border-radius: 0.25rem;
 	}
+	.placeholder {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.6rem;
+		text-align: center;
+		padding: 0.25rem;
+		background: var(--color-global-bg);
+		border: 1px dashed var(--color-muted);
+	}
+	.info {
+		min-width: 0;
+	}
 	.artist {
 		font-size: 0.8rem;
 		opacity: 0.7;
-		margin: 0.5rem 0 0;
+		margin: 0;
 	}
 	.title {
 		margin: 0.1rem 0;
 		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	.meta {
 		font-size: 0.8rem;
 		opacity: 0.6;
 		margin: 0;
+	}
+
+	/* From sm up: back to the card grid — cover on top, text below. */
+	@media (min-width: 640px) {
+		.record {
+			display: block;
+			padding: 0;
+			border-bottom: none;
+		}
+		.record .cover,
+		.record .placeholder {
+			width: 100%;
+		}
+		.info {
+			margin-top: 0.5rem;
+		}
+		.title {
+			white-space: normal;
+		}
 	}
 </style>
