@@ -12,6 +12,13 @@ Netlify Identity + Git Gateway.
   (It does have one real side effect: pulling `@types/react` transitively into the dependency
   graph, which is what causes the Satori/`satori-html` type-cast noted in
   [og-images.md](./og-images.md).)
+  - The `<link rel="cms-config-url">` pointing Decap at its config is an **absolute** path
+    (`/admin/config.yml`), not a relative one. It used to be relative (`config.yml`), which only
+    resolved correctly when the URL had a trailing slash (`/admin/`) — visiting plain `/admin`
+    made the browser resolve it against the site root instead, a silent 404 with no useful error
+    on screen. The `#/` Decap adds to the URL bar after it loads is its own internal
+    (hash-based) router bootstrapping itself — that part's automatic and unrelated; you should
+    never need to type it by hand, on `/admin` or `/admin/`.
 - **`public/admin/config.yml`** — the actual CMS schema: one collection block per content
   collection (`blog`, `notes`, `tags`), each field mapped to match `src/content.config.ts`'s Zod
   schema. **These two files can drift** — Decap has no awareness of the Astro content schema, so a
