@@ -1,4 +1,4 @@
-a backend:
+backend:
   name: github
   repo: furioursus/furioursus.dev # owner/repo
   branch: main
