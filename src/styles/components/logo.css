@@ -8,11 +8,16 @@
 	   to `view-box` for that calculation instead — `fill-box` is what makes "50% 50%" mean "the
 	   center of this shape" rather than "the center of the whole 68.31×64.71 viewBox". */
 	& #Ear1,
+	& #Ear1Track,
 	& #Ear2,
+	& #Ear2Track,
 	& #Eyes,
 	& #Eye1,
+	& #Eye1Track,
 	& #Eye2,
-	& #Muzzle {
+	& #Eye2Track,
+	& #Muzzle,
+	& #MuzzleTrack {
 		transform-box: fill-box;
 	}
 
@@ -35,11 +40,12 @@
 	/* `#Eyes` is the group wrapping both eye shapes — animating it moves them together for the
 	   "looking around" glance. Each eye also blinks independently on its own loop, scaled from
 	   its own center, which composes fine since the blink transform lives on the child, not the
-	   group doing the glance. `#Muzzle` is a sibling of `#Eyes` in the SVG (not nested inside
-	   it), so it needs the same animation put on it directly, not inherited — same keyframes,
-	   same duration, no offsetting delay, so it shifts in exact lockstep with the eyes rather
-	   than trailing them. That's what sells it as the whole face turning instead of just a pair
-	   of eyes sliding around on a static head. */
+	   group doing the glance. `#Muzzle` sits inside its own `#MuzzleTrack` wrapper (added purely
+	   for cursor tracking — see the big comment inside the container query below) but is not
+	   itself nested inside `#Eyes`, so it needs the same animation put on it directly, not
+	   inherited — same keyframes, same duration, no offsetting delay, so it shifts in exact
+	   lockstep with the eyes rather than trailing them. That's what sells it as the whole face
+	   turning instead of just a pair of eyes sliding around on a static head. */
 	& #Eyes,
 	& #Muzzle {
 		animation: logo-look-around 13s ease-in-out infinite;
@@ -54,6 +60,36 @@
 	/* 7s/9s/11s/13s are pairwise coprime, so the four loops take a very long time to realign —
 	   long enough that the mark reads as idly alive rather than visibly looping. */
 
+	/* Return-to-idle: the moment the cursor leaves (or `--live-local-pointer-inside` otherwise
+	   drops to 0), the container style query below stops matching and every tracking value on
+	   the *Track wrappers snaps back to its initial `none` — but "snaps" only if nothing's
+	   transitioning it. This is that transition, declared unconditionally (outside the
+	   container query) so it's still in effect at the exact moment the query's own 0.1s-linear
+	   override disappears. `ease-out` here, not `linear` — unlike the tracking transitions,
+	   which get retargeted on every pointermove and need `linear`'s constant velocity to blend
+	   across repeated retargets, this one plays exactly once per tracking session (cursor
+	   leaves, motion settles, done), so a normal decelerate-into-rest ease reads as the bear
+	   settling rather than snapping. Slower too (0.4s vs. 0.1s) for the same reason — this is a
+	   deliberate "putting the cursor down" beat, not an urgent follow. The container query's own
+	   transition (declared inside, further below) overrides this the instant tracking resumes,
+	   so a quick in-and-out of the window doesn't fight between the two speeds. Each element's
+	   idle-loop `animation` (blink/twitch/glance) resumes in that same style recalc — safe to
+	   have both happening at once here because the *Track wrappers carry no `animation` of
+	   their own (see the load-bearing comment on them below); the resuming animation is always
+	   on a different element than the one this transition is reverting. */
+	& #Eye1Track,
+	& #Eye2Track,
+	& #MuzzleTrack {
+		transition:
+			translate 0.4s ease-out,
+			scale 0.4s ease-out;
+	}
+
+	& #Ear1Track,
+	& #Ear2Track {
+		transition: rotate 0.4s ease-out;
+	}
+
 	/* Cursor tracking, driven off the whole page rather than just the header — see
 	   `PropsForAuto.astro` for the shared full-viewport tracking surface this reads from and
 	   why it's sized the way it is. `<body>` (an ancestor of `.logo-mark`) carries
@@ -64,9 +100,9 @@
 	   *nearest ancestor* carrying the property, and every element qualifies as a style-query
 	   container without any `container-type` opt-in.
 
-	   This is pure CSS from here — no mousemove/rAF/cleanup JS, no class toggling. Swaps back
-	   to the idle loop the instant `--live-local-pointer-inside` drops to `0` (cursor leaves
-	   the browser window). */
+	   This is pure CSS from here — no mousemove/rAF/cleanup JS, no class toggling. Eases back to
+	   the idle loop (see the return-to-idle transition above) the instant
+	   `--live-local-pointer-inside` drops to `0` (cursor leaves the browser window). */
 	@container style(--live-local-pointer-inside: 1) {
 		/* prop-for-that's pointer-local plugin doesn't clamp these — it maths raw
 		   clientX/clientY against the tracking element's rect with no [0,1] cap (confirmed by
@@ -75,50 +111,88 @@
 		   for one frame, right before `inside` flips to 0. --x/--y clamp that so every calc()
 		   below is mathematically bounded to what it'd be exactly at the corresponding edge —
 		   the muzzle can't overshoot past its edge-of-screen extreme no matter what raw value
-		   comes through. Declared once here, read by the separate #Muzzle rule below too
-		   (same target element, same cascade — no need to redeclare there). */
-		& #Eyes,
-		& #Muzzle,
-		& #Ear1,
-		& #Ear2 {
+		   comes through. Declared on the *Track wrapper groups (below), not on
+		   #Eye1/#Eye2/#Ear1/#Ear2/#Muzzle themselves — see the load-bearing comment on those
+		   wrappers for why they exist at all. */
+		& #Eye1Track,
+		& #Eye2Track,
+		& #MuzzleTrack,
+		& #Ear1Track,
+		& #Ear2Track {
 			--x: clamp(0, var(--live-local-pointer-x-ratio, 0.5), 1);
 			--y: clamp(0, var(--live-local-pointer-y-ratio, 0.5), 1);
 		}
 
 		/* Stops the idle glance loop the instant tracking takes over. #Eyes (the group) gets
-		   no transform/translate of its own below — #Eye1/#Eye2 each position themselves
-		   individually now, at different rates (next rule), via the independent `translate`
-		   property, which composes with the blink keyframes' own `transform: scaleY()` that
-		   keeps running on them throughout tracking same as always (unrelated properties,
-		   same element, no conflict). */
+		   no transform/translate of its own below — #Eye1Track/#Eye2Track each position
+		   themselves individually now (next rule). #Ear1/#Ear2's own twitch loop is
+		   deliberately left running here — see the ear droop comment below. */
 		& #Eyes,
 		& #Muzzle {
 			animation: none;
 		}
 
-		/* Depth parallax: right eye (#Eye2) moves horizontally fastest, muzzle at the
-		   baseline rate, left eye (#Eye1) slowest — each a little quicker than the next, so
-		   the face reads as layers panning past at different rates rather than one rigid
+		/* #Eye1Track/#Eye2Track/#Ear1Track/#Ear2Track exist *only* for this — they're plain
+		   wrapper `<g>`s around #Eye1/#Eye2/#Ear1/#Ear2, carrying nothing but the tracking
+		   values here and the return-to-idle transition declared further up (outside this
+		   block), added specifically because putting the tracking `translate`/`scale`/`rotate`
+		   directly on #Eye1/#Eye2/#Ear1/#Ear2 doesn't render in Chrome. Confirmed with a screen
+		   recording of real cursor movement: #Muzzle visibly tracks the cursor while the eyes
+		   and ears stay completely still on screen, even though `getComputedStyle` reports the
+		   correct `translate`/`rotate` value on them the whole time — the style system computes
+		   the right answer, the paint just never picks it up. (First suspected an inheritance
+		   issue — #Eye1/#Eye2 were reading a `--x`/`--y` computed on their #Eyes parent — and
+		   "fixed" that, which changed nothing: computing --x/--y locally on #Eye1/#Eye2
+		   directly didn't help either, so that wasn't it.)
+
+		   The actual pattern: back when this was first diagnosed, #Muzzle was the *only* one of
+		   the three whose own `animation` was fully stopped during tracking — it didn't have a
+		   wrapper yet because it didn't need one. (It has one now, #MuzzleTrack, added for the
+		   return-to-idle transition above — see that comment for why leaving tracking needed
+		   the same animation/transition split as entering it.) #Eye1/#Eye2 keep
+		   `logo-blink` running throughout (`transform: scaleY()`), and #Ear1/#Ear2 keep their
+		   twitch loop running throughout (`transform: rotate()`) — by design, so blinking and
+		   twitching don't just cut out while the cursor moves. Whenever an element has both a
+		   still-running keyframe `animation` targeting `transform` *and* a `transition` on an
+		   independent transform property (`translate`/`scale`/`rotate`) at the same time,
+		   Chrome computes the transition correctly but never repaints it — despite the CSS
+		   spec treating `transform` and the standalone `translate`/`rotate`/`scale`
+		   properties as independent and composable, which is what every comment below still
+		   assumes and which does hold everywhere else (Firefox/Safari, and even Chrome when
+		   measured via `getComputedStyle`/`getBoundingClientRect` — both of which force a
+		   synchronous layout flush as a side effect and happen to mask the bug, which is how
+		   the first pass at diagnosing this went wrong). Moving the transition onto a separate
+		   wrapper `<g>` with no `animation` of its own sidesteps it: the animated leaf and the
+		   transitioned wrapper are different elements, so there's nothing on the transitioned
+		   element for Chrome's compositor to get confused about. Never got further than that —
+		   no isolated repro, no upstream bug filed — so if a future refactor moves the blink or
+		   twitch animation back onto the same element as the tracking transition, re-check with
+		   an actual recorded cursor move in Chrome, not just devtools: forcing computed style
+		   through the console will lie to you here. */
+
+		/* Depth parallax: right eye (#Eye2Track) moves horizontally fastest, muzzle at the
+		   baseline rate, left eye (#Eye1Track) slowest — each a little quicker than the next,
+		   so the face reads as layers panning past at different rates rather than one rigid
 		   plane sliding as a block. Y stays shared/unstaggered (7px on all three) — the ask
-		   was specifically about horizontal movement. --x/--y (declared above, on #Eyes and
-		   #Muzzle) inherit down to #Eye1/#Eye2 for free since they're #Eyes' children. Y
-		   range (7px) is deliberately much bigger than X's baseline (5px, against a ~72px-tall
-		   mark) — at an earlier, smaller Y amplitude this was under 5% of the logo's own
-		   height, so "looking down" never actually read as the eyes moving; it was completely
-		   upstaged by the muzzle's own (much larger, percentage-wise) squish below.
+		   was specifically about horizontal movement. Y range (7px) is deliberately much bigger
+		   than X's baseline (5px, against a ~72px-tall mark) — at an earlier, smaller Y
+		   amplitude this was under 5% of the logo's own height, so "looking down" never
+		   actually read as the eyes moving; it was completely upstaged by the muzzle's own
+		   (much larger, percentage-wise) squish below.
 
 		   `linear`, not `ease-out` — these transitions get retargeted on every pointermove,
 		   often faster than any one transition ever finishes. `ease-out` starts fast and
 		   decelerates on *each* leg, so retargeting it mid-flight repeatedly cuts that
 		   deceleration off and restarts a fresh fast start — a string of velocity
 		   discontinuities that reads as choppy rather than one continuous motion. `linear`'s
-		   constant velocity per leg blends far more smoothly across repeated retargets. */
-		/* Downward-only narrowing on top of the existing translate — a slight downcast squint
+		   constant velocity per leg blends far more smoothly across repeated retargets.
+
+		   Downward-only narrowing on top of the existing translate — a slight downcast squint
 		   as the glance drops, via the standalone `scale` property so it composes with the
-		   blink's own `transform: scaleY()` (same independent-property trick as `translate`
-		   above) instead of fighting it. max(0, --y - 0.5) keeps it at 1 (no narrowing) for
-		   the whole top half, same guard as the muzzle's foreshortening below. */
-		& #Eye1 {
+		   blink's own `transform: scaleY()` (still on #Eye1/#Eye2, the inner elements) instead
+		   of fighting it. max(0, --y - 0.5) keeps it at 1 (no narrowing) for the whole top
+		   half, same guard as the muzzle's foreshortening below. */
+		& #Eye1Track {
 			transition:
 				translate 0.1s linear,
 				scale 0.1s linear;
@@ -126,7 +200,7 @@
 			scale: 1 calc(1 - max(0, var(--y) - 0.5) * 0.3);
 		}
 
-		& #Eye2 {
+		& #Eye2Track {
 			transition:
 				translate 0.1s linear,
 				scale 0.1s linear;
@@ -146,8 +220,8 @@
 		   put — anatomically the right cue. Push and squish were bumped up (6px/0.3/0.68,
 		   from 4px/0.24/0.56) to sell "looking down" harder without the compression fully
 		   inverting the shape at y=1. `linear` timing for the same retargeting reason as
-		   #Eye1/#Eye2 above. */
-		& #Muzzle {
+		   #Eye1Track/#Eye2Track above. */
+		& #MuzzleTrack {
 			transform-origin: 50% 0%;
 			transition:
 				translate 0.1s linear,
@@ -160,19 +234,21 @@
 		/* Ear droop rides the same vertical glance as the eyes/muzzle — a head tilting down
 		   tips the ears forward with it; looking up lifts them back slightly. Layered on TOP
 		   of each ear's own idle twitch (`logo-ear-twitch-left/right`, still running via
-		   `transform: rotate()` — untouched here and not stopped like #Eyes/#Muzzle's
-		   `logo-look-around` above) rather than replacing it: `rotate` is a standalone
-		   Individual Transform property independent of `transform`, so the two rotations
-		   just add. Signs are mirrored between the two ears to match each one's own twitch
-		   keyframes' dominant first step (Ear1 goes negative first, Ear2 positive first) —
-		   this is a best guess at "forward" without eyeballing the actual artwork; check the
-		   direction in-browser and flip both signs if it reads backwards. */
-		& #Ear1 {
+		   `transform: rotate()` on the inner `#Ear1`/`#Ear2` groups — untouched here and not
+		   stopped like #Eyes/#Muzzle's `logo-look-around` above) rather than replacing it:
+		   `rotate` lives on `#Ear1Track`/`#Ear2Track`, the outer wrapper `<g>`s, specifically so
+		   it's a different element from the one still running the twitch keyframes — see the
+		   big comment above the eye rules for why that separation is load-bearing in Chrome.
+		   Signs are mirrored between the two ears to match each one's own twitch keyframes'
+		   dominant first step (Ear1 goes negative first, Ear2 positive first) — this is a best
+		   guess at "forward" without eyeballing the actual artwork; check the direction
+		   in-browser and flip both signs if it reads backwards. */
+		& #Ear1Track {
 			transition: rotate 0.1s linear;
 			rotate: calc((var(--y) - 0.5) * -12deg);
 		}
 
-		& #Ear2 {
+		& #Ear2Track {
 			transition: rotate 0.1s linear;
 			rotate: calc((var(--y) - 0.5) * 12deg);
 		}
