@@ -60,23 +60,36 @@
 	/* 7s/9s/11s/13s are pairwise coprime, so the four loops take a very long time to realign —
 	   long enough that the mark reads as idly alive rather than visibly looping. */
 
-	/* Return-to-idle: the moment the cursor leaves (or `--live-local-pointer-inside` otherwise
-	   drops to 0), the container style query below stops matching and every tracking value on
-	   the *Track wrappers snaps back to its initial `none` — but "snaps" only if nothing's
-	   transitioning it. This is that transition, declared unconditionally (outside the
-	   container query) so it's still in effect at the exact moment the query's own 0.1s-linear
-	   override disappears. `ease-out` here, not `linear` — unlike the tracking transitions,
-	   which get retargeted on every pointermove and need `linear`'s constant velocity to blend
-	   across repeated retargets, this one plays exactly once per tracking session (cursor
-	   leaves, motion settles, done), so a normal decelerate-into-rest ease reads as the bear
-	   settling rather than snapping. Slower too (0.4s vs. 0.1s) for the same reason — this is a
-	   deliberate "putting the cursor down" beat, not an urgent follow. The container query's own
-	   transition (declared inside, further below) overrides this the instant tracking resumes,
-	   so a quick in-and-out of the window doesn't fight between the two speeds. Each element's
-	   idle-loop `animation` (blink/twitch/glance) resumes in that same style recalc — safe to
-	   have both happening at once here because the *Track wrappers carry no `animation` of
-	   their own (see the load-bearing comment on them below); the resuming animation is always
-	   on a different element than the one this transition is reverting. */
+	/* Return-to-idle: the moment `--live-idle` flips to `1` (3s with no `pointermove` anywhere on
+	   the page — see the `pointer-idle` source in `PropsForAuto.astro`), the container style
+	   query below stops matching and every tracking value on the *Track wrappers snaps back to
+	   its initial `none` — but "snaps" only if nothing's transitioning it. This is that
+	   transition, declared unconditionally (outside the container query) so it's still in effect
+	   at the exact moment the query's own 0.1s-linear override disappears. `ease-out` here, not
+	   `linear` — unlike the tracking transitions, which get retargeted on every pointermove and
+	   need `linear`'s constant velocity to blend across repeated retargets, this one plays
+	   exactly once per tracking session (movement stops, motion settles, done), so a normal
+	   decelerate-into-rest ease reads as the bear settling rather than snapping. Slower too (0.4s
+	   vs. 0.1s) for the same reason — this is a deliberate "putting the cursor down" beat, not an
+	   urgent follow. The container query's own transition (declared inside, further below)
+	   overrides this the instant tracking resumes, so a quick pause-then-move doesn't fight
+	   between the two speeds. Each element's idle-loop `animation` (blink/twitch/glance) resumes
+	   in that same style recalc — safe to have both happening at once here because the *Track
+	   wrappers carry no `animation` of their own (see the load-bearing comment on them below);
+	   the resuming animation is always on a different element than the one this transition is
+	   reverting.
+
+	   Why 3s of inactivity rather than "cursor left the browser window" (an earlier version's
+	   trigger, via `--live-local-pointer-inside`): that only fires when the pointer physically
+	   crosses the viewport edge, which the vast majority of "user stopped paying attention"
+	   moments never do — someone reads the page, or their cursor just sits still somewhere in the
+	   middle of it, and `-inside` stays `1` forever. The bear would keep pointing at a stale
+	   position indefinitely, which read as this feature being broken rather than as the bear
+	   idling. `--live-idle` fixes that by keying off inactivity directly instead of a proxy for
+	   it, and as a side effect already covers the window-leave case too: once the cursor leaves,
+	   no more `pointermove` events arrive at all, so the same 3s timer fires on its own — one
+	   signal, both cases, at the cost of up to 3s of lag specifically when the cursor leaves
+	   (acceptable for a decorative idle state). */
 	& #Eye1Track,
 	& #Eye2Track,
 	& #MuzzleTrack {
@@ -93,27 +106,32 @@
 	/* Cursor tracking, driven off the whole page rather than just the header — see
 	   `PropsForAuto.astro` for the shared full-viewport tracking surface this reads from and
 	   why it's sized the way it is. `<body>` (an ancestor of `.logo-mark`) carries
-	   `--live-local-pointer-x-ratio`/`-y-ratio` (0–1 across the *viewport*) and
-	   `--live-local-pointer-inside` (1/0, cursor anywhere in the browser window). Custom
-	   properties inherit downward, so `.logo-mark` reads them for free — no hoisting needed
-	   here. The container style query below matches because `@container style()` looks at the
-	   *nearest ancestor* carrying the property, and every element qualifies as a style-query
-	   container without any `container-type` opt-in.
+	   `--live-local-pointer-x-ratio`/`-y-ratio` (0–1 across the *viewport*, from the
+	   `pointer-local` source). Whether tracking is active at all is gated separately, on
+	   `--live-idle` (1/0, from the `pointer-idle` source, also in `PropsForAuto.astro`) rather
+	   than on pointer position — see the return-to-idle comment above for why. Both write to
+	   ancestors of `.logo-mark` (`<body>` and `<html>` respectively), and custom properties
+	   inherit downward, so `.logo-mark` reads both for free — no hoisting needed here. The
+	   container style query below matches because `@container style()` looks at the *nearest
+	   ancestor* carrying the property, and every element qualifies as a style-query container
+	   without any `container-type` opt-in.
 
-	   This is pure CSS from here — no mousemove/rAF/cleanup JS, no class toggling. Eases back to
-	   the idle loop (see the return-to-idle transition above) the instant
-	   `--live-local-pointer-inside` drops to `0` (cursor leaves the browser window). */
-	@container style(--live-local-pointer-inside: 1) {
+	   This is pure CSS from here — no mousemove/rAF/cleanup JS, no class toggling lives in
+	   *this* file; the one bit of custom JS this feature needs (debouncing "how long since the
+	   pointer last moved") lives entirely in `PropsForAuto.astro`'s `pointer-idle` source, behind
+	   the same `--live-*` custom-property boundary as everything else prop-for-that provides.
+	   Eases back to the idle loop (see the return-to-idle transition above) the instant
+	   `--live-idle` flips to `1`. */
+	@container style(--live-idle: 0) {
 		/* prop-for-that's pointer-local plugin doesn't clamp these — it maths raw
 		   clientX/clientY against the tracking element's rect with no [0,1] cap (confirmed by
 		   reading its source directly), so the last pointermove right as the cursor exits the
-		   window can land slightly outside the viewport and report a ratio a bit past 0 or 1
-		   for one frame, right before `inside` flips to 0. --x/--y clamp that so every calc()
-		   below is mathematically bounded to what it'd be exactly at the corresponding edge —
-		   the muzzle can't overshoot past its edge-of-screen extreme no matter what raw value
-		   comes through. Declared on the *Track wrapper groups (below), not on
-		   #Eye1/#Eye2/#Ear1/#Ear2/#Muzzle themselves — see the load-bearing comment on those
-		   wrappers for why they exist at all. */
+		   window can land slightly outside the viewport and report a ratio a bit past 0 or 1 for
+		   that one frame. --x/--y clamp that so every calc() below is mathematically bounded to
+		   what it'd be exactly at the corresponding edge — the muzzle can't overshoot past its
+		   edge-of-screen extreme no matter what raw value comes through. Declared on the *Track
+		   wrapper groups (below), not on #Eye1/#Eye2/#Ear1/#Ear2/#Muzzle themselves — see the
+		   load-bearing comment on those wrappers for why they exist at all. */
 		& #Eye1Track,
 		& #Eye2Track,
 		& #MuzzleTrack,

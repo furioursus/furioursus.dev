@@ -63,11 +63,15 @@ does two things:
 
 That div writes three properties onto `<body>`, inherited by everything on the page:
 `--live-local-pointer-x-ratio` / `-y-ratio` (0–1 across the viewport) and
-`--live-local-pointer-inside` (1/0 — cursor anywhere in the browser window). `logo.css` consumes
-them with a container style query:
+`--live-local-pointer-inside` (1/0 — cursor anywhere in the browser window, unused by `logo.css`
+today but kept for any future consumer — see [Reusing this for something
+else](#return-to-idle)). A second, separate source (also registered in `PropsForAuto.astro`,
+covered in [Return to idle](#return-to-idle) below) writes `--live-idle` (1/0) onto `<html>`.
+`logo.css` reads the pointer ratios for *where* to point, and `--live-idle` for *whether* to be
+tracking at all:
 
 ```css
-@container style(--live-local-pointer-inside: 1) {
+@container style(--live-idle: 0) {
 	& #Eye1Track,
 	& #Eye2Track,
 	& #MuzzleTrack,
@@ -182,11 +186,12 @@ edge-of-screen extreme no matter what raw value comes through.
 Two things make the container style query itself work without a `container-type` opt-in anywhere
 or any hoisting inside `logo.css`:
 
-- **Custom properties inherit downward.** `<body>` is an ancestor of `.logo-mark`, so
-  `.logo-mark`'s descendants read `--live-local-pointer-*` for free.
+- **Custom properties inherit downward.** `<body>` and `<html>` are both ancestors of
+  `.logo-mark`, so `.logo-mark`'s descendants read `--live-local-pointer-*` and `--live-idle` for
+  free, no matter which one actually carries each.
 - **Every element is a valid `@container style()` container** — unlike size queries, style queries
-  don't need `container-type` set on the ancestor. The query above matches because `<body>` is the
-  _nearest ancestor_ actually carrying `--live-local-pointer-inside`.
+  don't need `container-type` set on the ancestor. The query above matches because `<html>` is the
+  _nearest ancestor_ actually carrying `--live-idle`.
 
 `#MuzzleTrack`'s foreshortening — a downward-only extra push folded into its own `translate` (since
 `translate` can only be declared once per element, this is combined with its baseline 5px rate
@@ -221,16 +226,16 @@ and restarts a fresh fast start — a string of velocity discontinuities that re
 than one continuous motion. `linear`'s constant velocity per leg blends far more smoothly across
 repeated retargets. 0.1s prioritizes immediacy over smoothing — tight enough that the mark reads
 as following the cursor directly rather than catching up to it a beat later. This transition is
-declared *inside* the container query, so it only applies while `--live-local-pointer-inside: 1`
-— see the next section for what takes over the instant that stops being true.
+declared *inside* the container query, so it only applies while `--live-idle: 0` — see the next
+section for what takes over the instant that stops being true.
 
 ## Return to idle
 
-The moment the cursor leaves the browser window (or a page loads with `--live-local-pointer-inside`
-already `0`), the container query above stops matching, and every tracking value on the `*Track`
-wrappers reverts to its initial `none`. Left alone, that's an instant snap — not what a bear
-"settling back into looking around on his own" should look like. `logo.css` declares a second,
-slower transition on the same wrappers, *outside* the container query:
+The moment `--live-idle` flips to `1`, the container query above stops matching, and every
+tracking value on the `*Track` wrappers reverts to its initial `none`. Left alone, that's an
+instant snap — not what a bear "settling back into looking around on his own" should look like.
+`logo.css` declares a second, slower transition on the same wrappers, *outside* the container
+query:
 
 ```css
 & #Eye1Track,
@@ -266,9 +271,33 @@ entering tracking. So the muzzle needed the same wrapper split, just to make the
 than the entry. Same fix, same reasoning, just triggered by the other edge of the transition this
 time.
 
+### What actually triggers it: `--live-idle`, not "cursor left the window"
+
+An earlier version of this feature gated the whole container query on `--live-local-pointer-inside`
+instead — the same property `pointer-local` already provides, flipping to `0` only when the cursor
+physically crosses the browser window's edge. That shipped, and didn't visibly work: the trigger
+condition was wrong, not the transition. `-inside` stays `1` for as long as the cursor is anywhere
+in the window, including sitting perfectly still — which describes most "user stopped paying
+attention" moments far better than "cursor left the window" does. Someone reads the page, or their
+cursor just rests somewhere in the middle of it, and the bear would keep pointing at a stale
+position indefinitely. It looked broken because, for that condition, it was.
+
+The fix was a different signal entirely: a small custom `pointer-idle` source, registered in
+`PropsForAuto.astro` via prop-for-that's own public `register()` API (there's no built-in plugin
+for "how long since the pointer last moved," and CSS has no primitive for "time since a value last
+changed," so this is the smallest amount of custom JS that still routes through the same batched
+writer as everything else here — see that file for the full source and reasoning). It debounces
+`pointermove` with a 3s `setTimeout` and writes `--live-idle` (1/0) onto `<html>`: `1` on page load
+and again 3s after the last `pointermove` anywhere on the page, `0` the instant one arrives.
+`--live-local-pointer-inside` is no longer read by `logo.css` at all — as a side effect, the new
+signal already covers the window-leave case too, since no more `pointermove` events arrive once the
+cursor leaves, so the same 3s timer fires on its own (just with up to 3s of lag on that specific
+case, an acceptable trade for a decorative idle state).
+
 **Reusing this for something else:** any future feature that wants "where's the cursor, roughly"
-can read the same three `--live-local-pointer-*` properties directly — no need to stand up another
-tracking element. For a different kind of runtime state entirely (viewport size, battery, network,
+can read the same `--live-local-pointer-*` properties directly — no need to stand up another
+tracking element. The same goes for `--live-idle` if something else wants "has the reader gone
+idle" specifically. For a different kind of runtime state entirely (viewport size, battery, network,
 scroll velocity, and 20+ more), see `node_modules/prop-for-that/README.md` for the full source
 catalog; adding a new one is almost always just a `data-props-for="<key>"` attribute plus, if it's
 a plugin source, nothing else — `auto` lazy-loads plugin chunks on first reference.

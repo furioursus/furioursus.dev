@@ -32,6 +32,22 @@
 	   `window` and only uses the element for its rect — it doesn't need real pointer events
 	   delivered to this div itself (confirmed by reading prop-for-that's source directly, not
 	   assumed).
+
+	3. Registers one custom source, pointer-idle, using prop-for-that's own public register()
+	   extension API rather than raw addEventListener/setProperty. There's no built-in plugin for
+	   "how long since the pointer last moved" (checked the plugin catalog directly), and CSS
+	   itself has no primitive for "time since a value last changed", so this is the smallest
+	   piece of custom JS that still routes through the same batched writer as everything else
+	   here. It writes --live-idle (1/0) onto :root, flipping to 1 after 3s with no pointermove
+	   anywhere on the page and back to 0 the instant one arrives. .logo-mark reads it as the
+	   trigger for logo.css's cursor-tracking container query, replacing an earlier, narrower
+	   --live-local-pointer-inside-based trigger that only fired when the cursor physically left
+	   the browser window, not when it just stopped moving (see logo.css for the full story).
+
+	   Deliberately not gated by --live-local-pointer-inside here: with no more pointermove events
+	   arriving once the cursor leaves the window, the idle timer already fires on its own within
+	   3s, so one signal covers both cases, at the cost of up to a 3s lag specifically on the
+	   window-leave case, which is an acceptable trade for a decorative idle state.
 -->
 <div
 	aria-hidden="true"
@@ -42,5 +58,30 @@
 </div>
 
 <script>
+	import { propsFor, register } from "prop-for-that";
 	import "prop-for-that/auto";
+
+	const IDLE_MS = 3000;
+
+	register({
+		key: "pointer-idle",
+		scope: "global",
+		start(ctx) {
+			let timer;
+			// Starts idle (matches page load, before any pointermove has ever happened) --
+			// only a real pointermove should ever flip this to "active".
+			ctx.write("idle", 1);
+			const onMove = () => {
+				ctx.write("idle", 0);
+				clearTimeout(timer);
+				timer = setTimeout(() => ctx.write("idle", 1), IDLE_MS);
+			};
+			window.addEventListener("pointermove", onMove, { passive: true });
+			return () => {
+				clearTimeout(timer);
+				window.removeEventListener("pointermove", onMove);
+			};
+		},
+	});
+	propsFor(["pointer-idle"]);
 </script>
