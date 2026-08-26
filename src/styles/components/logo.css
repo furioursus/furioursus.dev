@@ -131,14 +131,37 @@
 		   what it'd be exactly at the corresponding edge — the muzzle can't overshoot past its
 		   edge-of-screen extreme no matter what raw value comes through. Declared on the *Track
 		   wrapper groups (below), not on #Eye1/#Eye2/#Ear1/#Ear2/#Muzzle themselves — see the
-		   load-bearing comment on those wrappers for why they exist at all. */
+		   load-bearing comment on those wrappers for why they exist at all.
+
+		   --x/--y blend two ratios rather than reading --live-local-pointer-*-ratio directly:
+		   the viewport-wide one (--coarse-*, same as before) and a second one scoped to the mark
+		   itself (--fine-*, --live-logo-pointer-*-ratio, from the logo-pointer source registered
+		   in PropsForAuto.astro). The viewport-wide ratio goes nearly flat once the cursor is
+		   anywhere near the mark — it spans the whole viewport, but the mark itself is only
+		   around 70px across, so crossing the *entire face* barely moves it (measured: a few
+		   tenths of a pixel of resulting eye translate) — the eyes read as frozen exactly when
+		   the reader is closest to them. --live-logo-pointer-inside (1/0, whether the raw ratio
+		   landed inside the mark's own rect) selects which one --x/--y actually use: --coarse-*
+		   away from the mark (unchanged "look toward roughly where the cursor is on the page"
+		   behavior), --fine-* the instant the cursor is over the mark itself, where it's ratioed
+		   against the mark's own bounding box instead and so sweeps the full amplitude below
+		   across the width of the face rather than the width of the viewport. `inside` flipping
+		   is a hard swap (not a crossfade) between the two ratios, but --x/--y themselves were
+		   never transitioned, only the translate/scale/rotate calc'd from them further down are
+		   (the 0.1s linear rule below) — same as any other pointer retarget already handled
+		   there, so the swap eases in rather than snapping. */
 		& #Eye1Track,
 		& #Eye2Track,
 		& #MuzzleTrack,
 		& #Ear1Track,
 		& #Ear2Track {
-			--x: clamp(0, var(--live-local-pointer-x-ratio, 0.5), 1);
-			--y: clamp(0, var(--live-local-pointer-y-ratio, 0.5), 1);
+			--coarse-x: clamp(0, var(--live-local-pointer-x-ratio, 0.5), 1);
+			--coarse-y: clamp(0, var(--live-local-pointer-y-ratio, 0.5), 1);
+			--fine-x: clamp(0, var(--live-logo-pointer-x-ratio, 0.5), 1);
+			--fine-y: clamp(0, var(--live-logo-pointer-y-ratio, 0.5), 1);
+			--on-face: var(--live-logo-pointer-inside, 0);
+			--x: calc(var(--coarse-x) + var(--on-face) * (var(--fine-x) - var(--coarse-x)));
+			--y: calc(var(--coarse-y) + var(--on-face) * (var(--fine-y) - var(--coarse-y)));
 		}
 
 		/* Stops the idle glance loop the instant tracking takes over. #Eyes (the group) gets
