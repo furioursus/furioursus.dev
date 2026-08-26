@@ -48,6 +48,25 @@
 	   arriving once the cursor leaves the window, the idle timer already fires on its own within
 	   3s, so one signal covers both cases, at the cost of up to a 3s lag specifically on the
 	   window-leave case, which is an acceptable trade for a decorative idle state.
+
+	4. Registers a second custom source, logo-pointer, bound directly to the header's .logo-mark
+	   element (not hoisted — its own descendants, #Eye1Track/#Eye2Track/#MuzzleTrack/etc., are
+	   inside it, so they inherit its inline-written properties for free). This exists because the
+	   viewport-wide --live-local-pointer-*-ratio above goes practically flat once the cursor is
+	   near the mark itself: those ratios span the whole viewport, but the mark is maybe 70px
+	   across, so moving the real cursor all the way across the bear's own face barely nudges the
+	   ratio (measured: crossing the full face shifted the eye's translate by a few tenths of a
+	   pixel) — the eyes read as frozen exactly when the reader is closest to them, which is the
+	   worst place for this to be true. logo-pointer is the same rect-relative-ratio math as the
+	   built-in pointer-local plugin (clientX/Y against the bound element's own
+	   getBoundingClientRect(), unclamped, plus an "inside" boolean for whether the raw ratio
+	   landed in [0,1]) but under different property names (--live-logo-pointer-x/-y-ratio,
+	   --live-logo-pointer-inside) so it can coexist with, rather than shadow, the viewport-wide
+	   one — the built-in plugin's local names are hardcoded, so a second instance bound to the
+	   mark would otherwise overwrite the same inherited properties instead of adding a distinct
+	   pair logo.css can blend against. logo.css uses --live-logo-pointer-inside to blend this
+	   face-relative ratio in only while the cursor is actually over the mark, and the
+	   viewport-wide ratio otherwise — see logo.css for the blend itself.
 -->
 <div
 	aria-hidden="true"
@@ -84,4 +103,35 @@
 		},
 	});
 	propsFor(["pointer-idle"]);
+
+	// Face-relative pointer ratio, bound to the logo mark itself rather than the viewport --
+	// see point 4 in the comment above for why the viewport-wide pointer-local isn't enough on
+	// its own. Mirrors pointer-local's own math (not reused directly: its local property names
+	// are hardcoded, so a second binding to the mark would overwrite rather than add to the
+	// inherited viewport-wide values logo.css also needs).
+	register({
+		key: "logo-pointer",
+		scope: "element",
+		start(ctx) {
+			const el = ctx.target;
+			const onMove = (event: PointerEvent) => {
+				const rect = el.getBoundingClientRect();
+				const x = rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0;
+				const y = rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0;
+				const inside = x >= 0 && x <= 1 && y >= 0 && y <= 1;
+				ctx.write("logo-pointer-x-ratio", x);
+				ctx.write("logo-pointer-y-ratio", y);
+				ctx.write("logo-pointer-inside", inside ? 1 : 0);
+			};
+			// Seeded centered (not pointer-local's own 0/0/outside seed) so logo.css's blend
+			// starts from the same "centered" default its var() fallbacks already assume.
+			ctx.write("logo-pointer-x-ratio", 0.5);
+			ctx.write("logo-pointer-y-ratio", 0.5);
+			ctx.write("logo-pointer-inside", 0);
+			window.addEventListener("pointermove", onMove, { passive: true });
+			return () => window.removeEventListener("pointermove", onMove);
+		},
+	});
+	const logoMarkEl = document.querySelector<HTMLElement>(".logo-mark");
+	if (logoMarkEl) propsFor(logoMarkEl, ["logo-pointer"]);
 </script>

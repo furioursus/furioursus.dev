@@ -46,7 +46,9 @@ point at wherever the cursor actually is on the page — pure CSS, driven by
 [`prop-for-that`](https://github.com/argyleink/prop-for-that), a small library that exposes
 JS-only runtime state (pointer position, viewport size, etc.) as live CSS custom properties. No
 mousemove listener, no rAF loop, no cleanup code, no JS class-toggling lives in this repo for this
-feature — all of that is the library's problem, not ours.
+feature (with one small exception — see [Tracking on top of the mark
+itself](#tracking-on-top-of-the-mark-itself) below) — all of that is the library's problem, not
+ours.
 
 **`PropsForAuto.astro`** (included once in `Base.astro`) is the site-wide integration point, and
 does two things:
@@ -182,6 +184,45 @@ raw `clientX`/`clientY` against the tracking element's rect with no cap. The las
 right as the cursor exits the window can land slightly outside the viewport, so `--x`/`--y` clamp
 every value before it reaches any `calc()` below — the muzzle can't overshoot past its
 edge-of-screen extreme no matter what raw value comes through.
+
+### Tracking on top of the mark itself
+
+`--live-local-pointer-x/y-ratio` are ratios across the *whole viewport*. That's fine anywhere else
+on the page, but the mark itself is only around 70px across — crossing the entire face barely
+nudges a ratio meant to span a 1000+ px-wide viewport, so the eyes read as frozen exactly when the
+reader's cursor is closest to them (measured: sweeping the full width of the face moved the eye's
+`translate` by a few tenths of a pixel, invisible in practice). `--x`/`--y` above aren't actually
+`--live-local-pointer-*-ratio` directly — they blend it with a second, mark-scoped ratio:
+
+```css
+--coarse-x: clamp(0, var(--live-local-pointer-x-ratio, 0.5), 1);
+--fine-x: clamp(0, var(--live-logo-pointer-x-ratio, 0.5), 1);
+--on-face: var(--live-logo-pointer-inside, 0);
+--x: calc(var(--coarse-x) + var(--on-face) * (var(--fine-x) - var(--coarse-x)));
+/* --y is the same shape, off --coarse-y/--fine-y/--live-logo-pointer-y-ratio */
+```
+
+`--live-logo-pointer-x/y-ratio` and `--live-logo-pointer-inside` come from a second custom
+source, `logo-pointer`, registered in `PropsForAuto.astro` right alongside `pointer-idle` and
+bound directly to `.logo-mark` (`propsFor(logoMarkEl, ["logo-pointer"])` — not `data-props-for`,
+since the element needs to be looked up after the header renders; not hoisted, either, since
+`#Eye1Track`/etc. are already descendants of the element it's bound to). It's the same
+rect-relative math as the built-in `pointerLocal` plugin (`clientX`/`clientY` against the bound
+element's own `getBoundingClientRect()`, unclamped, plus an `inside` boolean for whether the raw
+ratio landed in `[0, 1]`) reimplemented under different property names rather than reused
+directly — `pointerLocal`'s local names are hardcoded, so a second binding to `.logo-mark` would
+overwrite the inherited viewport-wide properties instead of adding a distinct pair `logo.css` can
+blend against.
+
+`--on-face` (`--live-logo-pointer-inside`) is what actually selects between the two: `0` away from
+the mark, so `--x`/`--y` reduce to exactly `--coarse-x`/`--coarse-y` (the pre-existing
+viewport-wide behavior, unchanged) — `1` the instant the cursor is over the mark, so `--x`/`--y`
+become `--fine-x`/`--fine-y` instead, ratioed against the mark's own bounding box rather than the
+viewport, sweeping the full translate/scale/rotate amplitude already tuned below across the width
+of the actual face. The swap between the two is a hard jump in `--x`/`--y`, not a crossfade — but
+`--x`/`--y` themselves were never transitioned even before this, only the `translate`/`scale`/
+`rotate` calc'd from them further down are (the `0.1s linear` rule below), so a jump here eases in
+exactly like any other pointer retarget already does, rather than snapping.
 
 Two things make the container style query itself work without a `container-type` opt-in anywhere
 or any hoisting inside `logo.css`:
