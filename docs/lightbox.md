@@ -114,6 +114,21 @@ reduce` disables both.
 - Unsupported browsers (`@starting-style`/`allow-discrete` need a roughly 2024-or-later engine) fall
   back to the old instant show/hide — this is pure progressive enhancement, nothing to guard in JS.
 
+### Background scroll lock
+
+`showModal()` traps focus and clicks, but a native `<dialog>` does **not** stop the page behind it
+from scrolling on its own — confirmed the hard way, not spec behavior worth assuming. `Lightbox.astro`
+adds `.lightbox-locked` to `<html>` (not `<body>`) on open and removes it on `close`, guarded by
+`!document.querySelector("dialog[open]")` first — this custom element is defined once but
+instantiated per image, so closing one gallery's dialog shouldn't unlock scroll out from under
+another that's still open elsewhere on the page. `<html>` specifically because that's the element
+iOS Safari treats as the real scroll container for touch/rubber-band scrolling (see the
+`overflow-x: clip` comment in `global.css`) — locking `<body>` instead wouldn't stop a touch-drag
+scroll there. Only `overflow-y` is touched; `<html>`'s own `overflow-x: clip` is left alone, since
+that same `global.css` comment already found that combining `hidden` on both axes/elements causes
+an intermittent mid-scroll freeze on iOS. `scrollbar-gutter: stable` is already global, so losing
+the scrollbar for the moment the dialog's open doesn't shift any layout underneath it.
+
 ## Using it explicitly — `LightboxImage.astro`
 
 ```astro
@@ -195,6 +210,42 @@ plain `<img>`, moved back and forth like the automatic transform's output, style
 `--lightbox-thumb-*` custom properties `LightboxImage.astro` would otherwise set for you. Reach for
 `LightboxImage.astro` first; this is only for when astro:assets genuinely isn't an option.
 
+## Gallery grouping and navigation
+
+Wrapping a set of `<lightbox-image>` elements in a shared `[data-lightbox-gallery]` ancestor turns
+them into one navigable gallery — Next/Previous buttons appear in the dialog (`.lightbox-nav-prev`/
+`.lightbox-nav-next`, styled like `.lightbox-close`, same `mask` icon technique but a chevron), and
+ArrowLeft/ArrowRight navigate while a dialog from that gallery is open. `VinylCollection.astro`'s
+`.grid` is the only current user — every cover inside it is one gallery, in DOM order, no further
+setup. Escape and backdrop clicks still just close, same as ever; only the arrow keys and the nav
+buttons move between images.
+
+- **Grouping is structural, not a prop.** `Lightbox.astro`'s `getGalleryMembers()` walks up from an
+  image to its closest `[data-lightbox-gallery]` and collects every `<lightbox-image>` inside it —
+  there's no per-image group id to invent, keep in sync, or typo. An image with no such ancestor is
+  just a standalone lightbox, unchanged from before this existed (a blog post photo, `Masthead.astro`'s
+  cover) — none of them needed to opt out of anything.
+- **Filtered-out members are skipped.** `getGalleryMembers()` excludes anything under a `[hidden]`
+  ancestor, so `record-collection`'s search/genre/format filtering (which hides non-matching
+  `.record-item`s, see [`docs/discogs.md`](./discogs.md)) never lets Next/Prev land on a record
+  that's currently filtered out. Recomputed fresh on every navigation rather than cached at connect
+  — filters can't actually change *while* a dialog is open (it's modal, blocks interacting with
+  anything behind it), but there's no reason to trust a snapshot taken once and reused indefinitely.
+- **Navigation reuses the normal open path, not a separate one.** `navigate()` calls the current
+  dialog's `close()`, then `.click()`s the next member's own `.lightbox-trigger` — the exact same
+  click that opening it normally would fire. No duplicated "move image into dialog" logic, no new
+  state to keep in sync with the single-image path.
+- **Wraps around** at either end (last → first, first → last) rather than disabling at the
+  boundaries — simpler, and there's no meaningful "end of the gallery" state worth surfacing for a
+  small/medium collection.
+- **The buttons are always in the markup, hidden by default.** All three lightbox paths (the
+  automatic markdown transform, `LightboxImage.astro`, `RecordCard.astro`'s hand-rolled fallback)
+  render `.lightbox-nav-prev`/`-next` unconditionally with a `hidden` attribute — none of them can
+  know at author/build time whether they'll end up inside a gallery container. `Lightbox.astro`
+  un-hides both, per dialog, right before `showModal()` — but only when that image's *live* gallery
+  (post-filtering) actually has more than one member; a standalone image or a gallery filtered down
+  to one match never shows dead-end nav buttons.
+
 ## Captions
 
 Both usage paths can show a caption below the image (both under the thumbnail and, again, under
@@ -212,6 +263,15 @@ markup, not the same node moved back and forth):
   `coverImage.caption` in frontmatter. See [content-model.md](./content-model.md).
 
 Styling is one shared rule, `.lightbox-caption` in `lightbox.css` — used by all three call sites.
+
+**Dialog-only, richer captions**: the `caption` prop is a plain string — enough for the three cases
+above, not enough for a caller that wants a link or several independently-styled pieces of text.
+`LightboxImage.astro`'s `<dialog>` also renders a `<slot name="dialog-caption" />`, unfilled by
+default (renders nothing, so every caller above is unaffected). A caller passes
+`<a slot="dialog-caption" class="lightbox-caption" ...>...</a>` as a child instead of using
+`caption`; the `lightbox-caption` class is still required on it by hand (`LightboxImage.astro`
+doesn't add it for you) to pick up the width:0/min-width:100% fix above. `RecordCard.astro` is the
+one current user — see [`docs/discogs.md`](./discogs.md).
 
 When the image is moved into the dialog on open (see above), it's inserted with `insertBefore`
 targeting the dialog's own caption element specifically, not `appendChild` — otherwise the

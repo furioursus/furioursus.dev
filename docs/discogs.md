@@ -1,7 +1,8 @@
 # Record collection
 
-`/vinyl-collection/` ([src/pages/vinyl-collection.astro](../src/pages/vinyl-collection.astro)) renders a searchable,
-filterable grid of my vinyl collection, pulled from Discogs at build time via the
+The "Vinyl collection" section of [`/music/`](../src/pages/music.astro) (formerly its own
+`/vinyl-collection/` page — see [`docs/lastfm.md`](./lastfm.md) for the rest of that page) renders
+a searchable, filterable grid of my vinyl collection, pulled from Discogs at build time via the
 [`astro-discogs-collection`](https://www.npmjs.com/package/astro-discogs-collection) integration.
 
 ## How it's wired
@@ -22,18 +23,40 @@ filterable grid of my vinyl collection, pulled from Discogs at build time via th
   resolution — not just the 500×500 thumbnail — since `getLocalCoverImage()` returns Astro image
   metadata for the originally-cached (uncropped, undownsized) file. Because a lightbox trigger
   renders as a `<button>`, which can't legally nest inside the card's own `<a href={releaseUrl}>`,
-  `RecordCard`'s cover and its artist/title/meta text are two separate click targets: the image
-  opens the lightbox, the text still links out to the Discogs release page. Cover art is no longer
+  `RecordCard`'s cover and its artist/title/meta text (`.info`) are two separate click targets: the
+  image opens the lightbox, the text links out to the Discogs release page. Cover art is no longer
   purely decorative (it's its own interactive element now), so it carries a real, per-cover alt
   describing the artwork itself — see "Cover art alt text" below — falling back to
   `"{artist} – {title}"` for any release that hasn't been backfilled yet. The rare case where a
   release's cover hasn't been cached locally yet gets a hand-rolled lightbox around the plain
   `<img>` pointed at the remote `coverImageUrl` instead of `LightboxImage.astro` — see
   lightbox.md's "hand-rolled path" section for why.
+- `.info` (the artist/title/meta text) only shows in the card from `sm` down. `hasLightbox` in
+  `RecordCard.astro` gates an `.info--has-lightbox` modifier class, hidden via a plain
+  `@media (min-width: 640px)` rule in the component's own scoped `<style>` — **not** a Tailwind
+  `sm:hidden` utility, which was tried first and silently lost: Astro tacks a
+  `[data-astro-cid-xxxx]` attribute selector onto every rule in a component's scoped `<style>`, so
+  `.info { display: block }` (defined right there in the same file) outranks a plain `.sm\:hidden`
+  utility class on specificity regardless of source order, even though its media query matches
+  correctly. The fix is fighting on equal terms — both rules scoped, in the same file, so normal
+  specificity rules (compound class beats single class) apply as expected. From `sm` up, the same
+  three pieces of info reappear inside the cover's lightbox dialog instead — a linked `.dialog-info`
+  block passed via `LightboxImage.astro`'s `dialog-caption` slot (or written directly into the
+  dialog markup, for the hand-rolled remote-cover path) — see [`docs/lightbox.md`](./lightbox.md)'s
+  "Dialog-only, richer captions". A dense grid of just covers reads better at desktop widths, but a
+  release without any cover art at all has no dialog to hold that info instead, so the no-cover
+  `placeholder` path is exempt: `.info` stays visible there at every width, since it's the only
+  place that information ever appears.
+- Covers inside `VinylCollection.astro`'s grid navigate as one gallery — Next/Previous buttons and
+  ArrowLeft/ArrowRight inside the dialog, wrapping at either end, skipping anything currently
+  filtered out — via a plain `data-lightbox-gallery` attribute on `.grid`. See
+  [`docs/lightbox.md`](./lightbox.md)'s "Gallery grouping and navigation" for how that's detected
+  (structurally, not a per-image prop) and why filtered-out records are excluded.
 - `RecordCard`'s title renders as an `<h2>` by default, via a `titleLevel?: 1 | 2 | 3 | 4 | 5 | 6 |
-  false` prop (`false` renders a plain `<p>` instead). `h2` is correct as long as the card sits
-  directly under the page's one `<h1>`, as it does on `/vinyl-collection/` today — reach for the
-  prop if `RecordCard` ever gets reused somewhere with a different heading structure.
+  false` prop (`false` renders a plain `<p>` instead). `VinylCollection.astro` passes
+  `titleLevel={3}` since cards sit under that section's own "Vinyl collection" `<h2>` (rendered by
+  `music.astro`, one level up), not directly under the page's `<h1>` — reach for the prop again if
+  `RecordCard` ever moves to yet another heading depth.
 
 ## Cover art alt text
 
@@ -68,18 +91,44 @@ enlarges.
 ## Search/filter/sort is all client-side, no re-fetch
 
 Because the whole collection is static at build time, filtering doesn't need a server round trip.
-`src/pages/vinyl-collection.astro` renders every release into the grid up front, each `<li>` carrying
-lowercased `data-*` attributes (`data-search`, `data-genres`, `data-formats`, `data-artist`,
-`data-title`, `data-year`, `data-date-added`) that a `<record-collection>` custom element (defined
-in a `<script>` in the same file, following the `ThemeToggle.astro` pattern documented in
-[`docs/README.md`](./README.md)) reads to show/hide and reorder items in response to the search
-box, genre/format `<select>`s, and sort `<select>`. Nothing is removed from the DOM — filtering
-just toggles the `hidden` attribute — so the "N of M records" count and the empty-state message
-just reflect what's currently visible.
+`src/components/VinylCollection.astro` (rendered by `music.astro`, which does the Discogs fetch/
+sort and passes the result down as props) renders every release into the grid up front, each `<li>`
+carrying lowercased `data-*` attributes (`data-search`, `data-genres`, `data-formats`,
+`data-artist`, `data-title`, `data-year`, `data-date-added`) that a `<record-collection>` custom
+element (colocated with that markup in the same file, following the `ThemeToggle.astro` pattern
+documented in [`docs/README.md`](./README.md)) reads to show/hide and reorder items in response to
+the search box, genre/format `<select>`s, and sort `<select>`. Nothing is removed from the DOM —
+filtering just toggles the `hidden` attribute — so the "N of M records" count and the empty-state
+message just reflect what's currently visible.
 
 This is a different search mechanism from the site's Pagefind-based content search — see
 [`docs/search.md`](./search.md) — because Pagefind only indexes prose inside a
 `data-pagefind-body` element (blog posts and notes) and doesn't fit a filterable data grid.
+
+## Cover size toggle
+
+A radio group (`.size-toggle`, styled as a segmented button toggle — same dashed-border look as
+the search/filter controls) lets a visitor pick the grid's cover size: 10rem/13rem/18rem, driving
+`--cover-size` in `.grid`'s `grid-template-columns: repeat(auto-fill, minmax(var(--cover-size),
+1fr))`. Only shown from `sm` up — below that breakpoint the grid isn't a grid at all, it's
+`RecordCard.astro`'s own fixed-size single-column row layout (see its "Mobile-first" comment), so
+there'd be nothing for the control to do.
+
+Picked via native radio inputs, not a custom click handler on styled `<button>`s (contrast the
+period tabs in `docs/lastfm.md`) — a `type="radio"` group gets mutually-exclusive selection and
+arrow-key navigation for free, which fits a "pick one of three" control better than tabs (which
+imply switching between different *content*, not a display preference). The inputs themselves are
+visually hidden (clipped, not `display: none`, so they stay focusable) via `.size-option input`;
+`.size-option:has(input:checked)` gives the checked one the same active look the tabs use.
+
+The choice persists to `localStorage` (`vinyl-cover-size`) via `RecordCollection`'s
+`#setCoverSize()`/`#readStoredCoverSize()`, read back and re-applied — to both the CSS variable and
+which radio is `checked` — in `connectedCallback()`. Server-rendered markup always checks "Medium"
+(`DEFAULT_COVER_SIZE`, `13rem`); a returning visitor with a different stored size gets one brief
+reflow to the right column width on load rather than a blocking inline script to avoid it — the
+same trade-off this component already makes for search/filter/sort state, none of which is
+persisted either. `localStorage` calls are wrapped in `try`/`catch` (private browsing/disabled
+storage) — the toggle still works for that pageview, it just won't stick for the next one.
 
 ## Gotchas
 
@@ -90,6 +139,8 @@ This is a different search mechanism from the site's Pagefind-based content sear
   `"Vinyl"`, `"LP"`, `"Album"`, `"Reissue"` are separate options) since the package doesn't
   distinguish "physical format" from format descriptors — see `DiscogsRelease.formats` in
   `astro-discogs-collection`'s `types.d.ts`.
-- `/vinyl-collection/` is listed in `menuLinks` in `src/site.config.ts`; if `DISCOGS_USERNAME`/
-  `DISCOGS_TOKEN` are never set in an environment, the nav link still appears but leads to the
-  setup-notice state described above rather than a 404.
+- `/music/` is listed in `menuLinks` in `src/site.config.ts`; if `DISCOGS_USERNAME`/`DISCOGS_TOKEN`
+  are never set in an environment, the page still loads (the Last.fm sections above render
+  independently) but its vinyl section shows the setup notice instead of the grid.
+- `/vinyl-collection/` used to be this page's own URL; `public/_redirects` 301s it to `/music/`
+  now that the vinyl grid is a section of that page instead.

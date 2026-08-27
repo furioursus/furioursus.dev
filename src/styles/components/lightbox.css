@@ -2,6 +2,18 @@ lightbox-image {
 	display: inline-block;
 }
 
+/* Toggled on <html> (see Lightbox.astro) while a dialog is open, to stop the page scrolling
+   behind it — native <dialog>'s showModal() traps focus and clicks, but does *not* lock
+   scrolling on its own. `<html>`, not `<body>`, because that's the element iOS Safari treats as
+   the actual scroll container (see the `overflow-x: clip` comment in global.css); only `overflow-y`
+   is touched, leaving `<html>`'s own `overflow-x: clip` alone rather than combining `hidden` on
+   both axes/elements, which global.css's comment already found causes an intermittent mid-scroll
+   freeze on iOS. `scrollbar-gutter: stable` is already global, so losing the scrollbar here for a
+   moment doesn't shift layout underneath the dialog. */
+html.lightbox-locked {
+	overflow-y: hidden;
+}
+
 .lightbox-trigger {
 	@apply block w-full cursor-zoom-in appearance-none border-0 bg-transparent p-0;
 
@@ -70,6 +82,19 @@ lightbox-image {
 		}
 	}
 
+	/* Set on <html> for the single swap a gallery navigation performs (see navigate() in
+	   Lightbox.astro) — a grouped Next/Prev doesn't reuse one <dialog>, it closes the current
+	   image's and opens the next image's, each with its own independent ::backdrop. Animating
+	   one's fade-out concurrently with the other's fade-in let the actual page underneath show
+	   through for a beat mid-crossfade — read as the background flashing, not a transition.
+	   Higher specificity than the bare rules above (an extra class + type selector), so it wins
+	   regardless of where it sits in the file — no reliance on source-order like the
+	   reduced-motion overrides above. */
+	html.lightbox-navigating &,
+	html.lightbox-navigating &[open] {
+		transition: none;
+	}
+
 	&::backdrop {
 		@apply bg-global-bg/80 backdrop-blur-sm;
 		opacity: 0;
@@ -95,6 +120,11 @@ lightbox-image {
 		&[open]::backdrop {
 			transition: none;
 		}
+	}
+
+	html.lightbox-navigating &::backdrop,
+	html.lightbox-navigating &[open]::backdrop {
+		transition: none;
 	}
 
 	img {
@@ -134,12 +164,57 @@ lightbox-image {
 	min-width: 100%;
 }
 
-.lightbox-close {
-	@apply bg-global-bg/80 absolute top-2 right-2 z-10 h-8 w-8 cursor-pointer appearance-none rounded-full border-0 p-1.5;
+/* Shared by .lightbox-close and the two gallery-nav buttons below — a circular icon button
+   pinned to a corner/edge of the dialog. Each subclass only adds its own position + icon. */
+.lightbox-icon-button {
+	@apply bg-global-bg/80 absolute top-2 z-10 h-8 w-8 cursor-pointer appearance-none rounded-full border-0 p-1.5;
 
 	&:before {
 		@apply bg-global-text block h-full w-full content-[''];
-		mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z'/%3E%3C/svg%3E")
+	}
+}
+
+.lightbox-close {
+	@apply right-2;
+
+	&:before {
+		mask:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z'/%3E%3C/svg%3E")
+			center / 60% no-repeat;
+	}
+}
+
+/* Only shown when Lightbox.astro's script finds this dialog inside a `[data-lightbox-gallery]`
+   with more than one navigable (not filtered-out) member — hidden by default in markup so a
+   standalone image (a blog post photo, Masthead's cover) never renders dead nav buttons. See
+   "Gallery grouping and navigation" in docs/lightbox.md. */
+.lightbox-nav-prev,
+.lightbox-nav-next {
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.lightbox-nav-prev[hidden],
+.lightbox-nav-next[hidden] {
+	display: none;
+}
+
+.lightbox-nav-prev {
+	@apply left-2;
+
+	&:before {
+		mask:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15.41,16.59L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.59Z'/%3E%3C/svg%3E")
+			center / 60% no-repeat;
+	}
+}
+
+.lightbox-nav-next {
+	@apply right-2;
+
+	&:before {
+		mask:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8.59,16.59L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.59Z'/%3E%3C/svg%3E")
 			center / 60% no-repeat;
 	}
 }

@@ -8,7 +8,7 @@ import { siteConfig } from "../../site.config";
 <!-- <div data-netlify-identity-menu></div>
 <div data-netlify-identity-button>Login with Netlify Identity</div> -->
 <header class="group bg-global-bg breakout-container sticky top-0 z-30 mb-6" id="main-header">
-	<div class="relative mx-auto max-w-3xl px-4 py-4 sm:px-8">
+	<div class="relative mx-auto max-w-3xl px-4 py-8 sm:px-8">
 		{
 			/* ps-18 lives on this innermost row specifically, not the px-4/sm:px-8 wrapper
 			above — Tailwind's ps-* replaces (not adds to) px-*'s start-side value, so
@@ -46,9 +46,10 @@ import { siteConfig } from "../../site.config";
 						0.5rem via `translate`, landing its right edge a consistent half-rem
 						before the title regardless of what the width actually resolves to —
 						stays correct if the height (and so the auto width) ever changes again.
-						h-18 specifically (not just "smaller") is chosen to leave that same ~0.5rem
-						clear above and below within the sticky header's own height (88px:
-						72px logo + 2×8px). Vertical centering (inset-y-0 + my-auto) is a separate,
+						h-18 specifically (not just "smaller") is chosen to leave clear space
+						above and below within the sticky header's own height (136px at sm:
+						72px logo + 2×32px from py-8 on the row above). Vertical centering
+						(inset-y-0 + my-auto) is a separate,
 						unrelated mechanism — see the containing-block note above for why that
 						one specifically needed <a> to stop being a filtered element. */
 					}
@@ -57,7 +58,7 @@ import { siteConfig } from "../../site.config";
 							<svg
 								data-name="Bear Face"
 								aria-hidden="true"
-								class="logo-mark me-3 h-10 w-6 sm:absolute sm:inset-y-0 sm:inset-s-18 sm:my-auto sm:me-0 sm:h-18 sm:w-auto sm:-translate-x-[calc(100%+0.5rem)] sm:grayscale sm:group-hover:filter-none"
+								class="logo-mark me-4 h-10 w-6 sm:absolute sm:inset-y-0 sm:inset-s-18 sm:my-auto sm:me-0 sm:h-18 sm:w-auto sm:-translate-x-[calc(100%+0.5rem)] sm:grayscale sm:group-hover:filter-none"
 								fill="currentColor"
 								focusable="false"
 								viewBox="0 0 68.31 64.71"

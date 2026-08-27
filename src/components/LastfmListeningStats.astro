@@ -1,0 +1,124 @@
+---
+// src/components/LastfmListeningStats.astro
+// The /music/ page's Last.fm top-artists/albums/tracks stats, tabbed by time range. Defines the
+// <lastfm-period-tabs> custom element (colocated with its markup, following the ThemeToggle.astro
+// pattern — see docs/README.md's conventions section); switching tabs just toggles which
+// pre-rendered panel is visible, no re-fetch. See docs/lastfm.md for the wider feature.
+import LastfmRankedList from "@/components/LastfmRankedList.astro";
+import { LASTFM_PERIODS, type LastfmPeriod, type MusicStatsPeriod } from "@/utils/lastfm";
+
+interface Props {
+	periods: Partial<Record<LastfmPeriod, MusicStatsPeriod>>;
+}
+
+const { periods } = Astro.props;
+const DEFAULT_PERIOD = LASTFM_PERIODS[0].value;
+---
+
+<lastfm-period-tabs>
+	<h2 class="mt-10 mb-3 text-lg font-semibold">Listening stats</h2>
+	<div class="tabs" role="tablist">
+		{
+			LASTFM_PERIODS.map(({ value, label }, index) => (
+				<button aria-selected={index === 0} data-period-tab={value} role="tab" type="button">
+					{label}
+				</button>
+			))
+		}
+	</div>
+
+	{
+		LASTFM_PERIODS.map(({ value }) => {
+			const period = periods[value];
+			return (
+				<div class="period-panel" data-period-panel={value} hidden={value !== DEFAULT_PERIOD}>
+					<p class="text-muted mb-3 text-sm">
+						{(period?.totalArtists ?? 0).toLocaleString()} artists &middot;{" "}
+						{(period?.totalAlbums ?? 0).toLocaleString()} albums &middot;{" "}
+						{(period?.totalTracks ?? 0).toLocaleString()} tracks
+					</p>
+					<div class="breakout-container">
+						<div class="mx-auto max-w-7xl px-4 sm:px-8">
+							<div class="stats-grid">
+								<LastfmRankedList title="Top Artists" items={period?.artists ?? []} />
+								<LastfmRankedList title="Top Albums" items={period?.albums ?? []} showArtist />
+								<LastfmRankedList title="Top Tracks" items={period?.tracks ?? []} showArtist />
+							</div>
+						</div>
+					</div>
+				</div>
+			);
+		})
+	}
+</lastfm-period-tabs>
+
+<style>
+	.tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+	}
+
+	.tabs button {
+		font: inherit;
+		font-size: 0.8rem;
+		color: var(--color-global-text);
+		background: var(--color-global-bg);
+		border: 1px dashed var(--color-muted);
+		border-radius: 2px;
+		padding: 0.3rem 0.6rem;
+		cursor: pointer;
+	}
+
+	.tabs button:hover {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+	}
+
+	.tabs button[aria-selected="true"] {
+		color: var(--color-accent);
+		border-style: solid;
+		border-color: var(--color-accent);
+	}
+
+	.tabs button:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 1px;
+	}
+
+	.period-panel[hidden] {
+		display: none;
+	}
+
+	.stats-grid {
+		display: grid;
+		gap: 1.5rem;
+		margin-bottom: 2rem;
+	}
+
+	@media (min-width: 640px) {
+		.stats-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+</style>
+
+<script>
+	class LastfmPeriodTabs extends HTMLElement {
+		connectedCallback() {
+			const tabs = Array.from(this.querySelectorAll<HTMLButtonElement>("[data-period-tab]"));
+			const panels = Array.from(this.querySelectorAll<HTMLElement>("[data-period-panel]"));
+
+			for (const tab of tabs) {
+				tab.addEventListener("click", () => {
+					const period = tab.dataset.periodTab;
+					for (const t of tabs) t.setAttribute("aria-selected", String(t === tab));
+					for (const panel of panels) panel.hidden = panel.dataset.periodPanel !== period;
+				});
+			}
+		}
+	}
+
+	customElements.define("lastfm-period-tabs", LastfmPeriodTabs);
+</script>

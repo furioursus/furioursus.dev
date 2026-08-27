@@ -1,0 +1,178 @@
+---
+// src/components/LastfmNowPlaying.astro
+// Live "currently/last playing" strip for /music/ — polls Last.fm client-side, see docs/lastfm.md.
+// Starts `hidden` and stays that way until the first successful fetch resolves, so there's no
+// layout flash for a "loading…" state that (on a fast connection) is visible for a few hundred ms.
+import { Icon } from "astro-icon/components";
+---
+
+<lastfm-now-playing class="now-playing" hidden>
+	<div class="info">
+		<p class="label">
+			<Icon aria-hidden="true" class="label-icon" data-icon-playing focusable="false" name="mdi:play" />
+			<Icon aria-hidden="true" class="label-icon" data-icon-last focusable="false" name="mdi:history" />
+			<span data-label></span>
+		</p>
+		<a class="track" data-track-link href="#" rel="noopener" target="_blank">
+			<span data-track-name></span>
+		</a>
+		<p class="artist" data-artist></p>
+	</div>
+</lastfm-now-playing>
+
+<style>
+	.now-playing {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 1.5rem;
+		padding: 0.6rem 0.8rem;
+		border: 1px dashed var(--color-muted);
+		border-radius: 4px;
+	}
+
+	.now-playing[hidden] {
+		display: none;
+	}
+
+	.info {
+		min-width: 0;
+	}
+
+	.label {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		margin: 0;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		opacity: 0.65;
+	}
+
+	.label-icon {
+		width: 0.9rem;
+		height: 0.9rem;
+	}
+
+	/* Icon swap driven by the .is-playing class the script toggles — "now playing" gets the play
+	   glyph, a past scrobble gets the history glyph. Both live in the DOM from the start (rather
+	   than swapping the `name` prop in JS) so there's no extra network request mid-poll. */
+	:global(.now-playing:not(.is-playing)) [data-icon-playing] {
+		display: none;
+	}
+	:global(.now-playing.is-playing) [data-icon-last] {
+		display: none;
+	}
+
+	.track {
+		display: block;
+		margin: 0.1rem 0;
+		font-weight: 600;
+		text-decoration: none;
+		color: inherit;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.track:hover {
+		color: var(--color-accent);
+	}
+
+	.artist {
+		margin: 0;
+		font-size: 0.8rem;
+		opacity: 0.7;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+</style>
+
+<script>
+	import { getRelativeTime } from "@/utils/date";
+	import { fetchNowPlaying, type LastfmNowPlaying as NowPlayingData } from "@/utils/lastfm";
+
+	// Last.fm scrobbles land after ~50% of a track (or 4 minutes) plays, so 30s is plenty
+	// responsive without hammering their API from every open tab of this site.
+	const POLL_INTERVAL_MS = 30_000;
+
+	class LastfmNowPlayingElement extends HTMLElement {
+		#current: NowPlayingData | null = null;
+		#pollTimer: ReturnType<typeof setInterval> | null = null;
+
+		connectedCallback() {
+			this.#refresh();
+			this.#startPolling();
+			document.addEventListener("visibilitychange", this.#handleVisibility);
+		}
+
+		disconnectedCallback() {
+			this.#stopPolling();
+			document.removeEventListener("visibilitychange", this.#handleVisibility);
+		}
+
+		#handleVisibility = () => {
+			// Backgrounded tabs don't need to keep polling Last.fm — pick back up (with an
+			// immediate refresh, since the tab could've been hidden for hours) when it's visible again.
+			if (document.hidden) {
+				this.#stopPolling();
+			} else {
+				this.#refresh();
+				this.#startPolling();
+			}
+		};
+
+		#startPolling() {
+			this.#stopPolling();
+			this.#pollTimer = setInterval(() => this.#refresh(), POLL_INTERVAL_MS);
+		}
+
+		#stopPolling() {
+			if (this.#pollTimer) clearInterval(this.#pollTimer);
+			this.#pollTimer = null;
+		}
+
+		async #refresh() {
+			try {
+				this.#current = await fetchNowPlaying();
+			} catch {
+				// Last.fm hiccup, offline, whatever — keep showing the last-known state rather
+				// than flashing an error into what's meant to be a quiet corner of the page.
+				return;
+			}
+			this.#render();
+		}
+
+		#render() {
+			const data = this.#current;
+			if (!data) {
+				this.hidden = true;
+				return;
+			}
+			this.hidden = false;
+			this.classList.toggle("is-playing", data.nowPlaying);
+
+			const label = this.querySelector<HTMLElement>("[data-label]");
+			if (label) {
+				label.textContent = data.nowPlaying
+					? "Now playing"
+					: data.playedAt
+						? `Last played ${getRelativeTime(data.playedAt)}`
+						: "Last played";
+			}
+
+			const trackLink = this.querySelector<HTMLAnchorElement>("[data-track-link]");
+			if (trackLink) trackLink.href = data.url;
+
+			const trackName = this.querySelector("[data-track-name]");
+			if (trackName) trackName.textContent = data.name;
+
+			const artist = this.querySelector("[data-artist]");
+			if (artist) artist.textContent = data.album ? `${data.artist} — ${data.album}` : data.artist;
+		}
+	}
+
+	customElements.define("lastfm-now-playing", LastfmNowPlayingElement);
+</script>

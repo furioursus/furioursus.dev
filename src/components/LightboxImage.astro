@@ -100,8 +100,28 @@ const style = Object.fromEntries(
 	</button>
 	{captionText && <p class="lightbox-caption">{captionText}</p>}
 	<dialog class="lightbox-dialog">
-		<button type="button" class="lightbox-close" aria-label="Close image"></button>
+		<button type="button" class="lightbox-icon-button lightbox-close" aria-label="Close image"></button>
+		<button
+			type="button"
+			class="lightbox-icon-button lightbox-nav-prev"
+			aria-label="Previous image"
+			hidden
+		></button>
+		<button
+			type="button"
+			class="lightbox-icon-button lightbox-nav-next"
+			aria-label="Next image"
+			hidden
+		></button>
 		{needsSeparateDialogImage && <Image src={src} alt={alt} width={Math.min(src.width, 1600)} />}
 		{captionText && <p class="lightbox-caption">{captionText}</p>}
+		{
+			/* For a caller that needs richer, dialog-only caption content (a link, multiple
+			pieces of styled text) that the plain-string `caption` prop above can't express —
+			renders nothing when unfilled, so every existing caller is unaffected. See
+			RecordCard.astro for the one current use: cover art's artist/title/format info,
+			hidden from the card on desktop and shown here instead (docs/discogs.md). */
+		}
+		<slot name="dialog-caption" />
 	</dialog>
 </lightbox-image>

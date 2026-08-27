@@ -24,8 +24,10 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
 - [Webmentions](./webmentions.md) — likes/reposts/replies pulled from webmention.io.
 - [OG images](./og-images.md) — per-post social card images generated at build time.
 - [CMS](./cms.md) — Decap CMS + Netlify Identity, for editing content without a local checkout.
-- [Record collection](./discogs.md) — the `/vinyl-collection/` page: Discogs data via
-  `astro-discogs-collection`, client-side search/filter/sort.
+- [Music listening (Last.fm)](./lastfm.md) — the `/music/` page's live now-playing widget and
+  Last.fm top-artists/albums/tracks stats.
+- [Record collection](./discogs.md) — the `/music/` page's vinyl collection section: Discogs data
+  via `astro-discogs-collection`, client-side search/filter/sort.
 - [Deploy notifications](./deploy-notifications.md) — a local Netlify Build Plugin that posts
   deploy success/failure to Telegram.
 
