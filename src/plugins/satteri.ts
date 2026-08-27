@@ -119,8 +119,36 @@ export function satteriLightboxImagesPlugin(): HastPluginDefinition {
 									tagName: "button",
 									properties: {
 										type: "button",
-										className: ["lightbox-close"],
+										className: ["lightbox-icon-button", "lightbox-close"],
 										"aria-label": "Close image",
+									},
+									children: [],
+								},
+								// Only shown when Lightbox.astro's script finds this dialog inside a
+								// [data-lightbox-gallery] with more than one navigable member — see
+								// docs/lightbox.md's "Gallery grouping and navigation". `hidden` by
+								// default here for the same reason RecordCard.astro/LightboxImage.astro
+								// render them hidden too: no per-image way to know at author time
+								// whether a markdown image will end up inside a gallery container.
+								{
+									type: "element",
+									tagName: "button",
+									properties: {
+										type: "button",
+										className: ["lightbox-icon-button", "lightbox-nav-prev"],
+										"aria-label": "Previous image",
+										hidden: true,
+									},
+									children: [],
+								},
+								{
+									type: "element",
+									tagName: "button",
+									properties: {
+										type: "button",
+										className: ["lightbox-icon-button", "lightbox-nav-next"],
+										"aria-label": "Next image",
+										hidden: true,
 									},
 									children: [],
 								},

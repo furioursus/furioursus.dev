@@ -130,6 +130,14 @@ export default defineConfig({
 			WEBMENTION_DOMAIN: envField.string({ context: "server", access: "public", optional: true }),
 			WEBMENTION_URL: envField.string({ context: "client", access: "public", optional: true }),
 			WEBMENTION_PINGBACK: envField.string({ context: "client", access: "public", optional: true }),
+			// Last.fm's API only grants write/session access via a separate user-auth handshake —
+			// a bare api_key is read-only, so shipping it to the client (needed for the live
+			// now-playing widget's browser-side polling, see docs/lastfm.md) carries the same risk
+			// as any other public, rate-limited API key. "client" context makes it readable from
+			// both `music.astro`'s frontmatter (build-time stats fetch) and its client <script>
+			// (live polling) via the same `astro:env/client` import.
+			LASTFM_API_KEY: envField.string({ context: "client", access: "public", optional: true }),
+			LASTFM_USERNAME: envField.string({ context: "client", access: "public", optional: true }),
 		},
 	},
 });

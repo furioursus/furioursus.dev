@@ -1,4 +1,20 @@
 <script>
+	// Every <lightbox-image> inside a shared `[data-lightbox-gallery]` ancestor (VinylCollection's
+	// `.grid`, currently the only user) is one navigable gallery, in DOM order — no per-image
+	// opt-in needed, membership is purely structural. Filters out anything currently hidden by an
+	// ancestor (e.g. `record-collection`'s search/genre/format filtering toggles the `hidden`
+	// attribute on `.record-item`, not the DOM presence) so Next/Prev never lands on a filtered-out
+	// record. Recomputed fresh on every call rather than cached, since which records are hidden can
+	// change between dialog opens (filters can't change *while* a dialog is open — it's modal — but
+	// there's no reason to assume a snapshot taken once at connect is still accurate later).
+	function getGalleryMembers(image: HTMLElement): HTMLElement[] {
+		const gallery = image.closest("[data-lightbox-gallery]");
+		if (!gallery) return [image];
+		return Array.from(gallery.querySelectorAll("lightbox-image")).filter(
+			(candidate) => !candidate.closest("[hidden]"),
+		) as HTMLElement[];
+	}
+
 	// Registers the <lightbox-image> custom element used by both:
 	//  - the satteriLightboxImagesPlugin hast transform (src/plugins/satteri.ts),
 	//    which auto-wraps every markdown body image
@@ -9,6 +25,8 @@
 			const trigger = this.querySelector<HTMLButtonElement>(":scope > .lightbox-trigger");
 			const dialog = this.querySelector<HTMLDialogElement>(":scope > dialog.lightbox-dialog");
 			const closeButton = dialog?.querySelector<HTMLButtonElement>(".lightbox-close");
+			const prevButton = dialog?.querySelector<HTMLButtonElement>(".lightbox-nav-prev");
+			const nextButton = dialog?.querySelector<HTMLButtonElement>(".lightbox-nav-next");
 			const triggerImg = trigger?.querySelector("img");
 			// Usually the dialog starts with no <img> of its own — the trigger's
 			// gets moved in on open (see below). But when the thumbnail is a real
@@ -24,6 +42,34 @@
 				return;
 			}
 
+			// Moves to the next (direction: 1) or previous (-1) gallery member and opens it,
+			// wrapping around at either end. Reuses that member's own already-wired trigger click
+			// handler rather than duplicating the open logic here.
+			const navigate = (direction: 1 | -1) => {
+				const members = getGalleryMembers(this);
+				if (members.length <= 1) return;
+				const currentIndex = members.indexOf(this);
+				if (currentIndex === -1) return;
+				const nextIndex = (currentIndex + direction + members.length) % members.length;
+				const nextTrigger = members[nextIndex]?.querySelector<HTMLButtonElement>(
+					":scope > .lightbox-trigger",
+				);
+				// Suppresses the close/open transition for this swap (see the .lightbox-navigating
+				// rules in lightbox.css) — each gallery member has its own separate <dialog>, so
+				// animating this one's backdrop fading out while the next one's fades in let the
+				// actual page show through for a beat mid-crossfade. Removed a frame later, once
+				// the instant swap has actually been committed — removing it in the same
+				// synchronous tick it was added risks the browser never having applied it at all,
+				// since transitions key off the computed style at the point of the *next* style
+				// recalc, not each individual synchronous mutation along the way.
+				document.documentElement.classList.add("lightbox-navigating");
+				dialog.close();
+				nextTrigger?.click();
+				requestAnimationFrame(() => {
+					document.documentElement.classList.remove("lightbox-navigating");
+				});
+			};
+
 			trigger.addEventListener("click", () => {
 				if (!dialogOwnImg) {
 					// move (not clone) the image into the dialog — same element, same
@@ -37,22 +83,54 @@
 						dialog.appendChild(triggerImg);
 					}
 				}
+				// Only worth showing/wiring nav for a gallery of more than one *currently
+				// visible* member — recomputed on every open since filtering (elsewhere on the
+				// page) can only change between opens, a modal dialog blocks interacting with it.
+				const hasMultipleMembers = getGalleryMembers(this).length > 1;
+				if (prevButton) prevButton.hidden = !hasMultipleMembers;
+				if (nextButton) nextButton.hidden = !hasMultipleMembers;
+				// showModal() traps focus/clicks but doesn't stop background scroll on its own —
+				// see the .lightbox-locked comment in lightbox.css for why this targets <html>.
+				document.documentElement.classList.add("lightbox-locked");
 				dialog.showModal();
 			});
 
 			closeButton?.addEventListener("click", () => dialog.close());
+			prevButton?.addEventListener("click", () => navigate(-1));
+			nextButton?.addEventListener("click", () => navigate(1));
+
+			// Arrow keys navigate within a gallery; every other key (including Escape, handled
+			// natively by <dialog>) passes through untouched. Bound to the dialog rather than
+			// document — focus is trapped inside it while open, so keydowns land here regardless.
+			dialog.addEventListener("keydown", (e) => {
+				if (e.key === "ArrowRight") navigate(1);
+				else if (e.key === "ArrowLeft") navigate(-1);
+			});
 
 			// click on the backdrop (outside the image) closes the dialog
 			dialog.addEventListener("click", (e) => {
 				if (e.target === dialog) dialog.close();
 			});
 
-			// fires uniformly for Escape, the close button, and backdrop clicks
+			// fires uniformly for Escape, the close button, backdrop clicks, and mid-navigation
+			// (navigate() calls close() then immediately opens a different dialog). The
+			// lightbox-locked toggle below is harmless in that last case specifically — it's a
+			// non-transitioning property (overflow-y), removed and re-added in the same
+			// synchronous tick before either change is ever painted — unlike the dialog's own
+			// opacity/transform transitions, which needed the .lightbox-navigating class in
+			// lightbox.css to avoid a visible flash (see navigate()'s comment).
 			dialog.addEventListener("close", () => {
 				if (!dialogOwnImg) {
 					trigger.appendChild(triggerImg);
 				}
 				trigger.focus();
+				// Only unlock once no other <lightbox-image> on the page still has its dialog
+				// open — this element is defined once but instantiated per image, so a page with
+				// several galleries shouldn't have one closing dialog unlock scroll out from
+				// under another that's still open.
+				if (!document.querySelector("dialog[open]")) {
+					document.documentElement.classList.remove("lightbox-locked");
+				}
 			});
 		}
 	}

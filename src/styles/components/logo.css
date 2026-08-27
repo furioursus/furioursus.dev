@@ -3,6 +3,14 @@
    while the mark just sits there. Static everywhere else `icon.svg` is used (the favicon copy in
    `public/`): browsers don't run CSS animations in a favicon, so there's nothing to gain there. */
 .logo-mark {
+	/* The viewBox (68.31×64.71) is cropped tight to the artwork's *resting* bounding box, with
+	   no margin for any of this file's motion — the ear twitches rotate past its top edge, and
+	   the look-around glance/cursor tracking push translateX past its left/right edges. Browsers
+	   default the outermost `svg` element to `overflow: hidden` (unlike every other element,
+	   whose initial value is `visible`), so without this, all that motion gets hard-clipped at
+	   the viewBox rect the instant it moves past the resting artwork. */
+	overflow: visible;
+
 	/* The percentage transform-origins below are relative to each element's own rendered
 	   bounding box (its ear or eye shape), not the SVG viewport. SVG geometry elements default
 	   to `view-box` for that calculation instead — `fill-box` is what makes "50% 50%" mean "the

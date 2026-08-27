@@ -24,6 +24,14 @@ const TitleTag = titleLevel === false ? "p" : (`h${titleLevel}` as const);
 // backfilled yet, so a fresh checkout with an empty cache still gets *something* accessible.
 const generatedAlt = (coverAltData as Record<string, { alt: string }>)[String(release.id)]?.alt;
 const coverAlt = generatedAlt ?? `${release.artist} – ${release.title}`;
+const metaText = [release.year || null, release.formats.join(", ") || null]
+	.filter(Boolean)
+	.join(" ");
+// From sm up, `.info` below is hidden in favor of this same artist/title/meta info shown inside
+// the lightbox dialog instead (see the `dialog-caption` slot below and .dialog-info's styles) —
+// but only when there's actually a cover/dialog to show it in. The no-cover placeholder path has
+// no lightbox at all, so `.info` stays the only place that information ever appears.
+const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 ---
 
 <div class="record">
@@ -48,7 +56,13 @@ const coverAlt = generatedAlt ?? `${release.artist} – ${release.title}`;
 				thumbHeight="none"
 				width={500}
 				height={500}
-			/>
+			>
+				<a slot="dialog-caption" class="lightbox-caption dialog-info" href={release.releaseUrl} target="_blank" rel="noopener">
+					<span class="dialog-artist">{release.artist}</span>
+					<span class="dialog-title">{release.title}</span>
+					{metaText && <span class="dialog-meta">{metaText}</span>}
+				</a>
+			</LightboxImage>
 		) : release.coverImageUrl ? (
 			// No local cache yet (e.g. before the first image-cache run) — coverImageUrl is
 			// already Discogs's full-size art with no local resize applied, so a hand-rolled
@@ -68,17 +82,39 @@ const coverAlt = generatedAlt ?? `${release.artist} – ${release.title}`;
 					<img src={release.coverImageUrl} alt={coverAlt} loading="lazy" width="500" height="500" />
 				</button>
 				<dialog class="lightbox-dialog">
-					<button type="button" class="lightbox-close" aria-label="Close image" />
+					<button type="button" class="lightbox-icon-button lightbox-close" aria-label="Close image" />
+					<button
+						type="button"
+						class="lightbox-icon-button lightbox-nav-prev"
+						aria-label="Previous image"
+						hidden
+					/>
+					<button
+						type="button"
+						class="lightbox-icon-button lightbox-nav-next"
+						aria-label="Next image"
+						hidden
+					/>
+					<a class="lightbox-caption dialog-info" href={release.releaseUrl} target="_blank" rel="noopener">
+						<span class="dialog-artist">{release.artist}</span>
+						<span class="dialog-title">{release.title}</span>
+						{metaText && <span class="dialog-meta">{metaText}</span>}
+					</a>
 				</dialog>
 			</lightbox-image>
 		) : (
 			<div class="placeholder">{release.title}</div>
 		)
 	}
-	<a class="info" href={release.releaseUrl} target="_blank" rel="noopener">
+	<a
+		class:list={["info", { "info--has-lightbox": hasLightbox }]}
+		href={release.releaseUrl}
+		target="_blank"
+		rel="noopener"
+	>
 		<p class="artist">{release.artist}</p>
 		<TitleTag class="title">{release.title}</TitleTag>
-		<p class="meta">{release.year || ""} {release.formats.join(", ")}</p>
+		<p class="meta">{metaText}</p>
 	</a>
 </div>
 
@@ -144,6 +180,30 @@ const coverAlt = generatedAlt ?? `${release.artist} – ${release.title}`;
 		margin: 0;
 	}
 
+	/* The artist/title/meta shown inside the lightbox dialog in place of `.info`, from sm up (see
+	   `hasLightbox` above) — `.lightbox-caption` (global, from lightbox.css) already supplies the
+	   muted/centered/small-text look plus the width:0/min-width:100% fix a long title needs to
+	   avoid dragging the dialog wider than the photo (see docs/lightbox.md's Captions section);
+	   this just re-adds a link's affordance and makes the title itself stand out from the rest. */
+	.dialog-info {
+		display: block;
+		text-decoration: none;
+		color: inherit;
+	}
+	.dialog-info:hover .dialog-title {
+		color: var(--color-accent);
+	}
+	.dialog-artist,
+	.dialog-title,
+	.dialog-meta {
+		display: block;
+	}
+	.dialog-title {
+		margin: 0.1rem 0;
+		font-weight: 600;
+		color: var(--color-global-text);
+	}
+
 	/* From sm up: back to the card grid — cover on top, text below. */
 	@media (min-width: 640px) {
 		.record {
@@ -157,6 +217,9 @@ const coverAlt = generatedAlt ?? `${release.artist} – ${release.title}`;
 		}
 		.info {
 			margin-top: 0.5rem;
+		}
+		.info.info--has-lightbox {
+			display: none;
 		}
 		.title {
 			white-space: normal;
