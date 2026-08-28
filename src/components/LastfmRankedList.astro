@@ -15,7 +15,7 @@ const { items, showArtist = false, title } = Astro.props;
 ---
 
 <div class="ranked-list">
-	<h4>{title}</h4>
+	<h3>{title}</h3>
 	{
 		items.length === 0 ? (
 			<p class="empty">Nothing scrobbled in this range yet.</p>
@@ -49,7 +49,7 @@ const { items, showArtist = false, title } = Astro.props;
 		min-width: 0;
 	}
 
-	.ranked-list h4 {
+	.ranked-list h3 {
 		margin: 0 0 0.5rem;
 		font-size: 0.8rem;
 		text-transform: uppercase;

@@ -1,7 +1,8 @@
 /* Idle animation for the header bear logo (`.logo-mark`, `Header.astro`) — a blink, an
-   occasional ear twitch on each side, and a casual side-to-side glance, all looping forever
-   while the mark just sits there. Static everywhere else `icon.svg` is used (the favicon copy in
-   `public/`): browsers don't run CSS animations in a favicon, so there's nothing to gain there. */
+   occasional ear twitch on each side, a casual side-to-side glance, and a slow breathing scale
+   on the head, all looping forever while the mark just sits there. Static everywhere else
+   `icon.svg` is used (the favicon copy in `public/`): browsers don't run CSS animations in a
+   favicon, so there's nothing to gain there. */
 .logo-mark {
 	/* The viewBox (68.31×64.71) is cropped tight to the artwork's *resting* bounding box, with
 	   no margin for any of this file's motion — the ear twitches rotate past its top edge, and
@@ -24,9 +25,24 @@
 	& #Eye1Track,
 	& #Eye2,
 	& #Eye2Track,
+	& #Head,
 	& #Muzzle,
 	& #MuzzleTrack {
 		transform-box: fill-box;
+	}
+
+	/* A slow, subtle scale on the head shape itself — the base the ears/eyes/muzzle all sit on
+	   top of — to read as a barely-there breathing motion under the rest of the idle loops.
+	   Anchored at the bottom (50% 100% of the head's own fill-box, i.e. its jaw) rather than the
+	   center so the swell reads as the chest rising from a fixed base instead of the whole head
+	   growing outward in every direction, which looked more like a pulse than a breath. Y grows
+	   slightly more than X (1.5% vs. 0.8%) since a real breath expands the torso vertically more
+	   than it widens it. No wrapper/Track split needed here (unlike the eyes/ears/muzzle above)
+	   — #Head carries no `transition` on a standalone translate/scale/rotate property, so there's
+	   nothing for the Chrome paint bug described further below to trip over. */
+	& #Head {
+		animation: logo-breathe 5s ease-in-out infinite;
+		transform-origin: 50% 100%;
 	}
 
 	/* Pivots sit at the base of each ear, where it meets the head, so the twitch hinges the ear
@@ -65,7 +81,7 @@
 		transform-origin: 50% 50%;
 	}
 
-	/* 7s/9s/11s/13s are pairwise coprime, so the four loops take a very long time to realign —
+	/* 5s/7s/9s/11s/13s are pairwise coprime, so the five loops take a very long time to realign —
 	   long enough that the mark reads as idly alive rather than visibly looping. */
 
 	/* Return-to-idle: the moment `--live-idle` flips to `1` (3s with no `pointermove` anywhere on
@@ -313,9 +329,20 @@
 		& #Eyes,
 		& #Eye1,
 		& #Eye2,
+		& #Head,
 		& #Muzzle {
 			animation: none;
 		}
+	}
+}
+
+@keyframes logo-breathe {
+	0%,
+	100% {
+		transform: scale(1, 1);
+	}
+	50% {
+		transform: scale(1.008, 1.015);
 	}
 }
 

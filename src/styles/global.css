@@ -53,7 +53,11 @@
 @theme {
 	--color-global-bg: hsla(49, 31%, 93%, 1);
 	--color-global-text: hsla(0, 0%, 6%, 1);
-	--color-muted: hsla(43, 6%, 44%, 1);
+	/* 40% (not the old 44%) — the flat 44% shared by both themes read at only 4.18:1 against this
+	   light bg, under WCAG AA's 4.5:1 for text. Dark mode needs the opposite adjustment (lighter,
+	   not darker — see the [data-theme="dark"] block below); same hue/sat, solved per-background
+	   instead of shared. */
+	--color-muted: hsla(43, 6%, 40%, 1);
 	--color-link: oklch(55.44% 0.0431 185.69);
 	--color-accent: oklch(55.27% 0.195 19.06);
 	--color-accent-2: oklch(18.15% 0 0);
@@ -84,7 +88,10 @@
 			color-scheme: dark;
 			--color-global-bg: hsla(0, 0%, 6%, 1);
 			--color-global-text: hsla(49, 31%, 93%, 1);
-			--color-muted: hsla(43, 6%, 44%, 1);
+			/* 48% (not the light-mode 40% above) — lighter, not darker, since this sits on a near-
+			   black bg instead of a near-white one. Was silently duplicating the light-mode value
+			   (44%) verbatim, which only cleared 4.05:1 here. */
+			--color-muted: hsla(43, 6%, 48%, 1);
 			--color-link: oklch(70.44% 0.1133 349);
 			--color-accent: oklch(70.91% 0.1415 163.7);
 			--color-accent-2: oklch(94.66% 0 0);
