@@ -40,13 +40,18 @@ export default defineConfig({
 			provider: fontProviders.local(),
 			name: "MonoLisa",
 			cssVariable: "--font-monolisa",
-			// "optional" (vs. the default "swap") — a local/same-origin font is ready almost
-			// immediately, so this still shows MonoLisa on effectively every load, but it never
-			// swaps mid-render. "swap" was causing a huge CLS hit (~0.38): Astro's auto-generated
-			// fallback metrics get close but not pixel-identical, and that few-px mismatch shifted
-			// content above the vinyl grid, which cascaded into the whole ~3500px-tall grid moving
-			// (see docs/lighthouse findings, 2026-08-27).
-			display: "optional",
+			// "fallback" (vs. the default "swap") — ~100ms block period like "optional", but
+			// (unlike "optional") keeps a ~3s window where it'll still swap in once the font
+			// arrives instead of giving up on that page view for good. Tried "optional" first:
+			// its zero swap window means if the font isn't ready within ~100ms it never appears
+			// for that load at all — and dev serves local assets with no-cache headers, so every
+			// reload is a cold fetch that reliably misses that window in Chrome specifically
+			// (Firefox/Safari are looser about it), i.e. MonoLisa silently never rendered there.
+			// "swap" (the original default) was the other extreme — a huge CLS hit (~0.38):
+			// Astro's auto-generated fallback metrics get close but not pixel-identical, and that
+			// few-px mismatch shifted content above the vinyl grid, cascading into the whole
+			// ~3500px-tall grid moving (see docs/lighthouse findings, 2026-08-27).
+			display: "fallback",
 			options: {
 				variants: [
 					{
