@@ -54,8 +54,16 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 				aspectRatio="1/1"
 				thumbWidth="100%"
 				thumbHeight="none"
-				width={500}
-				height={500}
+				// The thumbnail never actually renders wider than the grid's own "Large" cell size
+				// (18rem/288px, see VinylCollection.astro's COVER_SIZES) or the mobile row's fixed
+				// 3.5rem/56px (.record :global(.cover) above) — 500 was Discogs's own thumbnail
+				// resolution, not a real display size, and was making Astro generate (and browsers
+				// fetch) a candidate roughly 3x heavier than anything ever shown on-page.
+				// width/height only set the *thumbnail's* resolution here; the dialog still gets
+				// its own full-res Image regardless (see needsSeparateDialogImage above).
+				width={288}
+				height={288}
+				sizes="(min-width: 640px) 18rem, 3.5rem"
 			>
 				<a slot="dialog-caption" class="lightbox-caption dialog-info" href={release.releaseUrl} target="_blank" rel="noopener">
 					<span class="dialog-artist">{release.artist}</span>

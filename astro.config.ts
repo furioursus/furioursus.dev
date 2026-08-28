@@ -40,6 +40,13 @@ export default defineConfig({
 			provider: fontProviders.local(),
 			name: "MonoLisa",
 			cssVariable: "--font-monolisa",
+			// "optional" (vs. the default "swap") — a local/same-origin font is ready almost
+			// immediately, so this still shows MonoLisa on effectively every load, but it never
+			// swaps mid-render. "swap" was causing a huge CLS hit (~0.38): Astro's auto-generated
+			// fallback metrics get close but not pixel-identical, and that few-px mismatch shifted
+			// content above the vinyl grid, which cascaded into the whole ~3500px-tall grid moving
+			// (see docs/lighthouse findings, 2026-08-27).
+			display: "optional",
 			options: {
 				variants: [
 					{

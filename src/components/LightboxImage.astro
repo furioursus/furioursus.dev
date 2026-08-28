@@ -32,6 +32,13 @@ interface Props {
 	 * `needsSeparateDialogImage` below. */
 	width?: number;
 	height?: number;
+	/** Overrides astro:assets' auto-computed `sizes` for the thumbnail's srcset, which
+	 * (given `layout="constrained"`) defaults to `(min-width: {width}px) {width}px, 100vw` —
+	 * correct only when the thumbnail actually renders at `width` on wide viewports. Pass this
+	 * whenever the real display size is smaller/responsive (e.g. a grid cell narrower than
+	 * `width`), so the browser fetches a candidate sized for how the image actually lays out
+	 * instead of the widest one in the generated set. No effect without `width`/`height`. */
+	sizes?: string;
 	/** Forwarded to astro:assets Image — set for an above-the-fold image
 	 * (e.g. a post's cover image) so it loads eagerly instead of lazily.
 	 * @default false */
@@ -49,6 +56,7 @@ const {
 	caption,
 	width,
 	height,
+	sizes,
 	priority,
 	class: className,
 } = Astro.props;
@@ -91,6 +99,7 @@ const style = Object.fromEntries(
 					layout="constrained"
 					width={width}
 					height={height}
+					sizes={sizes}
 					priority={priority ?? false}
 				/>
 			) : (
