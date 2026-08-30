@@ -31,8 +31,14 @@ const latestNotes = allNotes
 
 <PageLayout meta={{ title: "Home" }}>
 	<section>
-		<h1 class="title mb-4" id="greeting">
-			<button class="waving-hand">👋</button>
+		{
+			// `wobble` is animate.css's keyframe (imported globally, see Base.astro) — not defined
+			// here, just referenced by name via the animate-[] arbitrary utility. Dropped this
+			// hover rule's old `display: inline-block` as redundant: a <button>'s default display
+			// is already inline-block, unset by anything else here.
+		}
+		<h1 class="title group mb-4 flex cursor-pointer items-center gap-2" id="greeting">
+			<button class="m-0 border-0 p-0 [background:none] group-hover:animate-[wobble_1s_5]">👋</button>
 			<span class="title-text" id="greeting-text">Hello, World!</span>
 		</h1>
 		<script is:inline>
@@ -531,24 +537,3 @@ const latestNotes = allNotes
 		)
 	}
 </PageLayout>
-
-<style>
-	h1 {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		cursor: pointer;
-		&:hover {
-			.waving-hand {
-				display: inline-block;
-				animation: wobble 1s 5;
-			}
-		}
-	}
-	.waving-hand {
-		background: none;
-		border: none;
-		padding: 0;
-		margin: 0;
-	}
-</style>

@@ -31,22 +31,23 @@ a searchable, filterable grid of my vinyl collection, pulled from Discogs at bui
   release's cover hasn't been cached locally yet gets a hand-rolled lightbox around the plain
   `<img>` pointed at the remote `coverImageUrl` instead of `LightboxImage.astro` — see
   lightbox.md's "hand-rolled path" section for why.
-- `.info` (the artist/title/meta text) only shows in the card from `sm` down. `hasLightbox` in
-  `RecordCard.astro` gates an `.info--has-lightbox` modifier class, hidden via a plain
-  `@media (min-width: 640px)` rule in the component's own scoped `<style>` — **not** a Tailwind
-  `sm:hidden` utility, which was tried first and silently lost: Astro tacks a
-  `[data-astro-cid-xxxx]` attribute selector onto every rule in a component's scoped `<style>`, so
-  `.info { display: block }` (defined right there in the same file) outranks a plain `.sm\:hidden`
-  utility class on specificity regardless of source order, even though its media query matches
-  correctly. The fix is fighting on equal terms — both rules scoped, in the same file, so normal
-  specificity rules (compound class beats single class) apply as expected. From `sm` up, the same
-  three pieces of info reappear inside the cover's lightbox dialog instead — a linked `.dialog-info`
-  block passed via `LightboxImage.astro`'s `dialog-caption` slot (or written directly into the
-  dialog markup, for the hand-rolled remote-cover path) — see [`docs/lightbox.md`](./lightbox.md)'s
-  "Dialog-only, richer captions". A dense grid of just covers reads better at desktop widths, but a
-  release without any cover art at all has no dialog to hold that info instead, so the no-cover
-  `placeholder` path is exempt: `.info` stays visible there at every width, since it's the only
-  place that information ever appears.
+- The artist/title/meta link only shows in the card from `sm` down — `hasLightbox` in
+  `RecordCard.astro` conditionally adds a plain `sm:hidden` Tailwind utility to it. That utility
+  used to silently lose to a same-file scoped `<style>` rule: Astro tacks a `[data-astro-cid-xxxx]`
+  attribute selector onto every rule in a component's scoped `<style>`, so a `.info { display: block }`
+  defined there outranked a plain `.sm\:hidden` utility class on specificity regardless of source
+  order, even though its media query matched correctly. `RecordCard.astro` no longer has a scoped
+  `<style>` block at all (its CSS was ported to inline Tailwind utilities), which is what actually
+  fixes this — `sm:hidden` now competes with an equally-specific plain `block` utility instead of a
+  boosted-specificity scoped one, so ordinary cascade order resolves it correctly, same as this
+  pattern works everywhere else in the codebase. From `sm` up, the same three pieces of info
+  reappear inside the cover's lightbox dialog instead — the same markup passed via
+  `LightboxImage.astro`'s `dialog-caption` slot (or written directly into the dialog markup, for the
+  hand-rolled remote-cover path) — see [`docs/lightbox.md`](./lightbox.md)'s "Dialog-only, richer
+  captions". A dense grid of just covers reads better at desktop widths, but a release without any
+  cover art at all has no dialog to hold that info instead, so the no-cover `placeholder` path is
+  exempt: its info stays visible there at every width, since it's the only place that information
+  ever appears.
 - Covers inside `VinylCollection.astro`'s grid navigate as one gallery — Next/Previous buttons and
   ArrowLeft/ArrowRight inside the dialog, wrapping at either end, skipping anything currently
   filtered out — via a plain `data-lightbox-gallery` attribute on `.grid`. See
