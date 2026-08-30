@@ -27,14 +27,24 @@ const coverAlt = generatedAlt ?? `${release.artist} – ${release.title}`;
 const metaText = [release.year || null, release.formats.join(", ") || null]
 	.filter(Boolean)
 	.join(" ");
-// From sm up, `.info` below is hidden in favor of this same artist/title/meta info shown inside
-// the lightbox dialog instead (see the `dialog-caption` slot below and .dialog-info's styles) —
-// but only when there's actually a cover/dialog to show it in. The no-cover placeholder path has
-// no lightbox at all, so `.info` stays the only place that information ever appears.
+// From sm up, the info link below is hidden (via a plain `sm:hidden` utility, conditionally
+// applied) in favor of this same artist/title/meta info shown inside the lightbox dialog instead
+// (see the `dialog-caption` slot below) — but only when there's actually a cover/dialog to show it
+// in. The no-cover placeholder path has no lightbox at all, so that link stays the only place that
+// information ever appears, at every width.
+//
+// `sm:hidden` specifically (not a scoped <style> rule) is safe here now that this component has no
+// scoped <style> block left to conflict with it — it used to: Astro tacks a `[data-astro-cid-xxx]`
+// attribute selector onto every rule in a component's scoped <style>, so a same-file
+// `.info { display: block }` outranked a plain `.sm\:hidden` utility on specificity regardless of
+// media query or source order, silently losing (see docs/discogs.md, and git history on this file
+// from before its CSS was ported to Tailwind utilities). With no more competing scoped rule, the
+// two Tailwind utilities (`block` / `sm:hidden`) have equal specificity and normal cascade order
+// resolves it correctly, same as this exact pattern works everywhere else in the codebase.
 const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 ---
 
-<div class="record">
+<div class="flex items-center gap-3 border-b border-muted py-[0.4rem] sm:block sm:border-b-0 sm:py-0">
 	{
 		// The cover art is its own click target (opens the enlarged view) rather than living
 		// inside the link below — a <button>, which the lightbox trigger renders as, can't
@@ -48,13 +58,13 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 			// just the 500×500 crop. See LightboxImage.astro's `needsSeparateDialogImage`.
 			// The thumbnail never actually renders wider than the grid's own "Large" cell size
 			// (18rem/288px, see VinylCollection.astro's COVER_SIZES) or the mobile row's fixed
-			// 3.5rem/56px (.record :global(.cover) above) — 500 was Discogs's own thumbnail
+			// 3.5rem/56px (the flex-none/w-14 classes below) — 500 was Discogs's own thumbnail
 			// resolution, not a real display size, and was making Astro generate (and browsers
 			// fetch) a candidate roughly 3x heavier than anything ever shown on-page.
 			// width/height only set the *thumbnail's* resolution here; the dialog still gets
 			// its own full-res Image regardless (see needsSeparateDialogImage above).
 			<LightboxImage
-				class="cover"
+				class="flex-none w-14 sm:w-full [&_img]:rounded"
 				src={localImage}
 				alt={coverAlt}
 				fit="cover"
@@ -65,10 +75,18 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 				height={288}
 				sizes="(min-width: 640px) 18rem, 3.5rem"
 			>
-				<a slot="dialog-caption" class="lightbox-caption dialog-info" href={release.releaseUrl} target="_blank" rel="noopener">
-					<span class="dialog-artist">{release.artist}</span>
-					<span class="dialog-title">{release.title}</span>
-					{metaText && <span class="dialog-meta">{metaText}</span>}
+				<a
+					slot="dialog-caption"
+					class="lightbox-caption group block text-inherit no-underline"
+					href={release.releaseUrl}
+					target="_blank"
+					rel="noopener"
+				>
+					<span class="block">{release.artist}</span>
+					<span class="my-[0.1rem] block font-semibold text-global-text group-hover:text-accent">
+						{release.title}
+					</span>
+					{metaText && <span class="block">{metaText}</span>}
 				</a>
 			</LightboxImage>
 		) : release.coverImageUrl ? (
@@ -79,7 +97,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 			// mirrors the trigger/dialog/close structure LightboxImage.astro renders (see
 			// docs/lightbox.md) without astro:assets, which can't optimize a remote URL here.
 			<lightbox-image
-				class="cover"
+				class="flex-none w-14 sm:w-full [&_img]:rounded"
 				style={{
 					"--lightbox-thumb-width": "100%",
 					"--lightbox-thumb-fit": "cover",
@@ -103,134 +121,46 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 						aria-label="Next image"
 						hidden
 					/>
-					<a class="lightbox-caption dialog-info" href={release.releaseUrl} target="_blank" rel="noopener">
-						<span class="dialog-artist">{release.artist}</span>
-						<span class="dialog-title">{release.title}</span>
-						{metaText && <span class="dialog-meta">{metaText}</span>}
+					<a
+						class="lightbox-caption group block text-inherit no-underline"
+						href={release.releaseUrl}
+						target="_blank"
+						rel="noopener"
+					>
+						<span class="block">{release.artist}</span>
+						<span class="my-[0.1rem] block font-semibold text-global-text group-hover:text-accent">
+							{release.title}
+						</span>
+						{metaText && <span class="block">{metaText}</span>}
 					</a>
 				</dialog>
 			</lightbox-image>
 		) : (
-			<div class="placeholder">{release.title}</div>
+			<div class="flex-none w-14 sm:w-full aspect-square flex items-center justify-center rounded border border-dashed border-muted bg-global-bg p-1 text-center text-[0.6rem]">
+				{release.title}
+			</div>
 		)
 	}
 	<a
-		class:list={["info", { "info--has-lightbox": hasLightbox }]}
+		class:list={[
+			"block min-w-0 text-inherit no-underline sm:mt-2",
+			hasLightbox && "sm:hidden",
+		]}
 		href={release.releaseUrl}
 		target="_blank"
 		rel="noopener"
 	>
-		<p class="artist">{release.artist}</p>
-		<TitleTag class="title">{release.title}</TitleTag>
-		<p class="meta">{metaText}</p>
+		<p class="m-0 text-[0.8rem] opacity-70">{release.artist}</p>
+		{
+			// `title` (not just utility classes) is deliberate — it's the same shared heading class
+			// Masthead.astro/Note.astro/etc. use (text-accent-2 text-2xl font-semibold, see
+			// global.css's `@layer components`), just tuned for this compact row with the utilities
+			// alongside it. Dropping the class name here would silently lose that shared styling,
+			// not just this component's own tweaks to it.
+		}
+		<TitleTag class="title my-[0.1rem] overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">
+			{release.title}
+		</TitleTag>
+		<p class="m-0 text-[0.8rem] opacity-60">{metaText}</p>
 	</a>
 </div>
-
-<style>
-	/* Mobile-first: a compact row — thumbnail left, text right. */
-	.record {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.4rem 0;
-		border-bottom: 1px solid var(--color-muted);
-	}
-	/* .cover is now the lightbox's own <lightbox-image> wrapper (either
-	   LightboxImage.astro's, or the hand-rolled one for the remote-URL
-	   fallback below) — it sizes/crops itself via the --lightbox-thumb-*
-	   custom properties, so this just controls the wrapper's box size.
-	   LightboxImage.astro renders that wrapper (and the <img> inside it)
-	   itself, so neither ever picks up this file's own scope hash — every
-	   selector reaching past `.record` needs :global(), or it silently
-	   matches nothing (which is exactly what made mobile thumbnails balloon
-	   to inconsistent sizes: this width rule wasn't applying at all). */
-	.record :global(.cover),
-	.record .placeholder {
-		flex: none;
-		width: 3.5rem;
-	}
-	.record :global(.cover img) {
-		border-radius: 0.25rem;
-	}
-	.placeholder {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		aspect-ratio: 1;
-		font-size: 0.6rem;
-		text-align: center;
-		padding: 0.25rem;
-		background: var(--color-global-bg);
-		border: 1px dashed var(--color-muted);
-		border-radius: 0.25rem;
-	}
-	.info {
-		display: block;
-		min-width: 0;
-		text-decoration: none;
-		color: inherit;
-	}
-	.artist {
-		font-size: 0.8rem;
-		opacity: 0.7;
-		margin: 0;
-	}
-	.title {
-		margin: 0.1rem 0;
-		font-weight: 600;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.meta {
-		font-size: 0.8rem;
-		opacity: 0.6;
-		margin: 0;
-	}
-
-	/* The artist/title/meta shown inside the lightbox dialog in place of `.info`, from sm up (see
-	   `hasLightbox` above) — `.lightbox-caption` (global, from lightbox.css) already supplies the
-	   muted/centered/small-text look plus the width:0/min-width:100% fix a long title needs to
-	   avoid dragging the dialog wider than the photo (see docs/lightbox.md's Captions section);
-	   this just re-adds a link's affordance and makes the title itself stand out from the rest. */
-	.dialog-info {
-		display: block;
-		text-decoration: none;
-		color: inherit;
-	}
-	.dialog-info:hover .dialog-title {
-		color: var(--color-accent);
-	}
-	.dialog-artist,
-	.dialog-title,
-	.dialog-meta {
-		display: block;
-	}
-	.dialog-title {
-		margin: 0.1rem 0;
-		font-weight: 600;
-		color: var(--color-global-text);
-	}
-
-	/* From sm up: back to the card grid — cover on top, text below. */
-	@media (min-width: 640px) {
-		.record {
-			display: block;
-			padding: 0;
-			border-bottom: none;
-		}
-		.record :global(.cover),
-		.record .placeholder {
-			width: 100%;
-		}
-		.info {
-			margin-top: 0.5rem;
-		}
-		.info.info--has-lightbox {
-			display: none;
-		}
-		.title {
-			white-space: normal;
-		}
-	}
-</style>
