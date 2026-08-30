@@ -1,7 +1,7 @@
 ---
 title: "Getting Ready"
 description: "In the brief moments between relaxing and going out, i find intimacy and connection by watching someone’s preperation rituals."
-publishDate: "2024 "
+publishDate: "2024-01-01T00:00:00Z"
 coverImage:
   src: "./sir-aditya-getting-ready.jpg"
   aspectClass: "aspect-[14/16]"
