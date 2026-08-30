@@ -1,7 +1,7 @@
 ---
 title: "My Favorite Asshole"
 description: "My cat Tybalt is an asshole, but i love him dearly. He’s not great at being affectionate but he always wants to be around."
-publishDate: "03 Jan 2024"
+publishDate: "2024-01-03T00:00:00Z"
 coverImage:
   src: "./tybalt-in-my-beanie.jpg"
   aspectClass: "aspect-[12/16]"

@@ -1,7 +1,7 @@
 ---
 title: "Last Night a DJ Saved My Life"
 description: "You gotta get up, you gotta get on, you gotta get down girl"
-publishDate: "01 January 2024"
+publishDate: "2024-01-01T00:00:00Z"
 coverImage:
   src: "./dj-minx-get-wrecked-and-carry.jpg"
   alt: "DJ Minx, a legendary artist out of Detroit spins house tracks while backlit by flood lights and lasers in front of a crowd"
