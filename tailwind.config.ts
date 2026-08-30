@@ -12,6 +12,34 @@ export default {
 			gridTemplateColumns: {
 				"auto-1fr": "auto 1fr",
 			},
+			// Standard "small UI text" size — captions, meta lines, tab labels, section headers —
+			// used across Last.fm/RecordCard components. Between Tailwind's default xs (0.75rem)
+			// and sm (0.875rem); named 2xs to match the common community convention for this size.
+			fontSize: {
+				"2xs": "0.8rem",
+			},
+			// Named the way Tailwind names its own non-integer spacing steps (0.5, 1.5, 2.5, ...):
+			// the key is the value's multiple of the 0.25rem base spacing unit.
+			spacing: {
+				// Tight vertical margin on a title/name sitting close to an adjacent line
+				// (RecordCard, LastfmNowPlaying).
+				"0.4": "0.1rem",
+				// Compact list-row / pill padding, standardized across RecordCard,
+				// LastfmRankedList, LastfmNowPlaying, and LastfmListeningStats onto these three
+				// steps (previously 0.3rem/0.4rem/0.6rem/0.8rem, hand-tuned per component).
+				"1.6": "0.4rem",
+				"2.4": "0.6rem",
+				"3.2": "0.8rem",
+			},
+			lineHeight: {
+				// LastfmRankedList's tightly-packed two-line (name + artist) rows.
+				compact: "1.3",
+			},
+			letterSpacing: {
+				// Extra tracking on small uppercase labels (LastfmNowPlaying's status line,
+				// LastfmRankedList's section heading) so the caps stay readable.
+				label: "0.04em",
+			},
 			typography: () => ({
 				DEFAULT: {
 					css: {

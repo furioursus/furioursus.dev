@@ -21,7 +21,7 @@ const DEFAULT_PERIOD = LASTFM_PERIODS[0].value;
 		{
 			LASTFM_PERIODS.map(({ value, label }, index) => (
 				<button
-					class="cursor-pointer rounded-[2px] border border-dashed border-muted bg-global-bg px-[0.6rem] py-[0.3rem] text-[0.8rem] text-global-text [font:inherit] hover:border-accent hover:text-accent aria-selected:border-solid aria-selected:border-accent aria-selected:text-accent focus-visible:[outline:2px_solid_var(--color-accent)] focus-visible:outline-offset-1"
+					class="cursor-pointer rounded-[2px] border border-dashed border-muted bg-global-bg px-2.4 py-1.6 text-2xs text-global-text [font:inherit] hover:border-accent hover:text-accent aria-selected:border-solid aria-selected:border-accent aria-selected:text-accent focus-visible:[outline:2px_solid_var(--color-accent)] focus-visible:outline-offset-1"
 					aria-selected={index === 0}
 					data-period-tab={value}
 					role="tab"
