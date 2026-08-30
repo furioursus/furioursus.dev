@@ -4,7 +4,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@tailwindcss/vite";
 import { defineConfig, envField, fontProviders } from "astro/config";
-import discogsCollection from 'astro-discogs-collection';
+import discogsCollection from "astro-discogs-collection";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
 import robotsTxt from "astro-robots-txt";
@@ -75,7 +75,7 @@ export default defineConfig({
 			include: {
 				mdi: ["*"],
 			},
-    }),
+		}),
 		discogsCollection(),
 		sitemap(),
 		mdx(),
