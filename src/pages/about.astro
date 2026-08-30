@@ -11,53 +11,56 @@ const meta = {
 
 <PageLayout meta={meta}>
 	<h1 class="title mb-12">About Me</h1>
-	<LightboxImage
-		src={aboutPhoto}
-		alt="Wearing a green-and-red snapback cap backwards, glasses, and a ginger beard, looking up and to the side while standing outside at night near a streetlamp. A padlock hangs from the zipper pull of a black hoodie."
-		fit="cover"
-		aspectRatio="3/4"
-		thumbWidth="100%"
-		width={288}
-		height={384}
-		priority
-		class="mb-4 sm:float-right sm:ms-6"
-	/>
-	<div class="prose prose-sm max-w-none">
-		<p>
-			This page is admittedly a little spartan right now as i figure out how to talk about myself
-			without making me physically cringe.
-		</p>
-		<ul class="list-inside list-disc" role="list">
-			<li>
-				i’m <a href="https://www.cdc.gov/ncbddd/adhd/index.html">ADHD</a> and am a huge proponent of stimulants
-				as treatment
-			</li>
-			<li>In 2013, two days before my birthday, i was diagnosed with HIV</li>
-			<li>i’m disastrously bisexual</li>
-			<li>
-				i’m <a href="https://www.teenvogue.com/story/what-is-agender">agender</a> and use they/them pronouns
-			</li>
-			<li>
-				i live with my <a href="https://nahi.design">spouse, Nahi</a> and our two cats, Dante &amp; Tybalt
-			</li>
-			<li>
-				i spend much of my weekends with my <a
-					href="https://bsky.app/profile/chimeracoder.bsky.social">other partner/Sir</a
-				>, also in New York
-			</li>
-			<li>
-				i love <a href="https://new.mta.info/">public transit</a> and will take it any chance i can
-			</li>
-			<li>
-				i build mechanical keyboards and enjoy woodworking as hobbies, even though my living space
-				doesn’t allow much room for either.
-			</li>
-			<li>
-				lately i’ve really gotten into 3d printing, thanks to a thoughtful <a
-					href="https://bambulab.com/en-us/p1">Valentine’s Day present</a
-				>
-				from my spouse, Nahi
-			</li>
-		</ul>
+	<div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-8">
+		<LightboxImage
+			src={aboutPhoto}
+			alt="Wearing a green-and-red snapback cap backwards, glasses, and a ginger beard, looking up and to the side while standing outside at night near a streetlamp. A padlock hangs from the zipper pull of a black hoodie."
+			fit="cover"
+			aspectRatio="3/4"
+			thumbWidth="100%"
+			width={240}
+			height={320}
+			sizes="(min-width: 40rem) 240px, 100vw"
+			priority
+			class="mb-6 sm:order-2 sm:col-span-1 sm:mb-0"
+		/>
+		<div class="prose prose-sm max-w-none sm:order-1 sm:col-span-2">
+			<p>
+				This page is admittedly a little spartan right now as i figure out how to talk about myself
+				without making me physically cringe.
+			</p>
+			<ul class="list-inside list-disc" role="list">
+				<li>
+					i’m <a href="https://www.cdc.gov/ncbddd/adhd/index.html">ADHD</a> and am a huge proponent of
+					stimulants as treatment
+				</li>
+				<li>In 2013, two days before my birthday, i was diagnosed with HIV</li>
+				<li>i’m disastrously bisexual</li>
+				<li>
+					i’m <a href="https://www.teenvogue.com/story/what-is-agender">agender</a> and use they/them pronouns
+				</li>
+				<li>
+					i live with my <a href="https://nahi.design">spouse, Nahi</a> and our two cats, Dante &amp; Tybalt
+				</li>
+				<li>
+					i spend much of my weekends with my <a
+						href="https://bsky.app/profile/chimeracoder.bsky.social">other partner/Sir</a
+					>, also in New York
+				</li>
+				<li>
+					i love <a href="https://new.mta.info/">public transit</a> and will take it any chance i can
+				</li>
+				<li>
+					i build mechanical keyboards and enjoy woodworking as hobbies, even though my living space
+					doesn’t allow much room for either.
+				</li>
+				<li>
+					lately i’ve really gotten into 3d printing, thanks to a thoughtful <a
+						href="https://bambulab.com/en-us/p1">Valentine’s Day present</a
+					>
+					from my spouse, Nahi
+				</li>
+			</ul>
+		</div>
 	</div>
 </PageLayout>
