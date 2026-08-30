@@ -44,7 +44,9 @@ const metaText = [release.year || null, release.formats.join(", ") || null]
 const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 ---
 
-<div class="flex items-center gap-3 border-b border-muted py-tight-4 sm:block sm:border-b-0 sm:py-0">
+<div
+	class="border-muted py-tight-4 flex items-center gap-3 border-b sm:block sm:border-b-0 sm:py-0"
+>
 	{
 		// The cover art is its own click target (opens the enlarged view) rather than living
 		// inside the link below — a <button>, which the lightbox trigger renders as, can't
@@ -64,7 +66,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 			// width/height only set the *thumbnail's* resolution here; the dialog still gets
 			// its own full-res Image regardless (see needsSeparateDialogImage above).
 			<LightboxImage
-				class="flex-none w-14 sm:w-full [&_img]:rounded"
+				class="w-14 flex-none sm:w-full [&_img]:rounded"
 				src={localImage}
 				alt={coverAlt}
 				fit="cover"
@@ -83,7 +85,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 					rel="noopener"
 				>
 					<span class="block">{release.artist}</span>
-					<span class="my-tight-1 block font-semibold text-global-text group-hover:text-accent">
+					<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">
 						{release.title}
 					</span>
 					{metaText && <span class="block">{metaText}</span>}
@@ -97,7 +99,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 			// mirrors the trigger/dialog/close structure LightboxImage.astro renders (see
 			// docs/lightbox.md) without astro:assets, which can't optimize a remote URL here.
 			<lightbox-image
-				class="flex-none w-14 sm:w-full [&_img]:rounded"
+				class="w-14 flex-none sm:w-full [&_img]:rounded"
 				style={{
 					"--lightbox-thumb-width": "100%",
 					"--lightbox-thumb-fit": "cover",
@@ -108,7 +110,11 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 					<img src={release.coverImageUrl} alt={coverAlt} loading="lazy" width="500" height="500" />
 				</button>
 				<dialog class="lightbox-dialog">
-					<button type="button" class="lightbox-icon-button lightbox-close" aria-label="Close image" />
+					<button
+						type="button"
+						class="lightbox-icon-button lightbox-close"
+						aria-label="Close image"
+					/>
 					<button
 						type="button"
 						class="lightbox-icon-button lightbox-nav-prev"
@@ -128,7 +134,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 						rel="noopener"
 					>
 						<span class="block">{release.artist}</span>
-						<span class="my-tight-1 block font-semibold text-global-text group-hover:text-accent">
+						<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">
 							{release.title}
 						</span>
 						{metaText && <span class="block">{metaText}</span>}
@@ -136,21 +142,18 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 				</dialog>
 			</lightbox-image>
 		) : (
-			<div class="flex-none w-14 sm:w-full aspect-square flex items-center justify-center rounded border border-dashed border-muted bg-global-bg p-1 text-center text-[0.6rem]">
+			<div class="border-muted bg-global-bg flex aspect-square w-14 flex-none items-center justify-center rounded border border-dashed p-1 text-center text-[0.6rem] sm:w-full">
 				{release.title}
 			</div>
 		)
 	}
 	<a
-		class:list={[
-			"block min-w-0 text-inherit no-underline sm:mt-2",
-			hasLightbox && "sm:hidden",
-		]}
+		class:list={["block min-w-0 text-inherit no-underline sm:mt-2", hasLightbox && "sm:hidden"]}
 		href={release.releaseUrl}
 		target="_blank"
 		rel="noopener"
 	>
-		<p class="m-0 text-2xs opacity-70">{release.artist}</p>
+		<p class="text-2xs m-0 opacity-70">{release.artist}</p>
 		{
 			// `title` (not just utility classes) is deliberate — it's the same shared heading class
 			// Masthead.astro/Note.astro/etc. use (text-accent-2 text-2xl font-semibold, see
@@ -158,9 +161,11 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 			// alongside it. Dropping the class name here would silently lose that shared styling,
 			// not just this component's own tweaks to it.
 		}
-		<TitleTag class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">
+		<TitleTag
+			class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal"
+		>
 			{release.title}
 		</TitleTag>
-		<p class="m-0 text-2xs opacity-60">{metaText}</p>
+		<p class="text-2xs m-0 opacity-60">{metaText}</p>
 	</a>
 </div>
