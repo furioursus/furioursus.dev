@@ -14,8 +14,8 @@ Three collections, each backed by a `glob()` loader over a folder in `content/`:
 ```yaml
 title: string # required, max 60 chars
 description: string # required, 50–160 chars (SEO description)
-publishDate: string | Date # required
-updatedDate: string # optional
+publishDate: string # required, strict ISO 8601 with offset (e.g. "2024-01-14T00:00:00Z")
+updatedDate: string # optional, same strict ISO 8601 format as publishDate
 coverImage: # optional
   src: "./photo.jpg" # relative path, colocated with index.md — resolved via the image() schema helper
   alt: string
@@ -26,6 +26,13 @@ tags: string[] # default [] — deduped + lowercased automatically
 pinned: boolean # default false
 bskyPostUri: string # optional — set by the astro-standard-site-sync integration, not by hand
 ```
+
+`publishDate`/`updatedDate` reject anything that isn't full ISO 8601 with an explicit offset — a
+build-time Zod error, not a silent mis-parse. Decap's `datetime` widget already writes this format,
+so this only matters for hand-edited frontmatter; write `"2024-01-14T00:00:00Z"`, not a bare date or
+a freeform string like `"14 Jan 2024"`. The schema used to accept anything `new Date()` could parse —
+every existing post happened to resolve fine, but that parsing isn't guaranteed consistent across JS
+engines/versions, so a bad one would have silently mis-parsed rather than failing the build.
 
 `coverImage.src` goes through the `image()` schema helper, so it's a real optimized asset (via
 `astro:assets`), not a plain string — Astro resolves the relative path against the markdown file's
