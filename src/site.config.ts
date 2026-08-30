@@ -21,6 +21,13 @@ export const siteConfig: SiteConfig = {
 	ogLocale: "en_US",
 	// Determines whether to show the logo in the templates header
 	showLogo: true,
+	// Webmanifest background_color/theme_color (astro.config.ts's webmanifest() call) — also reused
+	// as-is by src/pages/og-image/_ogMarkup.ts's Satori markup, which can't reference the @theme
+	// dark-mode CSS custom properties (Satori renders to a static image at build time, no CSSOM).
+	// Single source of truth for what were three independently hand-typed hex literals — themeColor
+	// had drifted a digit (#2bbc89 in the OG markup vs. #2bbc8a here) before this existed.
+	backgroundColor: "#1d1f21",
+	themeColor: "#2bbc8a",
 	// Date.prototype.toLocaleDateString() parameters, found in src/utils/date.ts.
 	date: {
 		options: {
