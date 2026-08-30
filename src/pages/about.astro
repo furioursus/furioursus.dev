@@ -1,5 +1,7 @@
 ---
+import LightboxImage from "@/components/LightboxImage.astro";
 import PageLayout from "@/layouts/Base.astro";
+import aboutPhoto from "@/assets/images/about-photo.jpg";
 
 const meta = {
 	description: "A bit more about Christopher Kennedy-Nuñez — NYC-based frontend developer.",
@@ -9,6 +11,17 @@ const meta = {
 
 <PageLayout meta={meta}>
 	<h1 class="title mb-12">About Me</h1>
+	<LightboxImage
+		src={aboutPhoto}
+		alt="Wearing a green-and-red snapback cap backwards, glasses, and a ginger beard, looking up and to the side while standing outside at night near a streetlamp. A padlock hangs from the zipper pull of a black hoodie."
+		fit="cover"
+		aspectRatio="3/4"
+		thumbWidth="100%"
+		width={288}
+		height={384}
+		priority
+		class="mb-4 sm:float-right sm:ms-6"
+	/>
 	<div class="prose prose-sm max-w-none">
 		<p>
 			This page is admittedly a little spartan right now as i figure out how to talk about myself
