@@ -69,7 +69,7 @@ const paginationProps = {
 	<ul class="space-y-4">
 		{
 			page.data.map((p) => (
-				<li class="grid gap-1 sm:grid-cols-auto-1fr">
+				<li class="sm:grid-cols-auto-1fr grid gap-1">
 					<PostPreview as="h2" post={p} />
 				</li>
 			))

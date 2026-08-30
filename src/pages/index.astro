@@ -38,7 +38,9 @@ const latestNotes = allNotes
 			// is already inline-block, unset by anything else here.
 		}
 		<h1 class="title group mb-4 flex cursor-pointer items-center gap-2" id="greeting">
-			<button class="m-0 border-0 p-0 [background:none] group-hover:animate-[wobble_1s_5]">👋</button>
+			<button class="m-0 border-0 p-0 [background:none] group-hover:animate-[wobble_1s_5]"
+				>👋</button
+			>
 			<span class="title-text" id="greeting-text">Hello, World!</span>
 		</h1>
 		<script is:inline>
@@ -500,7 +502,7 @@ const latestNotes = allNotes
 				<h2 class="title mb-6 text-xl">Pinned Posts</h2>
 				<ul class="space-y-4" role="list">
 					{pinnedPosts.map((p) => (
-						<li class="grid gap-1 sm:grid-cols-auto-1fr">
+						<li class="sm:grid-cols-auto-1fr grid gap-1">
 							<PostPreview post={p} />
 						</li>
 					))}
@@ -513,7 +515,7 @@ const latestNotes = allNotes
 		<ul class="space-y-4" role="list">
 			{
 				latestPosts.map((p) => (
-					<li class="grid gap-1 sm:grid-cols-auto-1fr">
+					<li class="sm:grid-cols-auto-1fr grid gap-1">
 						<PostPreview post={p} />
 					</li>
 				))

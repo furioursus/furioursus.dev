@@ -7,11 +7,11 @@ import { Icon } from "astro-icon/components";
 ---
 
 <lastfm-now-playing
-	class="group flex items-center gap-3 rounded border border-dashed border-muted px-tight-8 py-tight-6 mb-6 [&[hidden]]:hidden"
+	class="group border-muted px-tight-8 py-tight-6 mb-6 flex items-center gap-3 rounded border border-dashed [[hidden]]:hidden"
 	hidden
 >
 	<div class="min-w-0">
-		<p class="m-0 flex items-center gap-[0.3rem] text-xs uppercase tracking-label opacity-65">
+		<p class="tracking-label m-0 flex items-center gap-[0.3rem] text-xs uppercase opacity-65">
 			{
 				// Icon swap driven by the .is-playing class the script toggles — "now playing" gets the
 				// play glyph, a past scrobble gets the history glyph. Both live in the DOM from the start
@@ -36,7 +36,7 @@ import { Icon } from "astro-icon/components";
 			<span data-label></span>
 		</p>
 		<a
-			class="my-tight-1 block overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-inherit no-underline hover:text-accent"
+			class="my-tight-1 hover:text-accent block overflow-hidden font-semibold text-ellipsis whitespace-nowrap text-inherit no-underline"
 			data-track-link
 			href="#"
 			rel="noopener"
@@ -44,7 +44,8 @@ import { Icon } from "astro-icon/components";
 		>
 			<span data-track-name></span>
 		</a>
-		<p class="m-0 overflow-hidden text-2xs text-ellipsis whitespace-nowrap opacity-70" data-artist></p>
+		<p class="text-2xs m-0 overflow-hidden text-ellipsis whitespace-nowrap opacity-70" data-artist>
+		</p>
 	</div>
 </lastfm-now-playing>
 
