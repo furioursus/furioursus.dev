@@ -1,5 +1,5 @@
 ---
-import { WEBMENTION_PINGBACK, WEBMENTION_URL } from "astro:env/client";
+import { GOATCOUNTER_CODE, WEBMENTION_PINGBACK, WEBMENTION_URL } from "astro:env/client";
 import { siteConfig } from "@/site.config";
 import type { SiteMeta } from "@/types";
 import "@/styles/global.css";
@@ -80,6 +80,17 @@ const socialImageURL = new URL(ogImage ? ogImage : "/social-card.png", Astro.url
 			<link href={WEBMENTION_URL} rel="webmention" />
 			{WEBMENTION_PINGBACK && <link href={WEBMENTION_PINGBACK} rel="pingback" />}
 		</>
+	)
+}
+
+{/* Analytics — see docs/analytics.md. Skipped outside prod so local dev doesn't pollute stats. */}
+{
+	import.meta.env.PROD && GOATCOUNTER_CODE && (
+		<script
+			async
+			data-goatcounter={`https://${GOATCOUNTER_CODE}.goatcounter.com/count`}
+			src="https://gc.zgo.at/count.js"
+		/>
 	)
 }
 
