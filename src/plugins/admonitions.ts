@@ -4,7 +4,7 @@ import { toMarkdown } from "mdast-util-to-markdown";
 import { toString as mdastToString } from "mdast-util-to-string";
 import type { MdastPluginDefinition } from "satteri";
 import type { AdmonitionType } from "@/types";
-import { h } from "@/utils/remark";
+import { h } from "../utils/remark";
 
 // Supported admonition types
 const Admonitions = new Set<AdmonitionType>(["tip", "note", "important", "caution", "warning"]);
