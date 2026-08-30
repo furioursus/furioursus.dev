@@ -72,9 +72,11 @@ enlarges.
   `astro dev`/`astro build`. Needs `ANTHROPIC_API_KEY` (and the usual `DISCOGS_USERNAME`/
   `DISCOGS_TOKEN`) in `.env`.
 - **Output**: `src/data/discogs-cover-alt.json`, keyed by release ID —
-  `{ "<id>": { alt, reviewed: false, model, generatedAt } }`. `RecordCard.astro` imports this
-  directly and falls back to `"{artist} – {title}"` for any release missing an entry (a fresh
-  checkout, or one added since the last run).
+  `{ "<id>": { artist, title, alt, reviewed: false, model, generatedAt } }`. `artist`/`title` are
+  written for human scanning only (a JSON object keyed by opaque numeric IDs is otherwise
+  unreadable) — nothing at runtime reads them. `RecordCard.astro` imports this directly for `alt`
+  and falls back to `"{artist} – {title}"` for any release missing an entry (a fresh checkout, or
+  one added since the last run).
 - **Committed to the repo on purpose** — unlike `src/assets/discogs-collection/` (the cover-image
   cache), which is gitignored and rebuilt from scratch every build. Netlify's production build
   never calls the Anthropic API or needs the key; it just reads whatever's already committed. Only
