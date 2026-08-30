@@ -1,5 +1,5 @@
 import type { MdastPluginDefinition } from "satteri";
-import { h } from "@/utils/remark";
+import { h } from "../utils/remark";
 
 const DIRECTIVE_NAME = "github";
 
