@@ -1,5 +1,7 @@
 export interface SiteConfig {
 	author: string;
+	/** Webmanifest `background_color` — also the OG image background, see site.config.ts's comment. */
+	backgroundColor: string;
 	date: {
 		options: Intl.DateTimeFormatOptions;
 	};
@@ -7,6 +9,8 @@ export interface SiteConfig {
 	lang: string;
 	ogLocale: string;
 	showLogo: boolean;
+	/** Webmanifest `theme_color` — also the OG image's footer border, see site.config.ts's comment. */
+	themeColor: string;
 	title: string;
 	url: string;
 }

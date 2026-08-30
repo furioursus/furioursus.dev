@@ -4,6 +4,14 @@ export default {
 	plugins: [require("@tailwindcss/typography")],
 	theme: {
 		extend: {
+			// grid-cols-auto-1fr — repeated verbatim (5x as of writing) as the arbitrary
+			// grid-cols-[auto_1fr] on every post-preview <li> (index.astro, blog/[...page].astro,
+			// tags/[tag]/[...page].astro): PostPreview.astro's fixed-width date column beside its
+			// flexible title/excerpt column. Named here so it reads as one deliberate layout
+			// primitive instead of five separately hand-typed arbitrary values.
+			gridTemplateColumns: {
+				"auto-1fr": "auto 1fr",
+			},
 			typography: () => ({
 				DEFAULT: {
 					css: {
