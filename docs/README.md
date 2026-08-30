@@ -30,6 +30,7 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   via `astro-discogs-collection`, client-side search/filter/sort.
 - [Deploy notifications](./deploy-notifications.md) — a local Netlify Build Plugin that posts
   deploy success/failure to Telegram.
+- [Analytics](./analytics.md) — GoatCounter pageview tracking, on only when `GOATCOUNTER_CODE` is set.
 
 ## Conventions worth knowing before you edit any of the above
 
