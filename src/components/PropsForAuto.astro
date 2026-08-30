@@ -88,7 +88,7 @@
 		key: "pointer-idle",
 		scope: "global",
 		start(ctx) {
-			let timer;
+			let timer: ReturnType<typeof setTimeout>;
 			// Starts idle (matches page load, before any pointermove has ever happened) --
 			// only a real pointermove should ever flip this to "active".
 			ctx.write("idle", 1);
