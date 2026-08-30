@@ -31,7 +31,7 @@ const { items, showArtist = false, title } = Astro.props;
 		) : (
 			<ol class="m-0 list-none p-0">
 				{items.map((item, index) => (
-					<li class="flex items-center gap-2 border-b border-muted py-1.6 last:border-b-0">
+					<li class="flex items-center gap-2 border-b border-muted py-tight-4 last:border-b-0">
 						<span class="w-5 flex-none text-right text-xs opacity-50" aria-hidden="true">
 							{index + 1}
 						</span>
