@@ -18,18 +18,22 @@ export default {
 			fontSize: {
 				"2xs": "0.8rem",
 			},
-			// Named the way Tailwind names its own non-integer spacing steps (0.5, 1.5, 2.5, ...):
-			// the key is the value's multiple of the 0.25rem base spacing unit.
+			// A separate micro-spacing scale for the handful of compact UI elements that need
+			// finer steps than Tailwind's own 0.25rem-based spacing scale offers — "tight-N" keys
+			// so they read as whole numbers (tight-1, tight-4, ...) without colliding with
+			// spacing's own existing numeric keys (spacing-1 is already 0.25rem, spacing-4 is
+			// already 1rem, etc.) — this is a distinct scale, not an extension of that one, so N
+			// here means tenths of a rem, not multiples of the 0.25rem base unit.
 			spacing: {
 				// Tight vertical margin on a title/name sitting close to an adjacent line
 				// (RecordCard, LastfmNowPlaying).
-				"0.4": "0.1rem",
+				"tight-1": "0.1rem",
 				// Compact list-row / pill padding, standardized across RecordCard,
 				// LastfmRankedList, LastfmNowPlaying, and LastfmListeningStats onto these three
 				// steps (previously 0.3rem/0.4rem/0.6rem/0.8rem, hand-tuned per component).
-				"1.6": "0.4rem",
-				"2.4": "0.6rem",
-				"3.2": "0.8rem",
+				"tight-4": "0.4rem",
+				"tight-6": "0.6rem",
+				"tight-8": "0.8rem",
 			},
 			lineHeight: {
 				// LastfmRankedList's tightly-packed two-line (name + artist) rows.
