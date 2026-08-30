@@ -71,9 +71,9 @@ pattern as `ThemeToggle.astro` / `record-collection` — see `docs/README.md`'s 
 ## Listening stats
 
 `src/components/LastfmListeningStats.astro` (rendered by `music.astro`, which does the
-`loadMusicStats()` fetch and passes `musicStats.periods` down as a prop) renders one
-`.period-panel` per `LASTFM_PERIODS` entry (each holding three `LastfmRankedList.astro` lists —
-artists/albums/tracks), all server-rendered up front. A `<lastfm-period-tabs>` custom element,
+`loadMusicStats()` fetch and passes `musicStats.periods` down as a prop) renders one panel
+(`[data-period-panel]`) per `LASTFM_PERIODS` entry (each holding three `LastfmRankedList.astro`
+lists — artists/albums/tracks), all server-rendered up front. A `<lastfm-period-tabs>` custom element,
 colocated with that markup in the same file (same `ThemeToggle.astro` pattern as
 `record-collection` — see `docs/README.md`'s conventions section), just toggles which panel is
 visible on tab click — no re-fetch, same "everything's already in the DOM, JS only shows/hides"

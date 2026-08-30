@@ -125,9 +125,30 @@ import { menuLinks, siteConfig } from "@/site.config";
 						{siteConfig.title}
 					</span>
 				</a>
+				{
+					// max-sm: (Tailwind's max-width variant — compiles to the same `@media (width < 40rem)`
+					// range query this used to be hand-written as) — the desktop nav is always-visible
+					// (sm:flex, unconditional, above) so none of this display-toggling/animation applies there.
+					// group-[.menu-open]: reads the .menu-open class MobileNavBtn's script toggles on
+					// <header> (already used for z-50 above) — no :global()-equivalent needed since
+					// Tailwind utilities aren't scoped to begin with.
+					// transform/transition are arbitrary properties, not scale-*/translate-*/duration-*
+					// utilities — Tailwind v4's scale-*/translate-* utilities set the standalone `scale`/
+					// `translate` CSS properties, not `transform`, so a hand-written `transition: transform
+					// ...` list needs the matching arbitrary `[transform:...]` to actually be listing the
+					// property that's changing. [@starting-style]: is Tailwind's arbitrary at-rule variant
+					// (rather than the dedicated `starting:` shorthand) so this doesn't depend on exactly
+					// which Tailwind 4.x minor version added that shorthand.
+				}
 				<nav
 					aria-label="Main"
-					class="bg-global-bg absolute -inset-x-4 top-[var(--mobile-nav-top,4.5rem)] flex-col divide-y px-2 py-4 group-[.menu-open]:z-50 sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0"
+					class="bg-global-bg absolute -inset-x-4 top-[var(--mobile-nav-top,4.5rem)] flex-col divide-y px-2 py-4 group-[.menu-open]:z-50 sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0
+					max-sm:hidden max-sm:opacity-0 max-sm:[transform:scale(0.92)_translateY(-0.5rem)]
+					max-sm:[transition:opacity_0.15s_ease-in,transform_0.15s_ease-in,display_0.15s_allow-discrete]
+					group-[.menu-open]:max-sm:flex group-[.menu-open]:max-sm:opacity-100 group-[.menu-open]:max-sm:[transform:scale(1)_translateY(0)]
+					group-[.menu-open]:max-sm:[transition:opacity_0.3s_cubic-bezier(0.34,1.56,0.64,1),transform_0.3s_cubic-bezier(0.34,1.56,0.64,1),display_0.3s_allow-discrete]
+					group-[.menu-open]:max-sm:[@starting-style]:opacity-0 group-[.menu-open]:max-sm:[@starting-style]:[transform:scale(0.92)_translateY(-0.5rem)]
+					motion-reduce:transition-none"
 					id="navigation-menu"
 				>
 					{
@@ -191,52 +212,6 @@ import { menuLinks, siteConfig } from "@/site.config";
 		</div>
 	</div>
 </header>
-
-<style>
-	/* Mobile-only: the desktop nav is always-visible (sm:flex, unconditional) so none of this
-	   display-toggling/animation applies there — bounded to the same breakpoint Tailwind's sm:
-	   variant uses, so the two never fight over the same viewport width. */
-	@media (width < 40rem) {
-		#navigation-menu {
-			display: none;
-			opacity: 0;
-			transform: scale(0.92) translateY(-0.5rem);
-			transition:
-				opacity 0.15s ease-in,
-				transform 0.15s ease-in,
-				display 0.15s allow-discrete;
-		}
-
-		/* .menu-open is toggled on <header> by MobileNavBtn's script below — same-file scoped
-		   styles reach across that ancestor/descendant pair fine, no :global() needed. */
-		.menu-open #navigation-menu {
-			display: flex;
-			opacity: 1;
-			transform: scale(1) translateY(0);
-			/* Overshoot easing for the open bounce, same curve lightbox.css uses for its dialog —
-			   close stays a plain quick ease so it doesn't wobble on the way out. */
-			transition:
-				opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-				transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-				display 0.3s allow-discrete;
-		}
-
-		/* The pre-transition state for the *opening* animation — without this there's no "from"
-		   value, so the menu would just appear at full opacity/scale instead of bouncing in. */
-		@starting-style {
-			.menu-open #navigation-menu {
-				opacity: 0;
-				transform: scale(0.92) translateY(-0.5rem);
-			}
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		#navigation-menu {
-			transition: none;
-		}
-	}
-</style>
 
 <script>
 	import { toggleClass } from "@/utils/domElement";
