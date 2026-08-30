@@ -33,9 +33,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-        # use astro check for issues
-      - name: Run Astro check
-        run: pnpm astro check
+        # astro check for type/template issues, biome check for lint/format issues
+      - name: Run checks
+        run: pnpm check
 
         # ensure build works
       - name: Run Astro build

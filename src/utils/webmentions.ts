@@ -91,7 +91,6 @@ function writeToCache(data: WebmentionsCache) {
 		}
 		// write data to cache json file
 		fs.writeFileSync(filePath, fileContent);
-		console.log("Webmentions saved to cache");
 	} catch (err) {
 		console.warn(
 			"Webmentions cache write failed — if you're running SSR on a serverless/ephemeral filesystem, this cache strategy probably won't work.",
@@ -103,11 +102,9 @@ function writeToCache(data: WebmentionsCache) {
 function getFromCache(): WebmentionsCache {
 	if (fs.existsSync(filePath)) {
 		const data = fs.readFileSync(filePath, "utf-8");
-		console.log("Webmentions retrieved from cache");
 		return JSON.parse(data);
 	}
 	// no cache found
-	console.log("No Webmentions cache found");
 	return {
 		lastFetched: null,
 		children: [],
