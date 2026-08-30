@@ -150,6 +150,9 @@ export default defineConfig({
 			// (live polling) via the same `astro:env/client` import.
 			LASTFM_API_KEY: envField.string({ context: "client", access: "public", optional: true }),
 			LASTFM_USERNAME: envField.string({ context: "client", access: "public", optional: true }),
+			// GoatCounter site code (the `xxx` in `xxx.goatcounter.com`) — inherently public, it's
+			// embedded directly in the tracking script's `src` for anyone to see. See docs/analytics.md.
+			GOATCOUNTER_CODE: envField.string({ context: "client", access: "public", optional: true }),
 		},
 	},
 });
