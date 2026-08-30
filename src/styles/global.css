@@ -138,6 +138,7 @@
 	   actually wider than the screen most of the time. `100dvw` tracks the viewport Safari is
 	   currently showing; keep the `vw` line first as a fallback for browsers without `dvw`. */
 	width: 100vw;
+	/* biome-ignore lint/suspicious/noDuplicateProperties: intentional fallback — see comment above */
 	width: 100dvw;
 	margin-left: 50%;
 	transform: translateX(-50%);

@@ -4,7 +4,7 @@
 		"paths": {
 			"@/*": ["./src/*"],
 			"@content/*": ["./content/*"],
-			"@uploads/*": ["./src/assets/uploads/*"],
+			"@uploads/*": ["./src/assets/uploads/*"]
 		}
 	},
 	"include": [".astro/types.d.ts", "**/*"],
