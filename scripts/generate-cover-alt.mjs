@@ -141,6 +141,8 @@ async function main() {
 		try {
 			const alt = await describeCover(client, imagePath);
 			cache[String(release.id)] = {
+				artist: release.artist,
+				title: release.title,
 				alt,
 				reviewed: false,
 				model: MODEL,
