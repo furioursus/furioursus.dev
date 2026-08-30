@@ -44,7 +44,7 @@ const metaText = [release.year || null, release.formats.join(", ") || null]
 const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 ---
 
-<div class="flex items-center gap-3 border-b border-muted py-[0.4rem] sm:block sm:border-b-0 sm:py-0">
+<div class="flex items-center gap-3 border-b border-muted py-1.6 sm:block sm:border-b-0 sm:py-0">
 	{
 		// The cover art is its own click target (opens the enlarged view) rather than living
 		// inside the link below — a <button>, which the lightbox trigger renders as, can't
@@ -83,7 +83,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 					rel="noopener"
 				>
 					<span class="block">{release.artist}</span>
-					<span class="my-[0.1rem] block font-semibold text-global-text group-hover:text-accent">
+					<span class="my-0.4 block font-semibold text-global-text group-hover:text-accent">
 						{release.title}
 					</span>
 					{metaText && <span class="block">{metaText}</span>}
@@ -128,7 +128,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 						rel="noopener"
 					>
 						<span class="block">{release.artist}</span>
-						<span class="my-[0.1rem] block font-semibold text-global-text group-hover:text-accent">
+						<span class="my-0.4 block font-semibold text-global-text group-hover:text-accent">
 							{release.title}
 						</span>
 						{metaText && <span class="block">{metaText}</span>}
@@ -150,7 +150,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 		target="_blank"
 		rel="noopener"
 	>
-		<p class="m-0 text-[0.8rem] opacity-70">{release.artist}</p>
+		<p class="m-0 text-2xs opacity-70">{release.artist}</p>
 		{
 			// `title` (not just utility classes) is deliberate — it's the same shared heading class
 			// Masthead.astro/Note.astro/etc. use (text-accent-2 text-2xl font-semibold, see
@@ -158,9 +158,9 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 			// alongside it. Dropping the class name here would silently lose that shared styling,
 			// not just this component's own tweaks to it.
 		}
-		<TitleTag class="title my-[0.1rem] overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">
+		<TitleTag class="title my-0.4 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">
 			{release.title}
 		</TitleTag>
-		<p class="m-0 text-[0.8rem] opacity-60">{metaText}</p>
+		<p class="m-0 text-2xs opacity-60">{metaText}</p>
 	</a>
 </div>
