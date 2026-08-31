@@ -20,7 +20,7 @@ She hits the nail on the head here and to be honest, i’d go a step further and
 
 i don’t want to just consume content: i want to connect with art and knowledge. i want to follow people and topics with intent. i want to feel like i own my own interests and share them with just as much determination.
 
-When we first started dating in 2013, my [spouse Chris](https://bsky.app/profile/pupchompers.bsky.social) and i would share music with one another and listen in my 2008 Scion xD as we drove around San Francisco. They’d introduce me to Bay Area hip-hop that they grew up with and i would share my interests in queercore and acid trip-hop. We shared TV shows and movies that each of us loved and learned more about each other in that process.
+When we first started dating in 2013, my [spouse Nahi](https://bsky.app/profile/pupchompers.bsky.social) and i would share music with one another and listen in my 2008 Scion xD as we drove around San Francisco. They’d introduce me to Bay Area hip-hop that they grew up with and i would share my interests in queercore and acid trip-hop. We shared TV shows and movies that each of us loved and learned more about each other in that process.
 
 Last year, when i was visiting Him while still living on the west coast, [Sir Aditya](https://bsky.app/profile/chimeracoder.bsky.social) and i sat down one night after He learned that i never really listened to [The Smiths](https://en.wikipedia.org/wiki/The_Smiths) — i was always more of a fan of [The Cure](https://en.wikipedia.org/wiki/The_Cure) — and He played [“Some Girls are Bigger than Others”](https://www.youtube.com/watch?v=C906lbkcYug) and other songs off “The Queen is Dead,” as we had just learned that Elizabeth II had just died.
 
