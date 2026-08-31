@@ -10,6 +10,7 @@ import icon from "astro-icon";
 import mtgCollection from "astro-mtg-collection";
 import robotsTxt from "astro-robots-txt";
 import webmanifest from "astro-webmanifest";
+import optimizeMtgImages from "./src/integrations/optimize-mtg-images";
 import { satteriAdmonitionsPlugin } from "./src/plugins/admonitions";
 import { satteriGithubCardPlugin } from "./src/plugins/github-cards";
 import {
@@ -79,6 +80,9 @@ export default defineConfig({
 		}),
 		discogsCollection(),
 		mtgCollection(),
+		// Must come right after mtgCollection() — see optimize-mtg-images.ts's own comment on why
+		// hook registration order matters here.
+		optimizeMtgImages(),
 		sitemap(),
 		mdx(),
 		robotsTxt(),
