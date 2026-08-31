@@ -1,0 +1,168 @@
+---
+// src/components/CardTile.astro
+import type { EnrichedCard } from "astro-mtg-collection";
+import { getLocalCardImage } from "astro-mtg-collection/images";
+import LightboxImage from "@/components/LightboxImage.astro";
+
+interface Props {
+	entry: EnrichedCard;
+	/**
+	 * Heading level for the title, or `false` to render it as a plain `<p>` instead of a
+	 * heading. Defaults to `2` — see RecordCard.astro, which this mirrors, for why.
+	 */
+	titleLevel?: 1 | 2 | 3 | 4 | 5 | 6 | false;
+}
+
+const { entry, titleLevel = 2 } = Astro.props;
+const { row, card, imageUrl, unitPrice, lineValue } = entry;
+
+// Keyed by the *resolved* Scryfall card's own id (see astro-mtg-collection's cache-images.ts),
+// not row.scryfallId — a row can resolve to a card via set+collector-number or name alone, so the
+// two aren't always the same value.
+const localImage = card ? getLocalCardImage(card.id) : undefined;
+const TitleTag = titleLevel === false ? "p" : (`h${titleLevel}` as const);
+const cardAlt = card?.name ?? row.name;
+// Scryfall's "normal" image size is 488×680px — 61:85 is that exact ratio reduced, so `fit="cover"`
+// below never actually crops anything, it just gives astro:assets a box to generate a smaller file
+// into (mirrors RecordCard.astro's cover-art sizing rationale).
+const metaText = [row.setName || null, row.rarity ? capitalize(row.rarity) : null]
+	.filter(Boolean)
+	.join(" · ");
+const priceText = formatPrice(unitPrice);
+// Only worth showing a separate line total when there's more than one copy — for qty 1 it'd just
+// repeat the unit price.
+const showLineValue = row.quantity > 1 && lineValue !== null;
+const hasLightbox = Boolean(localImage) || Boolean(imageUrl);
+const hasLink = Boolean(card?.scryfall_uri);
+
+function capitalize(value: string): string {
+	return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatPrice(value: number | null): string | null {
+	if (value === null) return null;
+	return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+}
+---
+
+<div class="border-muted py-tight-4 flex items-center gap-3 border-b sm:block sm:border-b-0 sm:py-0">
+	{
+		// Same two-click-target rationale as RecordCard.astro: the card art opens the lightbox, the
+		// text below links out to Scryfall — a lightbox trigger renders as a <button>, which can't
+		// nest inside the <a>.
+		localImage ? (
+			<LightboxImage
+				class="w-14 flex-none sm:w-full [&_img]:rounded"
+				src={localImage}
+				alt={cardAlt}
+				fit="cover"
+				aspectRatio="61/85"
+				thumbWidth="100%"
+				thumbHeight="none"
+				width={244}
+				height={340}
+				sizes="(min-width: 640px) 18rem, 3.5rem"
+			>
+				<a
+					slot="dialog-caption"
+					class="lightbox-caption group block text-inherit no-underline"
+					href={card?.scryfall_uri}
+					target="_blank"
+					rel="noopener"
+				>
+					<span class="block">{row.name}</span>
+					<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">
+						{metaText}
+					</span>
+					{priceText && <span class="block">{priceText}</span>}
+				</a>
+			</LightboxImage>
+		) : imageUrl ? (
+			// No local cache yet (e.g. before the first image-cache run) — imageUrl is Scryfall's own
+			// full-size art with no local resize applied, so a hand-rolled lightbox just needs to move
+			// that same already-loaded element into the dialog on click. Mirrors RecordCard.astro's
+			// remote-cover fallback.
+			<lightbox-image
+				class="w-14 flex-none sm:w-full [&_img]:rounded"
+				style={{
+					"--lightbox-thumb-width": "100%",
+					"--lightbox-thumb-fit": "cover",
+					"--lightbox-thumb-aspect": "61/85",
+				}}
+			>
+				<button type="button" class="lightbox-trigger" aria-haspopup="dialog">
+					<img src={imageUrl} alt={cardAlt} loading="lazy" width="488" height="680" />
+				</button>
+				<dialog class="lightbox-dialog">
+					<button
+						type="button"
+						class="lightbox-icon-button lightbox-close"
+						aria-label="Close image"
+					/>
+					<button
+						type="button"
+						class="lightbox-icon-button lightbox-nav-prev"
+						aria-label="Previous image"
+						hidden
+					/>
+					<button
+						type="button"
+						class="lightbox-icon-button lightbox-nav-next"
+						aria-label="Next image"
+						hidden
+					/>
+					<a
+						class="lightbox-caption group block text-inherit no-underline"
+						href={card?.scryfall_uri}
+						target="_blank"
+						rel="noopener"
+					>
+						<span class="block">{row.name}</span>
+						<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">
+							{metaText}
+						</span>
+						{priceText && <span class="block">{priceText}</span>}
+					</a>
+				</dialog>
+			</lightbox-image>
+		) : (
+			<div class="border-muted bg-global-bg flex aspect-square w-14 flex-none items-center justify-center rounded border border-dashed p-1 text-center text-[0.6rem] sm:aspect-card sm:w-full">
+				{row.name}
+			</div>
+		)
+	}
+	{
+		// When there's no Scryfall match at all, there's nothing to link out to — this renders as
+		// plain text instead of an anchor rather than pointing a link at nothing.
+		hasLink ? (
+			<a
+				class:list={["block min-w-0 text-inherit no-underline sm:mt-2", hasLightbox && "sm:hidden"]}
+				href={card?.scryfall_uri}
+				target="_blank"
+				rel="noopener"
+			>
+				<p class="text-2xs m-0 opacity-70">{metaText}</p>
+				<TitleTag
+					class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal"
+				>
+					{row.name}
+				</TitleTag>
+				<p class="text-2xs m-0 opacity-60">
+					{priceText ?? "Price unknown"}
+					{showLineValue && ` · ${row.quantity}x = ${formatPrice(lineValue)}`}
+				</p>
+			</a>
+		) : (
+			<div class:list={["block min-w-0 sm:mt-2", hasLightbox && "sm:hidden"]}>
+				<p class="text-2xs m-0 opacity-70">{metaText}</p>
+				<TitleTag class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">
+					{row.name}
+				</TitleTag>
+				<p class="text-2xs m-0 opacity-60">
+					{priceText ?? "Price unknown"}
+					{showLineValue && ` · ${row.quantity}x = ${formatPrice(lineValue)}`}
+				</p>
+			</div>
+		)
+	}
+</div>

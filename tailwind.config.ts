@@ -35,6 +35,14 @@ export default {
 				"tight-6": "0.6rem",
 				"tight-8": "0.8rem",
 			},
+			// Magic: The Gathering's standard card ratio (2.5"×3.5", i.e. 63mm×88mm), reduced —
+			// also the exact ratio of Scryfall's "normal" card images (488×680px), used both as
+			// this Tailwind aspect-ratio utility (CardTile.astro's no-image placeholder) and as
+			// the matching `aspectRatio` prop string passed to LightboxImage (a separate,
+			// non-Tailwind convention — see its own prop docs) for the card art itself.
+			aspectRatio: {
+				card: "61/85",
+			},
 			lineHeight: {
 				// LastfmRankedList's tightly-packed two-line (name + artist) rows.
 				compact: "1.3",
