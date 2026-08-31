@@ -5,7 +5,7 @@
 	"private": false,
 	"packageManager": "pnpm@10.34.5",
 	"scripts": {
-		"postinstall": "npm rebuild sharp --force",
+		"postinstall": "SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm rebuild sharp --force",
 		"dev": "astro dev",
 		"start": "astro dev",
 		"build": "astro build",
