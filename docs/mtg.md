@@ -104,15 +104,31 @@ removed from the DOM — filtering (and, below, pagination) just toggles the `hi
 
 - **Pagination** is a second `hidden`-toggling pass layered on top of filtering, not a separate
   mechanism — `#applyFilters()` narrows `#items` down to `#filtered` (still full DOM nodes, just a
-  smaller in-memory array), then `#renderPage()` shows only the current 60-card slice of *that*
-  array and hides the rest, including everything filtering already excluded. Changing any filter or
-  the sort key rebuilds `#filtered` and resets to page one — there's no stored page state to
-  reconcile against results that may no longer exist. `[data-pagination]` (the Prev/Next controls)
-  hides itself whenever the current filtered set fits on one page, same `hidden`-attribute
+  smaller in-memory array), then `#renderPage()` shows only the current `PAGE_SIZE`-card slice of
+  *that* array and hides the rest, including everything filtering already excluded. Changing any
+  filter or the sort key rebuilds `#filtered` and resets to page one — there's no stored page state
+  to reconcile against results that may no longer exist. `[data-pagination]` (the Prev/Next
+  controls — one copy above the grid, one below, so a full page's scroll never leaves you far from
+  either) hides itself whenever the current filtered set fits on one page, same `hidden`-attribute
   convention as `[data-empty]` above it. Gallery Next/Prev navigation (see
   [`docs/lightbox.md`](./lightbox.md)) already skips `[hidden]` ancestors for filtering's sake, so it
   falls out for pagination for free — the lightbox only ever cycles within the current page's
   visible cards, not the whole filtered set.
+- **The grid's height is floored, not just its card count kept constant.** A short last page
+  (different cards wrap their name/price text over a different number of lines, so it's not purely a
+  card-count thing) would otherwise visibly shrink `.grid` and yank the pagination bar/footer up to
+  meet it. `#renderPage()` tracks the tallest `.grid` has actually rendered this visit
+  (`#maxGridHeight`) and sets `min-height` to that floor *before* measuring the new page — doing it
+  in that order is what stops the browser from laying the shorter page out at its own natural height
+  for even one frame first. A column-count change (a resize crossing the mobile/desktop breakpoint)
+  invalidates that recorded number outright — a single-column mobile list and a multi-column desktop
+  grid have nothing in common height-wise for the same card count — so a `resize` listener drops the
+  floor back to zero rather than carrying over a number that's now meaningless; the next page render
+  re-establishes one that's actually right for the new layout. An earlier version of this tried
+  padding the last page with cloned filler grid cells instead, sized to match a real card — it kept
+  the *cell count* constant but not the height, since a page of identical clones can't reproduce the
+  natural height variance real cards have from wrapping differently. Measuring and flooring against
+  what was actually rendered sidesteps that assumption entirely.
 
 - **Color** filters against `data-color`, a pipe-separated list built from the card's
   `color_identity` (a colorless card gets `["C"]`) — picking "White" matches any card whose identity

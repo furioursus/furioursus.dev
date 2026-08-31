@@ -103,15 +103,19 @@ function formatPrice(value: number): string {
 
 				<button data-reset-button type="button"> Reset </button>
 			</div>
+
+			<div class="pagination" data-pagination hidden>
+				<button data-page-prev type="button">Previous</button>
+				<span data-page-label></span>
+				<button data-page-next type="button">Next</button>
+			</div>
+
 			<ul class="grid" data-lightbox-gallery role="list">
 				{
 					entries.map((entry) => (
 						<li
 							class="card-item"
-							data-color={(entry.card?.color_identity?.length
-								? entry.card.color_identity
-								: ["C"]
-							)
+							data-color={(entry.card?.color_identity?.length ? entry.card.color_identity : ["C"])
 								.join("|")
 								.toLowerCase()}
 							data-name={entry.row.name.toLowerCase()}
@@ -212,7 +216,8 @@ function formatPrice(value: number): string {
 				align-items: center;
 				justify-content: center;
 				gap: 1rem;
-				margin-top: 2rem;
+				/* Shorthand, not margin-top — this same block sits both above and below the grid now. */
+				margin: 1.5rem 0;
 				font-size: 0.875rem;
 			}
 
@@ -252,13 +257,7 @@ function formatPrice(value: number): string {
 			// stays a drop-in match for the package's server-side sortCards() semantics, just reading
 			// from data-* attributes instead of EnrichedCard objects.
 			type SortKey =
-				| "name-asc"
-				| "name-desc"
-				| "price-desc"
-				| "price-asc"
-				| "set"
-				| "quantity-desc"
-				| "rarity";
+				"name-asc" | "name-desc" | "price-desc" | "price-asc" | "set" | "quantity-desc" | "rarity";
 
 			// Mirrors astro-mtg-collection's RARITY_ORDER (collection.ts) — kept as a small local
 			// constant rather than importing the package into client code, same as VinylCollection.astro
@@ -274,7 +273,7 @@ function formatPrice(value: number): string {
 
 			// Cards per page — client-side only (see CardCollectionElement below), so a no-JS visitor
 			// still gets the full unpaginated grid, same as before pagination existed.
-			const PAGE_SIZE = 60;
+			const PAGE_SIZE = 30;
 
 			function priceOf(el: HTMLElement): number {
 				const raw = el.dataset.price;
@@ -299,9 +298,11 @@ function formatPrice(value: number): string {
 					(a.dataset.collector ?? "").localeCompare(b.dataset.collector ?? "", undefined, {
 						numeric: true,
 					}),
-				"quantity-desc": (a, b) => Number(b.dataset.quantity ?? 0) - Number(a.dataset.quantity ?? 0),
+				"quantity-desc": (a, b) =>
+					Number(b.dataset.quantity ?? 0) - Number(a.dataset.quantity ?? 0),
 				rarity: (a, b) =>
-					(RARITY_ORDER[a.dataset.rarity ?? ""] ?? -1) - (RARITY_ORDER[b.dataset.rarity ?? ""] ?? -1),
+					(RARITY_ORDER[a.dataset.rarity ?? ""] ?? -1) -
+					(RARITY_ORDER[b.dataset.rarity ?? ""] ?? -1),
 			};
 
 			class CardCollectionElement extends HTMLElement {
@@ -312,10 +313,23 @@ function formatPrice(value: number): string {
 				#filtered: HTMLLIElement[] = [];
 				#list: HTMLUListElement | null = null;
 				#page = 0;
+				// Tallest the grid has actually rendered at this viewport width, this visit — floors
+				// #list's height at that mark so a shorter page (typically just the last one) doesn't
+				// visibly shrink the grid and yank everything below it upward. See #renderPage().
+				#maxGridHeight = 0;
 
 				connectedCallback() {
 					this.#list = this.querySelector<HTMLUListElement>(".grid");
 					this.#items = Array.from(this.querySelectorAll<HTMLLIElement>(".card-item"));
+
+					// A column count change invalidates the recorded height (mobile's single-column list is
+					// far taller than the desktop grid for the same 30 cards, and vice versa) — drop the
+					// floor and let the next page render re-establish one that's actually right for the new
+					// layout, rather than over- or under-padding against a stale number.
+					window.addEventListener("resize", () => {
+						this.#maxGridHeight = 0;
+						this.#list?.style.removeProperty("min-height");
+					});
 
 					const searchInput = this.querySelector<HTMLInputElement>("[data-search-input]");
 					const colorSelect = this.querySelector<HTMLSelectElement>("[data-color-select]");
@@ -324,15 +338,20 @@ function formatPrice(value: number): string {
 					const artSelect = this.querySelector<HTMLSelectElement>("[data-art-select]");
 					const sortSelect = this.querySelector<HTMLSelectElement>("[data-sort-select]");
 					const resetButton = this.querySelector<HTMLButtonElement>("[data-reset-button]");
-					const prevButton = this.querySelector<HTMLButtonElement>("[data-page-prev]");
-					const nextButton = this.querySelector<HTMLButtonElement>("[data-page-next]");
+					// Two of each now — a mirrored pagination bar above and below the grid (a page this
+					// long needs Prev/Next in reach without a full scroll either way) — so every read or
+					// write below goes through querySelectorAll, not querySelector, and updates both.
+					const prevButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-prev]");
+					const nextButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-next]");
 
 					searchInput?.addEventListener("input", () => this.#applyFilters());
 					colorSelect?.addEventListener("change", () => this.#applyFilters());
 					raritySelect?.addEventListener("change", () => this.#applyFilters());
 					foilSelect?.addEventListener("change", () => this.#applyFilters());
 					artSelect?.addEventListener("change", () => this.#applyFilters());
-					sortSelect?.addEventListener("change", () => this.#applySort(sortSelect.value as SortKey));
+					sortSelect?.addEventListener("change", () =>
+						this.#applySort(sortSelect.value as SortKey),
+					);
 
 					resetButton?.addEventListener("click", () => {
 						if (searchInput) searchInput.value = "";
@@ -343,8 +362,12 @@ function formatPrice(value: number): string {
 						this.#applyFilters();
 					});
 
-					prevButton?.addEventListener("click", () => this.#goToPage(this.#page - 1));
-					nextButton?.addEventListener("click", () => this.#goToPage(this.#page + 1));
+					for (const button of prevButtons) {
+						button.addEventListener("click", () => this.#goToPage(this.#page - 1));
+					}
+					for (const button of nextButtons) {
+						button.addEventListener("click", () => this.#goToPage(this.#page + 1));
+					}
 
 					// Establish page one on first connect — without this every card would render at once
 					// (matching the pre-pagination behavior, and still what a no-JS visitor gets, since
@@ -410,9 +433,27 @@ function formatPrice(value: number): string {
 				}
 
 				#renderPage() {
+					const totalPages = this.#totalPages();
 					const start = this.#page * PAGE_SIZE;
-					const pageItems = new Set(this.#filtered.slice(start, start + PAGE_SIZE));
+					const pageSlice = this.#filtered.slice(start, start + PAGE_SIZE);
+					const pageItems = new Set(pageSlice);
 					for (const item of this.#items) item.hidden = !pageItems.has(item);
+
+					// Floor the grid's height at the tallest it's actually reached this visit, so a
+					// shorter page (typically just the last one — different cards wrap their name/price
+					// text over a different number of lines, so it's not just page count that varies)
+					// doesn't visibly shrink the grid and yank the pagination bar/footer up to meet it.
+					// Set *before* measuring: that's what stops the browser laying this page out at its
+					// own shorter natural height for even a single frame before the floor kicks in.
+					const list = this.#list;
+					if (list) {
+						list.style.minHeight = `${this.#maxGridHeight}px`;
+						const height = list.getBoundingClientRect().height;
+						if (height > this.#maxGridHeight) {
+							this.#maxGridHeight = height;
+							list.style.minHeight = `${height}px`;
+						}
+					}
 
 					const countEl = this.querySelector("[data-count]");
 					if (countEl) countEl.textContent = String(this.#filtered.length);
@@ -420,18 +461,17 @@ function formatPrice(value: number): string {
 					const emptyEl = this.querySelector<HTMLElement>("[data-empty]");
 					if (emptyEl) emptyEl.hidden = this.#filtered.length !== 0;
 
-					const totalPages = this.#totalPages();
-					const paginationEl = this.querySelector<HTMLElement>("[data-pagination]");
-					if (paginationEl) paginationEl.hidden = totalPages <= 1;
+					const paginationEls = this.querySelectorAll<HTMLElement>("[data-pagination]");
+					for (const el of paginationEls) el.hidden = totalPages <= 1;
 
-					const pageLabel = this.querySelector("[data-page-label]");
-					if (pageLabel) pageLabel.textContent = `Page ${this.#page + 1} of ${totalPages}`;
+					const pageLabels = this.querySelectorAll("[data-page-label]");
+					for (const el of pageLabels) el.textContent = `Page ${this.#page + 1} of ${totalPages}`;
 
-					const prevButton = this.querySelector<HTMLButtonElement>("[data-page-prev]");
-					if (prevButton) prevButton.disabled = this.#page === 0;
+					const prevButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-prev]");
+					for (const button of prevButtons) button.disabled = this.#page === 0;
 
-					const nextButton = this.querySelector<HTMLButtonElement>("[data-page-next]");
-					if (nextButton) nextButton.disabled = this.#page >= totalPages - 1;
+					const nextButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-next]");
+					for (const button of nextButtons) button.disabled = this.#page >= totalPages - 1;
 				}
 			}
 
