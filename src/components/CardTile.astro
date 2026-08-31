@@ -1,8 +1,6 @@
 ---
 // src/components/CardTile.astro
 import type { EnrichedCard } from "astro-mtg-collection";
-import { getLocalCardImage } from "astro-mtg-collection/images";
-import LightboxImage from "@/components/LightboxImage.astro";
 
 interface Props {
 	entry: EnrichedCard;
@@ -14,25 +12,31 @@ interface Props {
 }
 
 const { entry, titleLevel = 2 } = Astro.props;
-const { row, card, imageUrl, unitPrice, lineValue } = entry;
+const { row, card, imageUrl, unitPrice, lineValue, isFullArt, isExtendedArt } = entry;
 
-// Keyed by the *resolved* Scryfall card's own id (see astro-mtg-collection's cache-images.ts),
-// not row.scryfallId — a row can resolve to a card via set+collector-number or name alone, so the
-// two aren't always the same value.
-const localImage = card ? getLocalCardImage(card.id) : undefined;
+// Rendered straight against Scryfall's own hosted image — no local cache, no astro:assets. Two
+// reasons: rendering thousands of astro:assets <Image> instances (one per card) broke astro build
+// on this one route (see docs/mtg.md's "Card images load from Scryfall directly" section), and
+// even a plain local-file cache buys nothing on ephemeral hosting like Netlify — nothing persists
+// between builds, so downloading ~6,200 images just to discard them each build is pure waste.
+const imgSrc = imageUrl;
+
 const TitleTag = titleLevel === false ? "p" : (`h${titleLevel}` as const);
 const cardAlt = card?.name ?? row.name;
-// Scryfall's "normal" image size is 488×680px — 61:85 is that exact ratio reduced, so `fit="cover"`
-// below never actually crops anything, it just gives astro:assets a box to generate a smaller file
-// into (mirrors RecordCard.astro's cover-art sizing rationale).
-const metaText = [row.setName || null, row.rarity ? capitalize(row.rarity) : null]
+const artTreatment = [isFullArt && "Full Art", isExtendedArt && "Extended Art"]
+	.filter(Boolean)
+	.join(" · ");
+const metaText = [
+	row.setName || null,
+	row.rarity ? capitalize(row.rarity) : null,
+	artTreatment || null,
+]
 	.filter(Boolean)
 	.join(" · ");
 const priceText = formatPrice(unitPrice);
 // Only worth showing a separate line total when there's more than one copy — for qty 1 it'd just
 // repeat the unit price.
 const showLineValue = row.quantity > 1 && lineValue !== null;
-const hasLightbox = Boolean(localImage) || Boolean(imageUrl);
 const hasLink = Boolean(card?.scryfall_uri);
 
 function capitalize(value: string): string {
@@ -49,39 +53,9 @@ function formatPrice(value: number | null): string | null {
 	{
 		// Same two-click-target rationale as RecordCard.astro: the card art opens the lightbox, the
 		// text below links out to Scryfall — a lightbox trigger renders as a <button>, which can't
-		// nest inside the <a>.
-		localImage ? (
-			<LightboxImage
-				class="w-14 flex-none sm:w-full [&_img]:rounded"
-				src={localImage}
-				alt={cardAlt}
-				fit="cover"
-				aspectRatio="61/85"
-				thumbWidth="100%"
-				thumbHeight="none"
-				width={244}
-				height={340}
-				sizes="(min-width: 640px) 18rem, 3.5rem"
-			>
-				<a
-					slot="dialog-caption"
-					class="lightbox-caption group block text-inherit no-underline"
-					href={card?.scryfall_uri}
-					target="_blank"
-					rel="noopener"
-				>
-					<span class="block">{row.name}</span>
-					<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">
-						{metaText}
-					</span>
-					{priceText && <span class="block">{priceText}</span>}
-				</a>
-			</LightboxImage>
-		) : imageUrl ? (
-			// No local cache yet (e.g. before the first image-cache run) — imageUrl is Scryfall's own
-			// full-size art with no local resize applied, so a hand-rolled lightbox just needs to move
-			// that same already-loaded element into the dialog on click. Mirrors RecordCard.astro's
-			// remote-cover fallback.
+		// nest inside the <a>. Hand-rolled (not LightboxImage.astro) since there's no astro:assets
+		// Image here to wrap — see the frontmatter comment above.
+		imgSrc ? (
 			<lightbox-image
 				class="w-14 flex-none sm:w-full [&_img]:rounded"
 				style={{
@@ -91,7 +65,7 @@ function formatPrice(value: number | null): string | null {
 				}}
 			>
 				<button type="button" class="lightbox-trigger" aria-haspopup="dialog">
-					<img src={imageUrl} alt={cardAlt} loading="lazy" width="488" height="680" />
+					<img src={imgSrc} alt={cardAlt} loading="lazy" width="480" height="669" />
 				</button>
 				<dialog class="lightbox-dialog">
 					<button
@@ -136,7 +110,7 @@ function formatPrice(value: number | null): string | null {
 		// plain text instead of an anchor rather than pointing a link at nothing.
 		hasLink ? (
 			<a
-				class:list={["block min-w-0 text-inherit no-underline sm:mt-2", hasLightbox && "sm:hidden"]}
+				class:list={["block min-w-0 text-inherit no-underline sm:mt-2", imgSrc && "sm:hidden"]}
 				href={card?.scryfall_uri}
 				target="_blank"
 				rel="noopener"
@@ -153,7 +127,7 @@ function formatPrice(value: number | null): string | null {
 				</p>
 			</a>
 		) : (
-			<div class:list={["block min-w-0 sm:mt-2", hasLightbox && "sm:hidden"]}>
+			<div class:list={["block min-w-0 sm:mt-2", imgSrc && "sm:hidden"]}>
 				<p class="text-2xs m-0 opacity-70">{metaText}</p>
 				<TitleTag class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">
 					{row.name}

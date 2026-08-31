@@ -78,7 +78,11 @@ export default defineConfig({
 			},
 		}),
 		discogsCollection(),
-		mtgCollection(),
+		// cacheImages: false — CardTile.astro renders straight against Scryfall's own hosted
+		// imageUrl (plain <img>, no astro:assets), so there's no local cache for this to populate.
+		// Also sidesteps ephemeral hosting downloading ~6,200 images every single build just to
+		// discard them — nothing persists between builds there anyway. See docs/mtg.md.
+		mtgCollection({ cacheImages: false }),
 		sitemap(),
 		mdx(),
 		robotsTxt(),
