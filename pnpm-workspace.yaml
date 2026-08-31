@@ -5,3 +5,8 @@ allowBuilds:
   "@tailwindcss/oxide": true
   esbuild: true
   sharp: true
+# Git-hosted deps aren't covered by pnpm's built-in trusted-package list (unlike sharp/esbuild/etc.
+# above, which are), so astro-mtg-collection's own `prepare` build script (tsc -> dist/, see its
+# package.json) needs an explicit allowlist entry here or pnpm install refuses to run it.
+onlyBuiltDependencies:
+  - astro-mtg-collection
