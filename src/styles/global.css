@@ -99,7 +99,16 @@
 			--color-accent: oklch(66.46% 0.2457 359.43);
 			--color-accent-2: oklch(94.66% 0 0);
 			--color-quote: oklch(92.85% 0.2158 125.25);
+			/* See the light-mode --grain-image/--grain-blend below — swapped here rather than
+			   just tinted, since `multiply` on an already-near-black bg is a no-op. This inverted
+			   asset (white marks on black) plus `screen` is what actually shows up in dark mode. */
+			--grain-image: url("../assets/images/grain-dark.webp");
+			--grain-blend: screen;
 		}
+
+		/* Ambient grain overlay, see the body::after rule below. */
+		--grain-image: url("../assets/images/grain-light.webp");
+		--grain-blend: multiply;
 
 		--color-mode-transition-duration: 300ms;
 		--color-mode-transition-easing: ease-in-out;
@@ -112,6 +121,29 @@
 			--color-accent var(--color-mode-transition-duration) var(--color-mode-transition-easing),
 			--color-accent-2 var(--color-mode-transition-duration) var(--color-mode-transition-easing),
 			--color-quote var(--color-mode-transition-duration) var(--color-mode-transition-easing);
+	}
+
+	/* Ambient photocopy-grain texture — quiet paper tooth across the whole site, not a decorative
+	   "moment" (those get real riso ink-color treatment per docs/theming.md instead). Fixed, not
+	   scrolled with content, so the tile stays put and never has to cover more than one viewport's
+	   worth of page at a time. `pointer-events: none` so it never intercepts clicks.
+	   `z-index: 100` is deliberate, not decoration: several components DO set a stacking z-index
+	   of their own (Header.astro's sticky bar is `z-30`, its mobile menu `z-50`, BlogPost's
+	   back-to-top button `z-90`) — z-index:auto here would've painted this *below* every one of
+	   them regardless of body::after being last in the DOM, since a positioned element with an
+	   explicit z-index always beats a z-index:auto one. This needs to clear the highest of those,
+	   not just exist. Native <dialog> (the lightbox) still wins regardless — it paints in the
+	   browser's top layer, above any z-index at all. */
+	body::after {
+		content: "";
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		pointer-events: none;
+		background-image: var(--grain-image);
+		background-repeat: repeat;
+		mix-blend-mode: var(--grain-blend);
+		opacity: 0.25;
 	}
 
 	:target {
