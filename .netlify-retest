@@ -1,0 +1,4 @@
+Dummy file to trigger a fresh Netlify deploy preview build for PR #15, after pinning
+PNPM_VERSION=10.34.5 on the site — testing whether that resolves the "Install dependencies"
+failure Netlify hit while GH Actions' identical install/build succeeded. Safe to delete once
+confirmed.
