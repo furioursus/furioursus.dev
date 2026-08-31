@@ -1,0 +1,43 @@
+---
+// src/pages/mtg.astro
+// A searchable, filterable list of my Magic: The Gathering collection — see docs/mtg.md.
+// Mirrors music.astro's shape: this page does the fetch/sort, CardCollection.astro renders and
+// owns client-side search/filter/sort.
+import { loadCollection, queryCollection, RARITY_ORDER, summarize, uniqueSorted } from "astro-mtg-collection";
+import CardCollection from "@/components/CardCollection.astro";
+import PageLayout from "@/layouts/Base.astro";
+
+const { cards, missingFile, error } = await loadCollection();
+const sortedCards = queryCollection(cards, { sortBy: "name" });
+const stats = summarize(cards);
+const rarities = uniqueSorted(cards.map((entry) => entry.row.rarity)).sort(
+	(a, b) => (RARITY_ORDER[a.toLowerCase()] ?? 99) - (RARITY_ORDER[b.toLowerCase()] ?? 99),
+);
+const foils = uniqueSorted(cards.map((entry) => entry.row.foil));
+
+const meta = {
+	description: "A searchable, filterable list of my Magic: The Gathering card collection.",
+	title: "MTG Collection",
+};
+---
+
+<PageLayout meta={meta}>
+	<h1 class="title mb-6">MTG Collection</h1>
+
+	{
+		missingFile && (
+			<p class="prose prose-sm max-w-none">
+				Export a collection from ManaBox and save it to <code>src/data/collection.csv</code> to populate
+				this page.
+			</p>
+		)
+	}
+
+	{error && <p class="prose prose-sm max-w-none">Couldn't load the collection: {error}</p>}
+
+	{
+		!missingFile && !error && (
+			<CardCollection entries={sortedCards} foils={foils} rarities={rarities} stats={stats} />
+		)
+	}
+</PageLayout>
