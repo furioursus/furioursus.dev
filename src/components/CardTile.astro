@@ -1,7 +1,5 @@
 ---
 // src/components/CardTile.astro
-import fs from "node:fs";
-import path from "node:path";
 import type { EnrichedCard } from "astro-mtg-collection";
 
 interface Props {
@@ -14,27 +12,25 @@ interface Props {
 }
 
 const { entry, titleLevel = 2 } = Astro.props;
-const { row, card, imageUrl, unitPrice, lineValue } = entry;
+const { row, card, imageUrl, unitPrice, lineValue, isFullArt, isExtendedArt } = entry;
 
-// Pre-optimized by src/integrations/optimize-mtg-images.ts (astro:build:start, before this
-// component's own build-time code runs) into plain static webp files — *not* astro:assets'
-// <Image>/getLocalCardImage() the way RecordCard.astro's cover art is. Rendering thousands of
-// <Image> instances (one per card) broke astro build on this one route; see docs/mtg.md's "Card
-// images are pre-optimized, not astro:assets" section for the full story. Keyed by the *resolved*
-// Scryfall card's own id (see astro-mtg-collection's cache-images.ts), not row.scryfallId — a row
-// can resolve to a card via set+collector-number or name alone, so the two aren't always the same
-// value.
-const hasLocalImage = card
-	? fs.existsSync(path.join(process.cwd(), "public/mtg-cards", `${card.id}.webp`))
-	: false;
-// Falls back to Scryfall's own hosted image when the local optimize pass hasn't run yet for this
-// card (e.g. a card added since the last build) — same "local cache, then remote, then nothing"
-// fallback chain RecordCard.astro uses, just without astro:assets in the middle tier here.
-const imgSrc = hasLocalImage ? `/mtg-cards/${card?.id}.webp` : imageUrl;
+// Rendered straight against Scryfall's own hosted image — no local cache, no astro:assets. Two
+// reasons: rendering thousands of astro:assets <Image> instances (one per card) broke astro build
+// on this one route (see docs/mtg.md's "Card images load from Scryfall directly" section), and
+// even a plain local-file cache buys nothing on ephemeral hosting like Netlify — nothing persists
+// between builds, so downloading ~6,200 images just to discard them each build is pure waste.
+const imgSrc = imageUrl;
 
 const TitleTag = titleLevel === false ? "p" : (`h${titleLevel}` as const);
 const cardAlt = card?.name ?? row.name;
-const metaText = [row.setName || null, row.rarity ? capitalize(row.rarity) : null]
+const artTreatment = [isFullArt && "Full Art", isExtendedArt && "Extended Art"]
+	.filter(Boolean)
+	.join(" · ");
+const metaText = [
+	row.setName || null,
+	row.rarity ? capitalize(row.rarity) : null,
+	artTreatment || null,
+]
 	.filter(Boolean)
 	.join(" · ");
 const priceText = formatPrice(unitPrice);
