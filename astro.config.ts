@@ -7,6 +7,7 @@ import { defineConfig, envField, fontProviders } from "astro/config";
 import discogsCollection from "astro-discogs-collection";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
+import mtgCollection from "astro-mtg-collection";
 import robotsTxt from "astro-robots-txt";
 import webmanifest from "astro-webmanifest";
 import { satteriAdmonitionsPlugin } from "./src/plugins/admonitions";
@@ -77,6 +78,7 @@ export default defineConfig({
 			},
 		}),
 		discogsCollection(),
+		mtgCollection(),
 		sitemap(),
 		mdx(),
 		robotsTxt(),
