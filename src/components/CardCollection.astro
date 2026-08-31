@@ -426,10 +426,13 @@ function formatPrice(value: number): string {
 				#goToPage(page: number) {
 					this.#page = Math.min(Math.max(page, 0), this.#totalPages() - 1);
 					this.#renderPage();
-					// Jump back to the top of the grid — without this, Next on a short final page (or
-					// Previous from one) can leave the viewport scrolled past whatever cards actually
-					// remain, staring at blank space.
-					this.#list?.scrollIntoView({ behavior: "smooth", block: "start" });
+					// No forced scroll here on purpose. This used to smooth-scrollIntoView(#list, {block:
+					// "start"}) to stop a short last page leaving you stranded past its own content — but
+					// #renderPage()'s height floor already rules that out entirely (the grid never renders
+					// shorter than the tallest page you've seen), so the scroll had nothing left to guard
+					// against. What it *did* keep doing: yank the whole viewport ~1000px+ up to the grid's
+					// top every time, on every click — including the bottom Prev/Next pair added alongside
+					// the top one, whose entire point is paging without leaving where you already are.
 				}
 
 				#renderPage() {
