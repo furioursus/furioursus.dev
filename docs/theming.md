@@ -27,6 +27,19 @@ Dark mode is implemented as a selector variant, not Tailwind's default media-que
 — so `dark:` utility classes key off the `data-theme` attribute on `<html>`, not
 `prefers-color-scheme` directly. That indirection is what makes a manual toggle possible.
 
+### Current palette
+
+Queer-punk direction, SILENCE=DEATH-inspired: dark mode is near-black with warm off-white ink;
+light mode is a bleached xerox-paper ground (a cool pink-grey, not a flat white/cream) with
+near-black ink. Both themes share the same two accent hues rather than mirroring one theme's
+values into the other — `--color-accent` is hot pink (headings-as-links, hover states, focus
+rings) and `--color-link` / `--color-quote` share an acid green (hyperlink text, blockquote
+text). Each hue is retuned per background, not reused verbatim: a pink/green saturated enough to
+read as neon on black goes muddy or fails WCAG AA contrast on paper, so the light-mode values are
+darker and more saturated than their dark-mode counterparts. `--color-accent-2` (the heading
+color via `.title`) deliberately stays a plain near-black/near-white in both themes — it's doing
+bold-gothic-type contrast, not carrying a hue.
+
 ## Switching themes
 
 - **`src/components/ThemeProvider.astro`** — inlined, parser-blocking script (`is:inline`, to avoid

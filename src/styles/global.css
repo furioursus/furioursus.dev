@@ -16,27 +16,27 @@
 @property --color-global-bg {
 	syntax: "<color>";
 	inherits: true;
-	initial-value: hsla(49, 31%, 93%, 1);
+	initial-value: hsla(0, 15%, 94%, 1);
 }
 @property --color-global-text {
 	syntax: "<color>";
 	inherits: true;
-	initial-value: hsla(0, 0%, 6%, 1);
+	initial-value: hsla(273, 16%, 11%, 1);
 }
 @property --color-muted {
 	syntax: "<color>";
 	inherits: true;
-	initial-value: hsla(43, 6%, 44%, 1);
+	initial-value: hsla(279, 10%, 34%, 1);
 }
 @property --color-link {
 	syntax: "<color>";
 	inherits: true;
-	initial-value: oklch(55.44% 0.0431 185.69);
+	initial-value: oklch(47.83% 0.1176 125.71);
 }
 @property --color-accent {
 	syntax: "<color>";
 	inherits: true;
-	initial-value: oklch(55.27% 0.195 19.06);
+	initial-value: oklch(53.11% 0.2159 356.46);
 }
 @property --color-accent-2 {
 	syntax: "<color>";
@@ -46,22 +46,25 @@
 @property --color-quote {
 	syntax: "<color>";
 	inherits: true;
-	initial-value: oklch(55.27% 0.195 19.06);
+	initial-value: oklch(47.83% 0.1176 125.71);
 }
 
 /* you could refactor below to use light-dark(), depending on your target audience */
+/* Queer-punk repaint, SILENCE=DEATH-inspired: xerox-paper light mode, near-black dark mode,
+   hot pink + acid green as the two accent colors in both themes instead of a naive per-theme
+   invert — see docs/theming.md and the furioursus-dev-color-texture-redesign memory. */
 @theme {
-	--color-global-bg: hsla(49, 31%, 93%, 1);
-	--color-global-text: hsla(0, 0%, 6%, 1);
-	/* 40% (not the old 44%) — the flat 44% shared by both themes read at only 4.18:1 against this
-	   light bg, under WCAG AA's 4.5:1 for text. Dark mode needs the opposite adjustment (lighter,
-	   not darker — see the [data-theme="dark"] block below); same hue/sat, solved per-background
-	   instead of shared. */
-	--color-muted: hsla(43, 6%, 40%, 1);
-	--color-link: oklch(55.44% 0.0431 185.69);
-	--color-accent: oklch(55.27% 0.195 19.06);
+	--color-global-bg: hsla(0, 15%, 94%, 1);
+	--color-global-text: hsla(273, 16%, 11%, 1);
+	/* Purple-leaning grey (not the old warm brown) so the muted tone reads as chosen alongside
+	   the pink/green accents rather than a leftover neutral. 34% clears WCAG AA's 4.5:1 against
+	   this bg at ~6.6:1 — dark mode needs a different L for the same reason as before (tuned
+	   per-background, not shared), see the [data-theme="dark"] block below. */
+	--color-muted: hsla(279, 10%, 34%, 1);
+	--color-link: oklch(47.83% 0.1176 125.71);
+	--color-accent: oklch(53.11% 0.2159 356.46);
 	--color-accent-2: oklch(18.15% 0 0);
-	--color-quote: oklch(55.27% 0.195 19.06);
+	--color-quote: oklch(47.83% 0.1176 125.71);
 	--font-mono: var(--font-monolisa);
 }
 
@@ -88,14 +91,14 @@
 			color-scheme: dark;
 			--color-global-bg: hsla(0, 0%, 6%, 1);
 			--color-global-text: hsla(49, 31%, 93%, 1);
-			/* 48% (not the light-mode 40% above) — lighter, not darker, since this sits on a near-
-			   black bg instead of a near-white one. Was silently duplicating the light-mode value
-			   (44%) verbatim, which only cleared 4.05:1 here. */
-			--color-muted: hsla(43, 6%, 48%, 1);
-			--color-link: oklch(70.44% 0.1133 349);
-			--color-accent: oklch(70.91% 0.1415 163.7);
+			/* Lighter, not darker, since this sits on a near-black bg instead of a near-white
+			   one — same purple-grey hue family as the light-mode muted above, tuned to its own
+			   background rather than shared: 62% clears AA at ~6.8:1 here. */
+			--color-muted: hsla(264, 8%, 62%, 1);
+			--color-link: oklch(92.85% 0.2158 125.25);
+			--color-accent: oklch(66.46% 0.2457 359.43);
 			--color-accent-2: oklch(94.66% 0 0);
-			--color-quote: oklch(94.8% 0.106 136.49);
+			--color-quote: oklch(92.85% 0.2158 125.25);
 		}
 
 		--color-mode-transition-duration: 300ms;
