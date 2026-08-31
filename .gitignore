@@ -27,5 +27,3 @@ pnpm-debug.log*
 .data/
 .cache/
 src/assets/discogs-collection/
-src/assets/mtg-collection/
-public/mtg-cards/

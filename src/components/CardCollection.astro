@@ -79,6 +79,15 @@ function formatPrice(value: number): string {
 					</select>
 				</label>
 
+				<label class="control" for="mtg-art">
+					<span class="sr-only">Filter by art treatment</span>
+					<select data-art-select id="mtg-art">
+						<option value="">All art</option>
+						<option value="full">Full art</option>
+						<option value="extended">Extended art</option>
+					</select>
+				</label>
+
 				<label class="control" for="mtg-sort">
 					<span class="sr-only">Sort by</span>
 					<select data-sort-select id="mtg-sort">
@@ -110,6 +119,8 @@ function formatPrice(value: number): string {
 							data-quantity={entry.row.quantity}
 							data-rarity={entry.row.rarity.toLowerCase()}
 							data-foil={entry.row.foil.toLowerCase()}
+							data-full-art={entry.isFullArt}
+							data-extended-art={entry.isExtendedArt}
 							data-search={`${entry.row.name} ${entry.row.setName}`.toLowerCase()}
 							data-set={entry.row.setCode.toLowerCase()}
 							data-collector={entry.row.collectorNumber}
@@ -256,6 +267,7 @@ function formatPrice(value: number): string {
 					const colorSelect = this.querySelector<HTMLSelectElement>("[data-color-select]");
 					const raritySelect = this.querySelector<HTMLSelectElement>("[data-rarity-select]");
 					const foilSelect = this.querySelector<HTMLSelectElement>("[data-foil-select]");
+					const artSelect = this.querySelector<HTMLSelectElement>("[data-art-select]");
 					const sortSelect = this.querySelector<HTMLSelectElement>("[data-sort-select]");
 					const resetButton = this.querySelector<HTMLButtonElement>("[data-reset-button]");
 
@@ -263,6 +275,7 @@ function formatPrice(value: number): string {
 					colorSelect?.addEventListener("change", () => this.#applyFilters());
 					raritySelect?.addEventListener("change", () => this.#applyFilters());
 					foilSelect?.addEventListener("change", () => this.#applyFilters());
+					artSelect?.addEventListener("change", () => this.#applyFilters());
 					sortSelect?.addEventListener("change", () => this.#applySort(sortSelect.value as SortKey));
 
 					resetButton?.addEventListener("click", () => {
@@ -270,6 +283,7 @@ function formatPrice(value: number): string {
 						if (colorSelect) colorSelect.value = "";
 						if (raritySelect) raritySelect.value = "";
 						if (foilSelect) foilSelect.value = "";
+						if (artSelect) artSelect.value = "";
 						this.#applyFilters();
 					});
 				}
@@ -286,6 +300,8 @@ function formatPrice(value: number): string {
 						"";
 					const foil =
 						this.querySelector<HTMLSelectElement>("[data-foil-select]")?.value.toLowerCase() ?? "";
+					const art =
+						this.querySelector<HTMLSelectElement>("[data-art-select]")?.value.toLowerCase() ?? "";
 
 					let visible = 0;
 					for (const item of this.#items) {
@@ -293,7 +309,11 @@ function formatPrice(value: number): string {
 						const matchesColor = !color || (item.dataset.color ?? "").split("|").includes(color);
 						const matchesRarity = !rarity || item.dataset.rarity === rarity;
 						const matchesFoil = !foil || item.dataset.foil === foil;
-						const show = matchesSearch && matchesColor && matchesRarity && matchesFoil;
+						const matchesArt =
+							!art ||
+							(art === "full" && item.dataset.fullArt === "true") ||
+							(art === "extended" && item.dataset.extendedArt === "true");
+						const show = matchesSearch && matchesColor && matchesRarity && matchesFoil && matchesArt;
 						item.hidden = !show;
 						if (show) visible++;
 					}

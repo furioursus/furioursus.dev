@@ -9,4 +9,4 @@ allowBuilds:
 # above, which are), so astro-mtg-collection's own `prepare` build script (tsc -> dist/, see its
 # package.json) needs an explicit allowlist entry here or pnpm install refuses to run it.
 onlyBuiltDependencies:
-  - "astro-mtg-collection@https://codeload.github.com/furioursus/astro-mtg-collection/tar.gz/149f9700955dab7333dcc4fdc0444b0b8d2aa7e6"
+  - "astro-mtg-collection@https://codeload.github.com/furioursus/astro-mtg-collection/tar.gz/4ccf9f159030931d56bfc9d2fef6c1bf32ac69b4"
