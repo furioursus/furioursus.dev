@@ -3,7 +3,13 @@
 // A searchable, filterable list of my Magic: The Gathering collection — see docs/mtg.md.
 // Mirrors music.astro's shape: this page does the fetch/sort, CardCollection.astro renders and
 // owns client-side search/filter/sort.
-import { loadCollection, queryCollection, RARITY_ORDER, summarize, uniqueSorted } from "astro-mtg-collection";
+import {
+	loadCollection,
+	queryCollection,
+	RARITY_ORDER,
+	summarize,
+	uniqueSorted,
+} from "astro-mtg-collection";
 import CardCollection from "@/components/CardCollection.astro";
 import PageLayout from "@/layouts/Base.astro";
 
