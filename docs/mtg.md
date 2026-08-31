@@ -100,7 +100,19 @@ carrying lowercased `data-*` attributes (`data-search`, `data-color`, `data-rari
 `data-full-art`, `data-extended-art`, `data-name`, `data-price`, `data-set`, `data-collector`,
 `data-quantity`) that a `<card-collection>` custom element reads to show/hide and reorder cards in
 response to the search box, color/rarity/foil/art `<select>`s, and sort `<select>`. Nothing is
-removed from the DOM — filtering just toggles the `hidden` attribute.
+removed from the DOM — filtering (and, below, pagination) just toggles the `hidden` attribute.
+
+- **Pagination** is a second `hidden`-toggling pass layered on top of filtering, not a separate
+  mechanism — `#applyFilters()` narrows `#items` down to `#filtered` (still full DOM nodes, just a
+  smaller in-memory array), then `#renderPage()` shows only the current 60-card slice of *that*
+  array and hides the rest, including everything filtering already excluded. Changing any filter or
+  the sort key rebuilds `#filtered` and resets to page one — there's no stored page state to
+  reconcile against results that may no longer exist. `[data-pagination]` (the Prev/Next controls)
+  hides itself whenever the current filtered set fits on one page, same `hidden`-attribute
+  convention as `[data-empty]` above it. Gallery Next/Prev navigation (see
+  [`docs/lightbox.md`](./lightbox.md)) already skips `[hidden]` ancestors for filtering's sake, so it
+  falls out for pagination for free — the lightbox only ever cycles within the current page's
+  visible cards, not the whole filtered set.
 
 - **Color** filters against `data-color`, a pipe-separated list built from the card's
   `color_identity` (a colorless card gets `["C"]`) — picking "White" matches any card whose identity

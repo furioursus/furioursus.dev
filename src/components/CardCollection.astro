@@ -130,6 +130,12 @@ function formatPrice(value: number): string {
 					))
 				}
 			</ul>
+
+			<div class="pagination" data-pagination hidden>
+				<button data-page-prev type="button">Previous</button>
+				<span data-page-label></span>
+				<button data-page-next type="button">Next</button>
+			</div>
 		</div>
 
 		<style>
@@ -200,6 +206,45 @@ function formatPrice(value: number): string {
 			.card-item[hidden] {
 				display: none;
 			}
+
+			.pagination {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 1rem;
+				margin-top: 2rem;
+				font-size: 0.875rem;
+			}
+
+			.pagination[hidden] {
+				display: none;
+			}
+
+			.pagination button {
+				font: inherit;
+				font-size: 0.875rem;
+				color: var(--color-global-text);
+				background: var(--color-global-bg);
+				border: 1px solid var(--color-muted);
+				border-radius: 2px;
+				padding: 0.4rem 0.8rem;
+				cursor: pointer;
+			}
+
+			.pagination button:hover:not(:disabled) {
+				color: var(--color-accent);
+				border-color: var(--color-accent);
+			}
+
+			.pagination button:focus-visible {
+				outline: 2px solid var(--color-accent);
+				outline-offset: 1px;
+			}
+
+			.pagination button:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
 		</style>
 
 		<script>
@@ -226,6 +271,10 @@ function formatPrice(value: number): string {
 				mythic: 4,
 				bonus: 5,
 			};
+
+			// Cards per page — client-side only (see CardCollectionElement below), so a no-JS visitor
+			// still gets the full unpaginated grid, same as before pagination existed.
+			const PAGE_SIZE = 60;
 
 			function priceOf(el: HTMLElement): number {
 				const raw = el.dataset.price;
@@ -257,7 +306,12 @@ function formatPrice(value: number): string {
 
 			class CardCollectionElement extends HTMLElement {
 				#items: HTMLLIElement[] = [];
+				// The current filtered (not yet paginated) set, in whatever order #items is currently
+				// sorted in — #renderPage() slices a page out of this rather than out of #items directly,
+				// since #items always holds *every* card regardless of filter state.
+				#filtered: HTMLLIElement[] = [];
 				#list: HTMLUListElement | null = null;
+				#page = 0;
 
 				connectedCallback() {
 					this.#list = this.querySelector<HTMLUListElement>(".grid");
@@ -270,6 +324,8 @@ function formatPrice(value: number): string {
 					const artSelect = this.querySelector<HTMLSelectElement>("[data-art-select]");
 					const sortSelect = this.querySelector<HTMLSelectElement>("[data-sort-select]");
 					const resetButton = this.querySelector<HTMLButtonElement>("[data-reset-button]");
+					const prevButton = this.querySelector<HTMLButtonElement>("[data-page-prev]");
+					const nextButton = this.querySelector<HTMLButtonElement>("[data-page-next]");
 
 					searchInput?.addEventListener("input", () => this.#applyFilters());
 					colorSelect?.addEventListener("change", () => this.#applyFilters());
@@ -286,6 +342,14 @@ function formatPrice(value: number): string {
 						if (artSelect) artSelect.value = "";
 						this.#applyFilters();
 					});
+
+					prevButton?.addEventListener("click", () => this.#goToPage(this.#page - 1));
+					nextButton?.addEventListener("click", () => this.#goToPage(this.#page + 1));
+
+					// Establish page one on first connect — without this every card would render at once
+					// (matching the pre-pagination behavior, and still what a no-JS visitor gets, since
+					// nothing here runs for them at all).
+					this.#applyFilters();
 				}
 
 				#applyFilters() {
@@ -303,8 +367,7 @@ function formatPrice(value: number): string {
 					const art =
 						this.querySelector<HTMLSelectElement>("[data-art-select]")?.value.toLowerCase() ?? "";
 
-					let visible = 0;
-					for (const item of this.#items) {
+					this.#filtered = this.#items.filter((item) => {
 						const matchesSearch = !search || (item.dataset.search ?? "").includes(search);
 						const matchesColor = !color || (item.dataset.color ?? "").split("|").includes(color);
 						const matchesRarity = !rarity || item.dataset.rarity === rarity;
@@ -313,16 +376,13 @@ function formatPrice(value: number): string {
 							!art ||
 							(art === "full" && item.dataset.fullArt === "true") ||
 							(art === "extended" && item.dataset.extendedArt === "true");
-						const show = matchesSearch && matchesColor && matchesRarity && matchesFoil && matchesArt;
-						item.hidden = !show;
-						if (show) visible++;
-					}
+						return matchesSearch && matchesColor && matchesRarity && matchesFoil && matchesArt;
+					});
 
-					const countEl = this.querySelector("[data-count]");
-					if (countEl) countEl.textContent = String(visible);
-
-					const emptyEl = this.querySelector<HTMLElement>("[data-empty]");
-					if (emptyEl) emptyEl.hidden = visible !== 0;
+					// A changed filter invalidates whatever page you were on — e.g. page 4 of an
+					// unfiltered grid might not even exist once a search narrows things down.
+					this.#page = 0;
+					this.#renderPage();
 				}
 
 				#applySort(key: SortKey) {
@@ -330,6 +390,48 @@ function formatPrice(value: number): string {
 					const sorted = [...this.#items].sort(comparator);
 					for (const item of sorted) this.#list?.append(item);
 					this.#items = sorted;
+					// Re-filter rather than just re-paginate: #filtered was built from the old DOM order,
+					// so it needs rebuilding against the new one. Cheap (same predicates, same data), and
+					// resetting to page one on a re-sort matches what changing a filter already does.
+					this.#applyFilters();
+				}
+
+				#totalPages(): number {
+					return Math.max(1, Math.ceil(this.#filtered.length / PAGE_SIZE));
+				}
+
+				#goToPage(page: number) {
+					this.#page = Math.min(Math.max(page, 0), this.#totalPages() - 1);
+					this.#renderPage();
+					// Jump back to the top of the grid — without this, Next on a short final page (or
+					// Previous from one) can leave the viewport scrolled past whatever cards actually
+					// remain, staring at blank space.
+					this.#list?.scrollIntoView({ behavior: "smooth", block: "start" });
+				}
+
+				#renderPage() {
+					const start = this.#page * PAGE_SIZE;
+					const pageItems = new Set(this.#filtered.slice(start, start + PAGE_SIZE));
+					for (const item of this.#items) item.hidden = !pageItems.has(item);
+
+					const countEl = this.querySelector("[data-count]");
+					if (countEl) countEl.textContent = String(this.#filtered.length);
+
+					const emptyEl = this.querySelector<HTMLElement>("[data-empty]");
+					if (emptyEl) emptyEl.hidden = this.#filtered.length !== 0;
+
+					const totalPages = this.#totalPages();
+					const paginationEl = this.querySelector<HTMLElement>("[data-pagination]");
+					if (paginationEl) paginationEl.hidden = totalPages <= 1;
+
+					const pageLabel = this.querySelector("[data-page-label]");
+					if (pageLabel) pageLabel.textContent = `Page ${this.#page + 1} of ${totalPages}`;
+
+					const prevButton = this.querySelector<HTMLButtonElement>("[data-page-prev]");
+					if (prevButton) prevButton.disabled = this.#page === 0;
+
+					const nextButton = this.querySelector<HTMLButtonElement>("[data-page-next]");
+					if (nextButton) nextButton.disabled = this.#page >= totalPages - 1;
 				}
 			}
 
