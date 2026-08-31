@@ -3,7 +3,20 @@
 // A searchable, filterable list of my Magic: The Gathering collection — see docs/mtg.md.
 // Mirrors music.astro's shape: this page does the fetch/sort, CardCollection.astro renders and
 // owns client-side search/filter/sort.
-import { loadCollection, queryCollection, RARITY_ORDER, summarize, uniqueSorted } from "astro-mtg-collection";
+// Imports from the /collection subpath, not the main package — the main entry also re-exports
+// the Astro integration, whose own import chain reaches its Vite plugin (a plain `import ...
+// from "vite"`). Importing loadCollection/etc. from the main entry pulled that chain into this
+// page's own build and broke it (Vite's own internals ending up bundled into this route's
+// output chunk); see docs/mtg.md's "Card images are pre-optimized, not astro:assets" section —
+// this was the underlying cause, not image count as first suspected. See also
+// astro-mtg-collection's own README for why the split exists on the package side.
+import {
+	loadCollection,
+	queryCollection,
+	RARITY_ORDER,
+	summarize,
+	uniqueSorted,
+} from "astro-mtg-collection/collection";
 import CardCollection from "@/components/CardCollection.astro";
 import PageLayout from "@/layouts/Base.astro";
 

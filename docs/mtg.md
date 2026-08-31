@@ -10,28 +10,33 @@ section of it — the two collections are unrelated hobbies, unlike Last.fm/viny
 
 ## How it's wired
 
-- `mtgCollection()` is registered in `astro.config.ts`. Unlike `astro-discogs-collection`, it needs
-  no API credentials — it reads a CSV export directly, no env vars.
+- `mtgCollection({ cacheImages: false })` is registered in `astro.config.ts`. Unlike
+  `astro-discogs-collection`, it needs no API credentials — it reads a CSV export directly, no env
+  vars. `cacheImages: false` is explained below.
 - The collection export lives at `src/data/collection.csv` (the package's default `csvPath`) and
-  **is committed to the repo** — unlike its derived caches below, there's no live account to
-  re-fetch from at build time, so the export itself is the source of truth. Re-export from ManaBox
-  (Collection → menu → Export → CSV) and overwrite this file to update the collection; the next
-  build re-resolves and re-caches everything from the new rows.
-- `loadCollection()` (from `astro-mtg-collection`) parses the CSV and resolves each row against
-  Scryfall — by Scryfall ID when the export has one (ManaBox always does), falling back to
-  set+collector-number or name-only matching for thinner export formats. Returns
-  `{ cards, missingFile, error }`; `missingFile` is `true` when the CSV doesn't exist (a fresh
-  checkout without the export), and the page renders a setup notice instead of the grid.
+  **is committed to the repo** — unlike its derived Scryfall-data cache below, there's no live
+  account to re-fetch from at build time, so the export itself is the source of truth. Re-export
+  from ManaBox (Collection → menu → Export → CSV) and overwrite this file to update the collection;
+  the next build re-resolves everything from the new rows.
+- `loadCollection()`/`queryCollection()`/`summarize()`/`uniqueSorted()`/`RARITY_ORDER` are imported
+  from **`astro-mtg-collection/collection`**, not the bare package — see that subpath's own doc
+  comment (and the package's README) for why: the main entry also re-exports the Astro integration,
+  whose import chain reaches its Vite plugin, and importing data functions from *that* entry once
+  broke `astro build` outright (Rollup inlined a broken copy of Vite's own internals into this
+  page's build). Fixed at the package level by splitting the two concerns into separate entry
+  points — this site just has to keep importing from the right one.
+- `loadCollection()` parses the CSV and resolves each row against Scryfall — by Scryfall ID when
+  the export has one (ManaBox always does), falling back to set+collector-number or name-only
+  matching for thinner export formats. Returns `{ cards, missingFile, error }`; `missingFile` is
+  `true` when the CSV doesn't exist (a fresh checkout without the export), and the page renders a
+  setup notice instead of the grid.
 - `queryCollection()` does the initial server-side sort (`sortBy: "name"`); `summarize()` derives
   the unique-card/total-copies/total-value counts shown above the grid; `uniqueSorted()` builds the
   rarity and foil `<select>` option lists (rarities re-sorted by `RARITY_ORDER` afterwards, so the
   dropdown reads common→mythic instead of alphabetically).
-- Card art is served locally when available — `getLocalCardImage()` (from
-  `astro-mtg-collection/images`) in `src/components/CardTile.astro` looks up a cached image **by the
-  resolved Scryfall card's own `id`**, not the CSV row's `scryfallId` — a row without one (or with a
-  stale one) can still resolve to a card via set+collector-number or name matching, so the two
-  aren't always the same value. Falls back to the card's live Scryfall image URL, then a text
-  placeholder for the rare row Scryfall couldn't resolve at all.
+- Card art renders straight from Scryfall's own hosted `imageUrl` — a plain `<img>` in
+  `CardTile.astro`, not `getLocalCardImage()`/astro:assets the way `RecordCard.astro`'s cover art
+  works. See "Card images load directly from Scryfall" below for why.
 - Card art opens in the [lightbox](./lightbox.md) at click, same two-click-target split as
   `RecordCard.astro` (see [`docs/discogs.md`](./discogs.md)): the art opens the lightbox, the
   name/set/price text below links out to the card's Scryfall page — except for the rare unresolved
@@ -39,6 +44,45 @@ section of it — the two collections are unrelated hobbies, unlike Last.fm/viny
 - Cards inside `CardCollection.astro`'s grid navigate as one gallery (Next/Previous, arrow keys,
   wrapping, skipping filtered-out cards) via the same `data-lightbox-gallery` attribute pattern —
   see [`docs/lightbox.md`](./lightbox.md).
+
+## Card images load directly from Scryfall
+
+`CardTile.astro` renders a plain `<img src={entry.imageUrl}>` — Scryfall's own hosted "normal"
+image — with no local download, resize, or `astro:assets` optimization step at all. Two separate
+reasons landed on this, worth keeping apart:
+
+1. **A real build failure, since fixed elsewhere.** `astro build` once failed specifically
+   prerendering `/mtg/` (every other route, including `/music/`, built fine), deep inside an
+   Astro/Vite internal function that should never run during a static build. The image count
+   looked like the obvious suspect at the time (~6,200 unique cards, an order of magnitude beyond
+   any other page) and a batch pre-optimization step was built to sidestep it — but swapping every
+   card to plain `<img>` and removing `astro:assets` entirely reproduced the *exact same error*,
+   which ruled the image-volume theory out. The real cause was a Rollup-bundling bug in how
+   `astro-mtg-collection` structured its exports (see "How it's wired" above) — fixed at the
+   package level, unrelated to how card art itself is rendered.
+2. **Ephemeral hosting makes local caching pointless anyway.** Even with that bug fixed, a local
+   image cache (raw JPGs, or a resized/optimized copy) buys nothing on hosts like Netlify — nothing
+   persists between builds, so downloading or processing ~6,200 images just to discard the whole
+   checkout afterward is pure waste, paid on *every* build, forever. `cacheImages: false` in
+   `astro.config.ts`'s `mtgCollection()` call skips the package's own image-download step entirely
+   (added specifically to support this — see its README); rendering straight against `imageUrl`
+   skips the rest.
+
+The tradeoff: one fixed size for both the grid thumbnail and the lightbox's enlarged view, no
+responsive `srcset`, and art depends on Scryfall's own CDN being up — acceptable here since Astro's
+per-page image optimization was never buying anything durable in this deployment model to begin
+with.
+
+## Full art / extended art
+
+`astro-mtg-collection` flags each card's `EnrichedCard.isFullArt`/`isExtendedArt` booleans
+(Scryfall's `full_art`/`border_color`/`frame_effects` fields under the hood — see the package's own
+README). `CardTile.astro` appends "Full Art"/"Extended Art" to the existing set/rarity meta line
+when either is true (both can apply to the same printing) — no new visual treatment, just extends
+the plain-text line already there. `CardCollection.astro` also exposes them as a `data-full-art`/
+`data-extended-art` filter (`<select data-art-select>`, values `""`/`"full"`/`"extended"`), the
+same client-side `data-*`-attribute pattern the color/rarity/foil filters already use — see
+"Search/filter/sort is all client-side, no re-fetch" below.
 
 ## Prices are shown
 
@@ -53,10 +97,10 @@ promo print) shows "Price unknown" instead of `$0.00` or blank.
 Same mechanism as the vinyl collection (see [`docs/discogs.md`](./discogs.md)'s section of the same
 name) — `src/components/CardCollection.astro` renders every card into the grid up front, each `<li>`
 carrying lowercased `data-*` attributes (`data-search`, `data-color`, `data-rarity`, `data-foil`,
-`data-name`, `data-price`, `data-set`, `data-collector`, `data-quantity`) that a `<card-collection>`
-custom element reads to show/hide and reorder cards in response to the search box, color/rarity/foil
-`<select>`s, and sort `<select>`. Nothing is removed from the DOM — filtering just toggles the
-`hidden` attribute.
+`data-full-art`, `data-extended-art`, `data-name`, `data-price`, `data-set`, `data-collector`,
+`data-quantity`) that a `<card-collection>` custom element reads to show/hide and reorder cards in
+response to the search box, color/rarity/foil/art `<select>`s, and sort `<select>`. Nothing is
+removed from the DOM — filtering just toggles the `hidden` attribute.
 
 - **Color** filters against `data-color`, a pipe-separated list built from the card's
   `color_identity` (a colorless card gets `["C"]`) — picking "White" matches any card whose identity
@@ -82,19 +126,29 @@ custom element reads to show/hide and reorder cards in response to the search bo
 - **Collection scale.** This export is ~8,300 rows / ~6,200 unique cards — about 20x the size of
   the vinyl collection. Every card still renders into the DOM unpaginated (a deliberate choice, to
   stay consistent with `/music/`'s pattern) — images are lazy-loaded so this doesn't block first
-  paint, but the initial build downloads and optimizes thousands of card images the first time (or
-  after a CSV update introduces new cards); expect a build-time cost `/music/` doesn't have. Cached
-  images and Scryfall data persist across builds (`imageCacheDir`/`scryfallCachePath`/
-  `scryfallBulkCachePath`, all gitignored — see below), so only *new* rows pay that cost on
-  subsequent builds.
-- `src/assets/mtg-collection/` (the card-image cache) and `.cache/mtg-collection/` (the Scryfall
-  JSON/bulk-data cache) are gitignored — both are fully regenerable from `src/data/collection.csv`,
-  same as `astro-discogs-collection`'s equivalent caches.
-- `astro-mtg-collection` needs `/// <reference types="astro-mtg-collection/client" />` in
-  `src/env.d.ts` for TypeScript to know about the `virtual:mtg-collection/images` Vite module that
-  `getLocalCardImage()` resolves through — already added, only relevant if that reference is ever
-  removed.
+  paint. This scale is also *why* card art skips local caching/`astro:assets` entirely — see "Card
+  images load directly from Scryfall" above.
+- `.cache/mtg-collection/` (the Scryfall JSON/bulk-data cache — prices, card details) is gitignored
+  and regenerable from `src/data/collection.csv`, same treatment as `astro-discogs-collection`'s
+  equivalent cache. With `cacheImages: false`, the package's *image* cache directory
+  (`imageCacheDir`, `src/assets/mtg-collection/` by default) is never created at all.
 - `/mtg/` is listed in `menuLinks` in `src/site.config.ts`. If `src/data/collection.csv` is ever
   removed (e.g. a fork without the real export), the page still builds and loads — `loadCollection()`
   reports `missingFile: true` and the page shows a setup notice instead of the grid, same fallback
   pattern as `/music/`'s vinyl section without Discogs credentials.
+- **The pnpm version matters, and has to stay pinned identically everywhere.**
+  `astro-mtg-collection` is a `github:`-sourced git dependency with its own `prepare` build script,
+  which needs a `pnpm-workspace.yaml` `onlyBuiltDependencies` entry to run at all (git-hosted deps
+  aren't covered by pnpm's built-in trusted-package list the way registry packages are — see
+  `pnpm-workspace.yaml`'s own comment). That entry's required *shape* isn't stable across pnpm point
+  releases: 10.30.3 and 10.33.0 both hard-fail parsing a version-qualified git-URL entry
+  (`ERR_PNPM_INVALID_VERSION_UNION`), while 10.34.5 requires exactly that qualified form and
+  rejects the plain package name instead (`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`) — no single
+  config value satisfies both. Found the hard way: GitHub Actions (floating `pnpm/action-setup@v4`
+  major-version resolution) and Netlify (Corepack, which ignores a `PNPM_VERSION` env var entirely
+  and instead reads `package.json`'s `packageManager` field) silently landed on two different pnpm
+  versions, so a config shaped for one broke the other regardless of which was chosen. Fixed by
+  pinning `packageManager: "pnpm@10.34.5"` in `package.json` as the single source of truth — CI's
+  workflow reads it too (no explicit `version` input on `pnpm/action-setup@v4` anymore). If this
+  version is ever bumped, `pnpm-workspace.yaml`'s `onlyBuiltDependencies` entry may need its shape
+  rechecked against whatever pnpm changelog covers the jump.
