@@ -18,10 +18,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      # No `version` input — reads it from package.json's `packageManager` field instead, so this
+      # and Netlify's Corepack-driven pnpm selection can't drift apart. They already did once:
+      # onlyBuiltDependencies's git-dependency entry needs a different value shape depending on
+      # the exact pnpm point release (10.30.3 vs 10.34.5 disagree on it), so this and Netlify
+      # silently landing on different pnpm versions broke one of them regardless of which format
+      # was chosen. See docs/mtg.md.
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
           run_install: false
 
       - name: Setup node
