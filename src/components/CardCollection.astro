@@ -1,0 +1,319 @@
+---
+// src/components/CardCollection.astro
+// The /mtg/ page's card collection — a searchable, filterable grid over a ManaBox-exported
+// Magic: The Gathering collection. Mirrors VinylCollection.astro's structure (custom element
+// colocated with its markup, driving search/filter/sort entirely client-side, no re-fetch) —
+// see docs/mtg.md for the wider feature and docs/discogs.md for the pattern this follows.
+import type { CollectionSummary, EnrichedCard } from "astro-mtg-collection";
+import CardTile from "@/components/CardTile.astro";
+
+interface Props {
+	entries: EnrichedCard[];
+	rarities: string[];
+	foils: string[];
+	stats: CollectionSummary;
+}
+
+const { entries, rarities, foils, stats } = Astro.props;
+
+const COLORS = [
+	{ value: "W", label: "White" },
+	{ value: "U", label: "Blue" },
+	{ value: "B", label: "Black" },
+	{ value: "R", label: "Red" },
+	{ value: "G", label: "Green" },
+	{ value: "C", label: "Colorless" },
+] as const;
+
+function formatPrice(value: number): string {
+	return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+}
+---
+
+<card-collection>
+	<p class="text-muted mb-6 text-sm">
+		<span data-count>{stats.uniqueCards}</span> of {stats.uniqueCards} cards &middot; {
+			stats.totalQuantity
+		}
+		total copies &middot; est. {formatPrice(stats.totalValue)}
+		{stats.knownPriceCount < stats.uniqueCards && " (known prices only)"}
+	</p>
+
+	<p class="empty" data-empty hidden>No cards match your filters.</p>
+
+	<div class="breakout-container">
+		<div class="mx-auto max-w-7xl px-4 sm:px-8">
+			<div class="controls">
+				<label class="control" for="mtg-search">
+					<span class="sr-only">Search by card or set name</span>
+					<input
+						autocomplete="off"
+						data-search-input
+						id="mtg-search"
+						placeholder="Search card or set…"
+						type="search"
+					/>
+				</label>
+
+				<label class="control" for="mtg-color">
+					<span class="sr-only">Filter by color</span>
+					<select data-color-select id="mtg-color">
+						<option value="">All colors</option>
+						{COLORS.map(({ value, label }) => <option value={value}>{label}</option>)}
+					</select>
+				</label>
+
+				<label class="control" for="mtg-rarity">
+					<span class="sr-only">Filter by rarity</span>
+					<select data-rarity-select id="mtg-rarity">
+						<option value="">All rarities</option>
+						{rarities.map((rarity) => <option value={rarity}>{rarity}</option>)}
+					</select>
+				</label>
+
+				<label class="control" for="mtg-foil">
+					<span class="sr-only">Filter by foil</span>
+					<select data-foil-select id="mtg-foil">
+						<option value="">Foil &amp; nonfoil</option>
+						{foils.map((foil) => <option value={foil}>{foil}</option>)}
+					</select>
+				</label>
+
+				<label class="control" for="mtg-sort">
+					<span class="sr-only">Sort by</span>
+					<select data-sort-select id="mtg-sort">
+						<option value="name-asc">Name (A–Z)</option>
+						<option value="name-desc">Name (Z–A)</option>
+						<option value="price-desc">Price (highest)</option>
+						<option value="price-asc">Price (lowest)</option>
+						<option value="set">Set</option>
+						<option value="quantity-desc">Quantity (most)</option>
+						<option value="rarity">Rarity</option>
+					</select>
+				</label>
+
+				<button data-reset-button type="button"> Reset </button>
+			</div>
+			<ul class="grid" data-lightbox-gallery role="list">
+				{
+					entries.map((entry) => (
+						<li
+							class="card-item"
+							data-color={(entry.card?.color_identity?.length
+								? entry.card.color_identity
+								: ["C"]
+							)
+								.join("|")
+								.toLowerCase()}
+							data-name={entry.row.name.toLowerCase()}
+							data-price={entry.unitPrice ?? ""}
+							data-quantity={entry.row.quantity}
+							data-rarity={entry.row.rarity.toLowerCase()}
+							data-foil={entry.row.foil.toLowerCase()}
+							data-search={`${entry.row.name} ${entry.row.setName}`.toLowerCase()}
+							data-set={entry.row.setCode.toLowerCase()}
+							data-collector={entry.row.collectorNumber}
+						>
+							<CardTile entry={entry} titleLevel={3} />
+						</li>
+					))
+				}
+			</ul>
+		</div>
+
+		<style>
+			.controls {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.75rem;
+				margin-bottom: 1.5rem;
+			}
+
+			.control {
+				display: block;
+			}
+
+			input[type="search"],
+			select,
+			button[data-reset-button] {
+				font: inherit;
+				font-size: 0.875rem;
+				color: var(--color-global-text);
+				background: var(--color-global-bg);
+				border: 1px dashed var(--color-muted);
+				border-radius: 2px;
+				padding: 0.4rem 0.6rem;
+			}
+
+			input[type="search"] {
+				min-width: 14rem;
+			}
+
+			button[data-reset-button] {
+				cursor: pointer;
+				border-style: solid;
+			}
+
+			button[data-reset-button]:hover {
+				color: var(--color-accent);
+				border-color: var(--color-accent);
+			}
+
+			input[type="search"]:focus-visible,
+			select:focus-visible,
+			button[data-reset-button]:focus-visible {
+				outline: 2px solid var(--color-accent);
+				outline-offset: 1px;
+			}
+
+			.empty {
+				opacity: 0.7;
+			}
+
+			/* Mobile-first: a single-column list of rows (see CardTile.astro). */
+			.grid {
+				display: block;
+				padding: 0;
+				margin: 0;
+				list-style: none;
+			}
+
+			@media (min-width: 640px) {
+				.grid {
+					display: grid;
+					grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+					gap: 1rem;
+				}
+			}
+
+			.card-item[hidden] {
+				display: none;
+			}
+		</style>
+
+		<script>
+			// Mirrors astro-mtg-collection's own (unexported) SortKey union — see docs/mtg.md — so this
+			// stays a drop-in match for the package's server-side sortCards() semantics, just reading
+			// from data-* attributes instead of EnrichedCard objects.
+			type SortKey =
+				| "name-asc"
+				| "name-desc"
+				| "price-desc"
+				| "price-asc"
+				| "set"
+				| "quantity-desc"
+				| "rarity";
+
+			// Mirrors astro-mtg-collection's RARITY_ORDER (collection.ts) — kept as a small local
+			// constant rather than importing the package into client code, same as VinylCollection.astro
+			// hand-rolls its own sort comparators instead of calling back into astro-discogs-collection.
+			const RARITY_ORDER: Record<string, number> = {
+				common: 0,
+				uncommon: 1,
+				rare: 2,
+				special: 3,
+				mythic: 4,
+				bonus: 5,
+			};
+
+			function priceOf(el: HTMLElement): number {
+				const raw = el.dataset.price;
+				return raw ? Number(raw) : Number.NaN;
+			}
+
+			const sortComparators: Record<SortKey, (a: HTMLElement, b: HTMLElement) => number> = {
+				"name-asc": (a, b) => (a.dataset.name ?? "").localeCompare(b.dataset.name ?? ""),
+				"name-desc": (a, b) => (b.dataset.name ?? "").localeCompare(a.dataset.name ?? ""),
+				"price-desc": (a, b) => {
+					const av = priceOf(a);
+					const bv = priceOf(b);
+					return (Number.isNaN(bv) ? -1 : bv) - (Number.isNaN(av) ? -1 : av);
+				},
+				"price-asc": (a, b) => {
+					const av = priceOf(a);
+					const bv = priceOf(b);
+					return (Number.isNaN(av) ? Infinity : av) - (Number.isNaN(bv) ? Infinity : bv);
+				},
+				set: (a, b) =>
+					(a.dataset.set ?? "").localeCompare(b.dataset.set ?? "") ||
+					(a.dataset.collector ?? "").localeCompare(b.dataset.collector ?? "", undefined, {
+						numeric: true,
+					}),
+				"quantity-desc": (a, b) => Number(b.dataset.quantity ?? 0) - Number(a.dataset.quantity ?? 0),
+				rarity: (a, b) =>
+					(RARITY_ORDER[a.dataset.rarity ?? ""] ?? -1) - (RARITY_ORDER[b.dataset.rarity ?? ""] ?? -1),
+			};
+
+			class CardCollectionElement extends HTMLElement {
+				#items: HTMLLIElement[] = [];
+				#list: HTMLUListElement | null = null;
+
+				connectedCallback() {
+					this.#list = this.querySelector<HTMLUListElement>(".grid");
+					this.#items = Array.from(this.querySelectorAll<HTMLLIElement>(".card-item"));
+
+					const searchInput = this.querySelector<HTMLInputElement>("[data-search-input]");
+					const colorSelect = this.querySelector<HTMLSelectElement>("[data-color-select]");
+					const raritySelect = this.querySelector<HTMLSelectElement>("[data-rarity-select]");
+					const foilSelect = this.querySelector<HTMLSelectElement>("[data-foil-select]");
+					const sortSelect = this.querySelector<HTMLSelectElement>("[data-sort-select]");
+					const resetButton = this.querySelector<HTMLButtonElement>("[data-reset-button]");
+
+					searchInput?.addEventListener("input", () => this.#applyFilters());
+					colorSelect?.addEventListener("change", () => this.#applyFilters());
+					raritySelect?.addEventListener("change", () => this.#applyFilters());
+					foilSelect?.addEventListener("change", () => this.#applyFilters());
+					sortSelect?.addEventListener("change", () => this.#applySort(sortSelect.value as SortKey));
+
+					resetButton?.addEventListener("click", () => {
+						if (searchInput) searchInput.value = "";
+						if (colorSelect) colorSelect.value = "";
+						if (raritySelect) raritySelect.value = "";
+						if (foilSelect) foilSelect.value = "";
+						this.#applyFilters();
+					});
+				}
+
+				#applyFilters() {
+					const search =
+						this.querySelector<HTMLInputElement>("[data-search-input]")
+							?.value.trim()
+							.toLowerCase() ?? "";
+					const color =
+						this.querySelector<HTMLSelectElement>("[data-color-select]")?.value.toLowerCase() ?? "";
+					const rarity =
+						this.querySelector<HTMLSelectElement>("[data-rarity-select]")?.value.toLowerCase() ??
+						"";
+					const foil =
+						this.querySelector<HTMLSelectElement>("[data-foil-select]")?.value.toLowerCase() ?? "";
+
+					let visible = 0;
+					for (const item of this.#items) {
+						const matchesSearch = !search || (item.dataset.search ?? "").includes(search);
+						const matchesColor = !color || (item.dataset.color ?? "").split("|").includes(color);
+						const matchesRarity = !rarity || item.dataset.rarity === rarity;
+						const matchesFoil = !foil || item.dataset.foil === foil;
+						const show = matchesSearch && matchesColor && matchesRarity && matchesFoil;
+						item.hidden = !show;
+						if (show) visible++;
+					}
+
+					const countEl = this.querySelector("[data-count]");
+					if (countEl) countEl.textContent = String(visible);
+
+					const emptyEl = this.querySelector<HTMLElement>("[data-empty]");
+					if (emptyEl) emptyEl.hidden = visible !== 0;
+				}
+
+				#applySort(key: SortKey) {
+					const comparator = sortComparators[key] ?? sortComparators["name-asc"];
+					const sorted = [...this.#items].sort(comparator);
+					for (const item of sorted) this.#list?.append(item);
+					this.#items = sorted;
+				}
+			}
+
+			customElements.define("card-collection", CardCollectionElement);
+		</script>
+	</div>
+</card-collection>
