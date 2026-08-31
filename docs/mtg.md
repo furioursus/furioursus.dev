@@ -138,3 +138,19 @@ custom element reads to show/hide and reorder cards in response to the search bo
   removed (e.g. a fork without the real export), the page still builds and loads — `loadCollection()`
   reports `missingFile: true` and the page shows a setup notice instead of the grid, same fallback
   pattern as `/music/`'s vinyl section without Discogs credentials.
+- **The pnpm version matters, and has to stay pinned identically everywhere.**
+  `astro-mtg-collection` is a `github:`-sourced git dependency with its own `prepare` build script,
+  which needs a `pnpm-workspace.yaml` `onlyBuiltDependencies` entry to run at all (git-hosted deps
+  aren't covered by pnpm's built-in trusted-package list the way registry packages are — see
+  `pnpm-workspace.yaml`'s own comment). That entry's required *shape* isn't stable across pnpm point
+  releases: 10.30.3 and 10.33.0 both hard-fail parsing a version-qualified git-URL entry
+  (`ERR_PNPM_INVALID_VERSION_UNION`), while 10.34.5 requires exactly that qualified form and
+  rejects the plain package name instead (`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`) — no single
+  config value satisfies both. Found the hard way: GitHub Actions (floating `pnpm/action-setup@v4`
+  major-version resolution) and Netlify (Corepack, which ignores a `PNPM_VERSION` env var entirely
+  and instead reads `package.json`'s `packageManager` field) silently landed on two different pnpm
+  versions, so a config shaped for one broke the other regardless of which was chosen. Fixed by
+  pinning `packageManager: "pnpm@10.34.5"` in `package.json` as the single source of truth — CI's
+  workflow reads it too (no explicit `version` input on `pnpm/action-setup@v4` anymore). If this
+  version is ever bumped, `pnpm-workspace.yaml`'s `onlyBuiltDependencies` entry may need its shape
+  rechecked against whatever pnpm changelog covers the jump.
