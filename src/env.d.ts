@@ -4,4 +4,3 @@ declare module "@pagefind/default-ui" {
 	}
 }
 /// <reference types="astro-discogs-collection/client" />
-/// <reference types="astro-mtg-collection/client" />

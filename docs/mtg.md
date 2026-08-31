@@ -26,12 +26,13 @@ section of it — the two collections are unrelated hobbies, unlike Last.fm/viny
   the unique-card/total-copies/total-value counts shown above the grid; `uniqueSorted()` builds the
   rarity and foil `<select>` option lists (rarities re-sorted by `RARITY_ORDER` afterwards, so the
   dropdown reads common→mythic instead of alphabetically).
-- Card art is served locally when available — `getLocalCardImage()` (from
-  `astro-mtg-collection/images`) in `src/components/CardTile.astro` looks up a cached image **by the
-  resolved Scryfall card's own `id`**, not the CSV row's `scryfallId` — a row without one (or with a
-  stale one) can still resolve to a card via set+collector-number or name matching, so the two
-  aren't always the same value. Falls back to the card's live Scryfall image URL, then a text
-  placeholder for the rare row Scryfall couldn't resolve at all.
+- Card art is served locally when available — `src/components/CardTile.astro` checks for a
+  pre-optimized `public/mtg-cards/{id}.webp` file, keyed **by the resolved Scryfall card's own
+  `id`**, not the CSV row's `scryfallId` (a row without one, or with a stale one, can still resolve
+  to a card via set+collector-number or name matching, so the two aren't always the same value).
+  Falls back to the card's live Scryfall image URL, then a text placeholder for the rare row
+  Scryfall couldn't resolve at all. See "Card images are pre-optimized, not astro:assets" below for
+  why this isn't `getLocalCardImage()`/`astro:assets`, unlike `RecordCard.astro`'s cover art.
 - Card art opens in the [lightbox](./lightbox.md) at click, same two-click-target split as
   `RecordCard.astro` (see [`docs/discogs.md`](./discogs.md)): the art opens the lightbox, the
   name/set/price text below links out to the card's Scryfall page — except for the rare unresolved
@@ -39,6 +40,45 @@ section of it — the two collections are unrelated hobbies, unlike Last.fm/viny
 - Cards inside `CardCollection.astro`'s grid navigate as one gallery (Next/Previous, arrow keys,
   wrapping, skipping filtered-out cards) via the same `data-lightbox-gallery` attribute pattern —
   see [`docs/lightbox.md`](./lightbox.md).
+
+## Card images are pre-optimized, not astro:assets
+
+`RecordCard.astro` (the vinyl collection) resolves cover art through astro:assets — a real
+`<Image>`/`getLocalCardImage()`-equivalent, so Astro's own build-time pipeline resizes and
+optimizes each cover. The MTG collection deliberately does **not** do this: `astro build` failed
+specifically on `/mtg/`, every other route (including `/music/`) built fine, and the error surfaced
+deep inside an Astro/Vite internal function (`testCaseInsensitiveFS`, checking for a client entry
+file that has nothing to do with this page) that should never run during a static build at all.
+The one thing that route does differently from every other page on the site is push ~6,200 unique
+images through `<Image>` — one component instance per card, all in a single route's build — an
+order of magnitude more than any other page (the vinyl grid's cover count doesn't come close). The
+working theory is an upstream scale edge case in Astro/Vite's build-time image pipeline, not a bug
+in this repo's own code; rather than chase its exact root cause, `src/integrations/optimize-mtg-images.ts`
+sidesteps astro:assets for card art entirely, removing the suspect subsystem instead of just
+shrinking it.
+
+That integration is a **local** one (not a published package, unlike `astro-mtg-collection`
+itself) registered in `astro.config.ts` right after `mtgCollection()` — order matters, since it
+reads the raw JPGs `astro-mtg-collection`'s own `astro:build:start`/`astro:server:setup` hook just
+finished downloading into `imageCacheDir` (`src/assets/mtg-collection/card-images/`), rather than
+re-downloading them from Scryfall itself, and Astro fires same-named hooks in integration
+registration order. For each cached JPG without a matching output file yet, it resizes to 480px
+wide and writes a `.webp` to `public/mtg-cards/{scryfallId}.webp` via `sharp` (already a project
+dependency, used the same direct way in `src/pages/og-image/[...slug].png.ts`) — a genuine
+one-time batch pass, not one Sharp invocation per rendered card. It has to run from
+`astro:build:start` specifically (not, say, `mtg.astro`'s own frontmatter) because Astro copies
+`public/` to `dist/` as part of the client Vite build, itself before route generation — writing
+these files any later would miss that copy and they'd never reach `dist/`.
+
+`CardTile.astro` then just checks whether `public/mtg-cards/{id}.webp` exists on disk (a plain
+`fs.existsSync()` at component build time) and renders a hand-rolled `<lightbox-image>` around a
+plain `<img src="/mtg-cards/{id}.webp">` if so — the same hand-rolled-lightbox markup
+`RecordCard.astro` and the original version of this component used for Scryfall's own remote image
+URL as a fallback tier, now the *only* tier here (falling back further to the raw remote
+`imageUrl` for any card the optimize pass hasn't reached yet, e.g. one added since the last build).
+One fixed size for both the grid thumbnail and the lightbox's enlarged view, no responsive
+`srcset` — the same tradeoff `RecordCard.astro`'s own remote-image fallback already makes, just
+applied to every card here instead of only the rare un-cached one.
 
 ## Prices are shown
 
@@ -83,17 +123,17 @@ custom element reads to show/hide and reorder cards in response to the search bo
   the vinyl collection. Every card still renders into the DOM unpaginated (a deliberate choice, to
   stay consistent with `/music/`'s pattern) — images are lazy-loaded so this doesn't block first
   paint, but the initial build downloads and optimizes thousands of card images the first time (or
-  after a CSV update introduces new cards); expect a build-time cost `/music/` doesn't have. Cached
-  images and Scryfall data persist across builds (`imageCacheDir`/`scryfallCachePath`/
-  `scryfallBulkCachePath`, all gitignored — see below), so only *new* rows pay that cost on
-  subsequent builds.
-- `src/assets/mtg-collection/` (the card-image cache) and `.cache/mtg-collection/` (the Scryfall
-  JSON/bulk-data cache) are gitignored — both are fully regenerable from `src/data/collection.csv`,
-  same as `astro-discogs-collection`'s equivalent caches.
-- `astro-mtg-collection` needs `/// <reference types="astro-mtg-collection/client" />` in
-  `src/env.d.ts` for TypeScript to know about the `virtual:mtg-collection/images` Vite module that
-  `getLocalCardImage()` resolves through — already added, only relevant if that reference is ever
-  removed.
+  after a CSV update introduces new cards); expect a build-time cost `/music/` doesn't have. This
+  scale is also *why* card art bypasses astro:assets entirely — see "Card images are pre-optimized,
+  not astro:assets" above. Cached images and Scryfall data persist across builds
+  (`imageCacheDir`/`scryfallCachePath`/`scryfallBulkCachePath`, all gitignored — see below), so only
+  *new* rows pay that cost on subsequent builds — same for `public/mtg-cards/`'s pre-optimized
+  webps, which `src/integrations/optimize-mtg-images.ts` also skips regenerating when already
+  present.
+- `src/assets/mtg-collection/` (the raw card-image cache), `.cache/mtg-collection/` (the Scryfall
+  JSON/bulk-data cache), and `public/mtg-cards/` (the pre-optimized webps) are all gitignored —
+  every one is fully regenerable from `src/data/collection.csv`, same treatment as
+  `astro-discogs-collection`'s equivalent caches.
 - `/mtg/` is listed in `menuLinks` in `src/site.config.ts`. If `src/data/collection.csv` is ever
   removed (e.g. a fork without the real export), the page still builds and loads — `loadCollection()`
   reports `missingFile: true` and the page shows a setup notice instead of the grid, same fallback
