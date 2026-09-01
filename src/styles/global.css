@@ -149,13 +149,13 @@
 		   breakpoint variant, this file isn't a component Tailwind processes) at Tailwind's own
 		   `sm`/`lg` breakpoints so the tiers line up with where the rest of the site already
 		   changes shape: under 40rem gets the smallest (960w) image, 40–64rem gets a mid-size one
-		   (1600w), and 64rem and up gets the original full-res source. Each tier's target width is
-		   sized for `body::after`'s own `inset: -20%` box (1.4x the viewport in each dimension,
-		   not just 1x) plus some headroom, not the raw breakpoint value — see the generation
-		   command below.
+		   (1600w), and 64rem and up gets the original full-res source. Each tier's target width
+		   accounts for `body::after`'s own `inset: -20dvh -20dvw` box (a 1.4x-viewport box, not
+		   just 1x) plus some headroom, not the raw breakpoint value — see the generation command
+		   below.
 		   The under-40rem tier also gets an `orientation: portrait` variant, cropped and rotated
 		   from the source rather than just downscaled — for `cover`-fit, a *portrait* box's
-		   dominant dimension is its height, not its width (a tall phone's `inset: -20%` box can
+		   dominant dimension is its height, not its width (a tall phone's `inset`-enlarged box can
 		   easily need more source height than a landscape mobile box ever would), so reusing the
 		   landscape 960w crop there means asking a 678px-tall image to cover a box that can need
 		   1000px+ of height — real upscaling, not just a rounding margin. The portrait asset
@@ -220,6 +220,22 @@
 	   `isolate` on body (Base.astro) is required for this: without body establishing its own
 	   stacking context, a negative z-index here would escape body entirely and paint behind the
 	   `<html>` background instead of just behind body's children.
+	   A pseudo-element on `body`, not `background-image`/`background-attachment: fixed` directly
+	   on `body` itself, even though this now paints behind everything the same way a plain
+	   background would: `background-attachment: fixed` is the CSS-native way to pin a background
+	   so it doesn't scroll with content, but it has a genuinely bad history on iOS Safari — long
+	   unsupported outright, and a well-known scroll-jank source even where it now works, since it
+	   forces the browser to recomposite the background against the viewport on every scroll frame
+	   rather than letting it live on its own compositor layer, exactly the class of thing this
+	   feature already has to work around elsewhere on this same browser. `position: fixed` on a
+	   real element sidesteps that. Separately, the rubber-band overscan below (`inset:
+	   -10dvh -10dvw`) needs an actual box bigger than the viewport for `background-size: cover`
+	   to have room to bleed into — `body`'s own box is sized by its content, not independently
+	   inflatable without breaking its actual job as the scroll container. `mix-blend-mode`
+	   blending against body's own flat color, not a further-back ancestor's, is the one part that
+	   doesn't strictly need two layers — `background-blend-mode` could do that within a single
+	   element — but the fixed-positioning and oversized-box reasons above still hold regardless,
+	   so it wouldn't actually let this move onto `body` itself.
 	   Fixed, not scrolled with content, so the tile stays put and never has to cover more than one
 	   viewport's worth of page at a time. `pointer-events: none` so it never intercepts clicks.
 	   Native <dialog> (the lightbox) is unaffected either way — it paints in the browser's top
@@ -234,13 +250,30 @@
 	body::after {
 		content: "";
 		position: fixed;
-		inset: 0;
+		/* `-20dvh -20dvw`, not a plain `0` or a percentage — this used to be a `-20%` overscan
+		   (for iOS Safari's rubber-band overscroll bounce, which can reveal area beyond the
+		   viewport during the bounce) before being simplified down to `inset: 0` at some point;
+		   zero overscan removes that safety margin entirely. Restored at the *same* 20% magnitude
+		   as the original, not a smaller guessed value — this session had no way to test the
+		   actual bounce distance on a real device, so there's no basis for shipping a tighter
+		   margin than the one already proven to work; an earlier pass here picked 10% out of thin
+		   air, and that was the wrong instinct — go bigger than confirmed-necessary here, not
+		   smaller, when it can't be verified.
+		   `dvh`/`dvw`, not a bare percentage, still matters independent of the magnitude choice:
+		   percentage `inset` on a `position: fixed` element resolves against whichever of iOS
+		   Safari's several *different* viewport metrics (visible/layout/large/small) its
+		   containing block happens to pick — mostly moot for a genuinely `fixed` box on current
+		   WebKit, but not something worth trusting blindly on a real device this session couldn't
+		   directly test against (see min-h-dvh's own comment in Base.astro for a case where that
+		   ambiguity *did* bite, on the exact same class of element). `dvh`/`dvw` name the
+		   *dynamic* (currently-visible) viewport explicitly instead of leaving it ambiguous. */
+		inset: -20dvh -20dvw;
 		z-index: -1;
 		pointer-events: none;
 		background-image: var(--grain-image);
 		background-size: cover;
 		mix-blend-mode: var(--grain-blend);
-		opacity: 0.1;
+		opacity: 0.2;
 	}
 
 	:target {
@@ -337,8 +370,8 @@
 		   soften there.
 		   `-webkit-mask-image` alongside the unprefixed property — Safari only shipped unprefixed
 		   `mask-image` in 15.4, and this exact header/grain boundary already has a documented
-		   history of Safari-specific quirks (see body::after's `inset: -20%` comment), not a
-		   browser worth assuming here. */
+		   history of Safari-specific quirks (see body::after's `inset` comment and min-h-dvh in
+		   Base.astro), not a browser worth assuming here. */
 		mask-image: linear-gradient(to bottom, black calc(100% - 2rem), transparent 100%);
 		-webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2rem), transparent 100%);
 	}
