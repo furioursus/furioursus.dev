@@ -31,6 +31,25 @@
 		transform-box: fill-box;
 	}
 
+	/* Photocopy-static edge distortion (feTurbulence + feDisplacementMap, defined inline on the
+	   <svg> itself in Header.astro as #logo-melt, right where the artwork is) on the head
+	   silhouette and the two solid-dark outer-ear shapes specifically — not the pale
+	   ear-interior cutouts (#FrontEar1/#FrontEar2), not the eyes, not the muzzle. Targets
+	   #BackEar1/#BackEar2 directly rather than the #Ear1/#Ear2 group wrapper each sits inside —
+	   filtering the group would catch the front-ear cutout too, since SVG filters apply to
+	   everything painted inside the filtered element's own subtree, not just its direct
+	   children. Composes fine with #Head's own `logo-breathe` animation just below, and with
+	   #Ear1/#Ear2's own twitch animation despite #BackEar1/#BackEar2 living inside those animated
+	   groups: SVG `filter` is a separate raster pass applied to the already-transformed shape,
+	   unrelated to the `transform`/`translate`/`rotate`/`scale` properties the Chrome repaint bug
+	   documented further below actually involves — confirmed live with both animations running
+	   throughout, no stale/frozen frames. */
+	& #Head,
+	& #BackEar1,
+	& #BackEar2 {
+		filter: url(#logo-melt);
+	}
+
 	/* A slow, subtle scale on the head shape itself — the base the ears/eyes/muzzle all sit on
 	   top of — to read as a barely-there breathing motion under the rest of the idle loops.
 	   Anchored at the bottom (50% 100% of the head's own fill-box, i.e. its jaw) rather than the

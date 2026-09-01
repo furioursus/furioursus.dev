@@ -48,6 +48,15 @@
 	inherits: true;
 	initial-value: oklch(47.83% 0.1176 125.71);
 }
+@property --color-nav-hover {
+	syntax: "<color>";
+	inherits: true;
+	/* Same literal as --color-accent's own light-mode value below — light mode's hover state is
+	   meant to be a no-op (unchanged from the link's own resting color), not a distinct color of
+	   its own; only dark mode overrides this to something different. See the [data-theme="dark"]
+	   block and the nav-link comment further down for why. */
+	initial-value: oklch(53.11% 0.2159 356.46);
+}
 
 /* you could refactor below to use light-dark(), depending on your target audience */
 /* Queer-punk repaint, SILENCE=DEATH-inspired: xerox-paper light mode, near-black dark mode,
@@ -65,6 +74,8 @@
 	--color-accent: oklch(53.11% 0.2159 356.46);
 	--color-accent-2: oklch(18.15% 0 0);
 	--color-quote: oklch(47.83% 0.1176 125.71);
+	/* No-op in light mode by design — same value as --color-accent, see that @property's comment. */
+	--color-nav-hover: oklch(53.11% 0.2159 356.46);
 	--font-mono: var(--font-monolisa);
 }
 
@@ -99,16 +110,91 @@
 			--color-accent: oklch(66.46% 0.2457 359.43);
 			--color-accent-2: oklch(94.66% 0 0);
 			--color-quote: oklch(92.85% 0.2158 125.25);
+			/* Vivid caution-tape yellow, not another pink/green — nav hover/active in dark mode is
+			   meant to read as a distinct third interaction color, not a tint of the two existing
+			   accents. 90% L / 0.18 C clears WCAG AAA (~14:1) against this theme's near-black bg
+			   with enormous margin — high-L, high-C yellows are simply that far from near-black
+			   regardless of exact hue, so precision tuning like --color-muted's AA-clearing values
+			   above isn't needed here. See the nav-link comment in Header.astro for where this is
+			   actually used. */
+			--color-nav-hover: oklch(90% 0.18 95);
 			/* See the light-mode --grain-image/--grain-blend below — swapped here rather than
 			   just tinted, since `multiply` on an already-near-black bg is a no-op. This inverted
-			   asset (white marks on black) plus `screen` is what actually shows up in dark mode. */
-			--grain-image: url("../assets/images/grain-dark.webp");
+			   asset (white marks on black) plus `screen` is what actually shows up in dark mode.
+			   Same three breakpoint-sized tiers as the light-mode image below, for the same
+			   reason — see that comment. */
+			--grain-image: url("../assets/images/grain-dark-960w.webp");
 			--grain-blend: screen;
+
+			@media (max-width: 39.9375rem) and (orientation: portrait) {
+				--grain-image: url("../assets/images/grain-dark-portrait.webp");
+			}
+
+			@media (min-width: 40rem) {
+				--grain-image: url("../assets/images/grain-dark-1600w.webp");
+			}
+
+			@media (min-width: 64rem) {
+				--grain-image: url("../assets/images/grain-dark.webp");
+			}
 		}
 
-		/* Ambient grain overlay, see the body::after rule below. */
-		--grain-image: url("../assets/images/grain-light.webp");
+		/* Ambient grain overlay, see the body::after rule below. `background-size: cover` there
+		   means this is a single image scaled to fill the viewport, not a small tile repeated —
+		   so unlike a tiled texture, its own pixel dimensions matter: serving the same full-res
+		   image to a 380px-wide phone as to a 2560px desktop is both wasted bandwidth on mobile
+		   (downloading resolution it'll never render at) and softer than it needs to be on a
+		   narrower `cover` box. Three width tiers, swapped by viewport width alone (this is about
+		   the image's own resolution, not the page's layout, so plain `min-width` — not a Tailwind
+		   breakpoint variant, this file isn't a component Tailwind processes) at Tailwind's own
+		   `sm`/`lg` breakpoints so the tiers line up with where the rest of the site already
+		   changes shape: under 40rem gets the smallest (960w) image, 40–64rem gets a mid-size one
+		   (1600w), and 64rem and up gets the original full-res source. Each tier's target width is
+		   sized for `body::after`'s own `inset: -20%` box (1.4x the viewport in each dimension,
+		   not just 1x) plus some headroom, not the raw breakpoint value — see the generation
+		   command below.
+		   The under-40rem tier also gets an `orientation: portrait` variant, cropped and rotated
+		   from the source rather than just downscaled — for `cover`-fit, a *portrait* box's
+		   dominant dimension is its height, not its width (a tall phone's `inset: -20%` box can
+		   easily need more source height than a landscape mobile box ever would), so reusing the
+		   landscape 960w crop there means asking a 678px-tall image to cover a box that can need
+		   1000px+ of height — real upscaling, not just a rounding margin. The portrait asset
+		   (640×960, rotated 90° from the same source — this texture has no directional structure,
+		   so a rotation reads identically to the original) is sized to roughly match the current
+		   960w tier's own file size rather than chase zero-upscale perfection on the tallest
+		   phones: at this opacity, a modest amount of extra upscale on outlier devices is
+		   genuinely invisible, and matching the crop's aspect ratio to the box's is what actually
+		   buys the size-for-sharpness improvement over reusing the landscape crop — not a bigger
+		   file. Scoped to under 40rem only (`max-width: 39.9375rem`, one px below the `min-width:
+		   40rem` tier above so the two never both match) — portrait tablets/laptops above that
+		   still get the landscape 1600w/full-res tiers as before; that's an accepted gap, not an
+		   oversight, since portrait is overwhelmingly a phone thing and doubling every tier's file
+		   count for a rare case isn't worth it.
+		   Widths, not full responsive `srcset`-style art direction: a plain CSS custom property
+		   can't express a `srcset`, and this is a background-image on a pseudo-element, not an
+		   `<img>`, so there's no `srcset` to begin with — `@media`-scoped custom property
+		   overrides are the mechanism CSS actually has for this.
+		   Regenerate any tier from a new source with the `sharp` package already in
+		   devDependencies (no CLI tool needed) — e.g. the 960w tier:
+		   `sharp(src).resize({ width: 960 }).webp({ quality: 45, effort: 6 }).toFile(out)`, or the
+		   portrait tier: `sharp(src).rotate(90).resize(640, 960, { fit: "cover" })...`. Quality 45
+		   was chosen because the noise in this texture compresses poorly regardless of quality,
+		   per the note on body::after below — file size barely moved between quality 30 and 65 in
+		   testing, so there's little to gain by going higher. */
+		--grain-image: url("../assets/images/grain-light-960w.webp");
 		--grain-blend: multiply;
+
+		@media (max-width: 39.9375rem) and (orientation: portrait) {
+			--grain-image: url("../assets/images/grain-light-portrait.webp");
+		}
+
+		@media (min-width: 40rem) {
+			--grain-image: url("../assets/images/grain-light-1600w.webp");
+		}
+
+		@media (min-width: 64rem) {
+			--grain-image: url("../assets/images/grain-light.webp");
+		}
 
 		--color-mode-transition-duration: 300ms;
 		--color-mode-transition-easing: ease-in-out;
@@ -120,36 +206,41 @@
 			--color-link var(--color-mode-transition-duration) var(--color-mode-transition-easing),
 			--color-accent var(--color-mode-transition-duration) var(--color-mode-transition-easing),
 			--color-accent-2 var(--color-mode-transition-duration) var(--color-mode-transition-easing),
-			--color-quote var(--color-mode-transition-duration) var(--color-mode-transition-easing);
+			--color-quote var(--color-mode-transition-duration) var(--color-mode-transition-easing),
+			--color-nav-hover var(--color-mode-transition-duration) var(--color-mode-transition-easing);
 	}
 
 	/* Ambient photocopy-grain texture — quiet paper tooth across the whole site, not a decorative
-	   "moment" (those get real riso ink-color treatment per docs/theming.md instead). Fixed, not
-	   scrolled with content, so the tile stays put and never has to cover more than one viewport's
-	   worth of page at a time. `pointer-events: none` so it never intercepts clicks.
-	   `z-index: 100` is deliberate, not decoration: several components DO set a stacking z-index
-	   of their own (Header.astro's sticky bar is `z-30`, its mobile menu `z-50`, BlogPost's
-	   back-to-top button `z-90`) — z-index:auto here would've painted this *below* every one of
-	   them regardless of body::after being last in the DOM, since a positioned element with an
-	   explicit z-index always beats a z-index:auto one. This needs to clear the highest of those,
-	   not just exist. Native <dialog> (the lightbox) still wins regardless — it paints in the
-	   browser's top layer, above any z-index at all.
-	   `inset: -20%` (not `0`) — iOS Safari's rubber-band overscroll bounce reveals area beyond the
-	   viewport, and a `position: fixed` element sized to exactly match the viewport doesn't always
-	   keep pace with that bounce in real time; sized-to-viewport left a bare edge visible during
-	   the bounce. Overshooting well past any plausible overscroll distance (a percentage, so it
-	   scales with viewport size instead of a fixed px guess) means there's no edge to reveal.
-	   `background-repeat` already tiles infinitely, so this costs nothing extra. */
+	   "moment" (those get real riso ink-color treatment per docs/theming.md instead). Lives behind
+	   all page content, not over it: earlier this painted *above* everything (z-index:100) and blended
+	   with whatever content was underneath, which read as visible grain crawling across text/images
+	   on every scroll frame. Now it's pinned to `z-index: -1` — behind all in-flow content, blending
+	   only with body's own flat background color — so it only shows through the gaps (margins,
+	   padding, anywhere the page background is exposed) and never sits on top of anything readable.
+	   `isolate` on body (Base.astro) is required for this: without body establishing its own
+	   stacking context, a negative z-index here would escape body entirely and paint behind the
+	   `<html>` background instead of just behind body's children.
+	   Fixed, not scrolled with content, so the tile stays put and never has to cover more than one
+	   viewport's worth of page at a time. `pointer-events: none` so it never intercepts clicks.
+	   Native <dialog> (the lightbox) is unaffected either way — it paints in the browser's top
+	   layer, above any z-index at all.
+	   `background-size: cover` (not a tiled `background-repeat`, which is what this used to be) —
+	   the source asset is now one large photo-scale texture rather than a small seamless-tile
+	   crop, sized to the viewport via the breakpoint tiers on --grain-image above rather than
+	   repeated. This is noise, and noise compresses poorly regardless of format or quality
+	   setting — the breakpoint tiers above exist mainly to avoid shipping full desktop resolution
+	   to a phone that's going to downscale most of it away anyway, not because compression alone
+	   gets this small. */
 	body::after {
 		content: "";
 		position: fixed;
-		inset: -20%;
-		z-index: 100;
+		inset: 0;
+		z-index: -1;
 		pointer-events: none;
 		background-image: var(--grain-image);
-		background-repeat: repeat;
+		background-size: cover;
 		mix-blend-mode: var(--grain-blend);
-		opacity: 0.25;
+		opacity: 0.1;
 	}
 
 	:target {
@@ -183,6 +274,78 @@
 	width: 100dvw;
 	margin-left: 50%;
 	transform: translateX(-50%);
+}
+
+/* The sticky header's visual backing (solid-once-stuck background + the fade at its bottom edge)
+   lives on a `::before` scoped to the header's own box, NOT set directly on <header> itself —
+   found the hard way: `mask-image` (or `filter`, `opacity < 1`, anything that forces an element
+   onto its own compositing layer) clips *all* of that element's rendering, including descendant
+   content that overflows past its border box, to the masked/filtered region. The mobile nav
+   dropdown (Header.astro's #navigation-menu) is exactly that — position: absolute, rendered
+   entirely below the header's own ~100px box once open. With the mask on <header> directly, the
+   dropdown's own opacity/transform/display were all correct (toggling, positioning, everything
+   checked out) but it was invisible: it was rendering into the mask gradient's "past 100%, treat
+   as transparent" tail, nowhere near the `black`-to-`transparent` band that's supposed to just
+   cover the header's own bottom padding. `.header-fade`+`.header-surface` used to be two separate
+   classes applied straight to <header> for exactly this (broken) reason.
+   The fix: give the header a `::before` that duplicates its own box (`inset: 0`) and put the
+   background + mask there instead. That pseudo-element's masking only clips itself, not its
+   siblings — the dropdown is a sibling of this pseudo (both children of <header>), not something
+   painted through it, so it's unaffected regardless of what this masks away.
+   `position: absolute` needs a positioned ancestor — <header> already has one via its own
+   `sticky` utility class, so no extra `position` has to be set here (setting `position: relative`
+   on `.header-surface` itself, the way an earlier version of this tried, would have silently beaten
+   that `sticky` utility: this class lives outside any `@layer`, same as `.breakout-container`
+   below, so it always outranks anything in Tailwind's own `@layer utilities`).
+   `z-index: -1` puts it behind the header's actual content (logo/nav/search, all normal-flow
+   `z-index: auto` children) rather than painting over it — safe here because <header> already
+   establishes its own stacking context (`sticky` + a real `z-index` from its `z-30` utility), so
+   this doesn't need `isolate` the way body::after's own `z-index: -1` does. */
+.header-surface {
+	&::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+
+		/* Transparent until Header.astro's script marks the header `.is-stuck` (an
+		   IntersectionObserver watching #header-sentinel in Base.astro — see that comment for
+		   why a sentinel, not the header itself, gets observed). At page load the header just
+		   sits in its normal document position with nothing scrolled underneath it yet to hide —
+		   a solid `--color-global-bg` panel there from the first frame read as a heavy,
+		   unnecessary card dropped on top of the page before there was anything for it to
+		   actually cover. No transition tied to scroll position itself (this is a plain on/off
+		   class flip, not scroll-driven animation), just a short cross-fade so the swap doesn't
+		   pop the instant it's stuck. */
+		background-color: transparent;
+		transition: background-color 200ms ease;
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+
+		/* Softens that solid background's own bottom edge into the page instead of a hard line —
+		   opaque, unlike the page's own background which now has body::after's grain showing
+		   through it at z-index: -1 (see that comment above), it would otherwise end abruptly
+		   right where scrolled content met it, reading as a flat card dropped over a grainy page.
+		   Fades from fully opaque down to fully transparent across exactly the header's own
+		   bottom `py-8` padding (2rem) — empty space in the header's layout (the logo/nav/search
+		   row sits above it in the content div), so nothing readable ever fades; content scrolling
+		   up dissolves into view there instead of appearing/disappearing at a hard edge. No fade
+		   at the top: nothing sits above a sticky header pinned to `top: 0`, so there's no seam to
+		   soften there.
+		   `-webkit-mask-image` alongside the unprefixed property — Safari only shipped unprefixed
+		   `mask-image` in 15.4, and this exact header/grain boundary already has a documented
+		   history of Safari-specific quirks (see body::after's `inset: -20%` comment), not a
+		   browser worth assuming here. */
+		mask-image: linear-gradient(to bottom, black calc(100% - 2rem), transparent 100%);
+		-webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2rem), transparent 100%);
+	}
+
+	&.is-stuck::before {
+		background-color: var(--color-global-bg);
+	}
 }
 
 @layer components {

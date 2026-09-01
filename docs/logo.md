@@ -39,6 +39,80 @@ pattern takes a very long time to visibly repeat.
   static muzzle. The eyes' own blink transforms still compose fine on top of this, since they
   live on the child `#Eye1`/`#Eye2` elements, not the group doing the glance.
 
+## Edge distortion
+
+`#Head`, `#BackEar1`, and `#BackEar2` — the body silhouette and the two solid-dark outer-ear
+shapes, not the pale ear-interior cutouts or the eyes/muzzle — carry
+`filter: url(#logo-melt)` (`logo.css`), referencing an `feTurbulence`/`feDisplacementMap` filter
+defined inline on the `<svg>` itself in `Header.astro`, right alongside the artwork:
+
+```html
+<filter id="logo-melt" x="-30%" y="-30%" width="160%" height="160%">
+	<feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="10" result="noise" />
+	<feDisplacementMap in="SourceGraphic" in2="noise" scale="3">
+		<animate id="logo-melt-pulse" attributeName="scale" dur="5s" values="1;6;1" repeatCount="indefinite" />
+	</feDisplacementMap>
+</filter>
+```
+
+Reads as a photocopy-static fuzz along the silhouette's edge — fitting the site's grain/riso
+texture direction (see [theming.md](./theming.md)) applied to the logo specifically, rather than
+another instance of the ambient grain overlay.
+
+`x`/`y`/`width`/`height` on the `<filter>` (a `-30%`/`160%` region, not the default `-10%`/`120%`)
+give `feDisplacementMap`'s `scale` room to push pixels out that far without clipping at the filter
+region's own edge — SVG filters, unlike CSS ones, don't automatically grow their bounds to fit
+whatever the filter chain produces. The region's sized for headroom past the `<animate>`'s own peak
+value (`6`), not just the resting `scale="3"` — if that peak ever climbs further and starts
+visibly clipping at the current edge, widen `x`/`y`/`width`/`height` together, not just the
+animated value alone.
+
+**The distortion already moves with the shape for free**, before any animation on the filter
+itself: `feTurbulence`/`feDisplacementMap` default to `primitiveUnits="userSpaceOnUse"` (unset
+here), which resolves against the *current* user-space coordinate system — the one CSS `transform`
+on the filtered element already establishes. So the noise rotates/scales rigidly along with
+`#Head`'s `logo-breathe` and `#Ear1`/`#Ear2`'s twitch without anything extra — confirmed by forcing
+a large manual rotation on `#Ear1` and watching the fuzzy edge track it exactly, not stay fixed in
+place while the shape rotated underneath.
+
+**On top of that**, the `<animate>` on `feDisplacementMap`'s own `scale` (`id="logo-melt-pulse"`)
+pulses the distortion's *intensity* over the same 5s duration as `#Head`'s `logo-breathe` — both
+start unoffset at page load, so they stay in lockstep indefinitely: the melt is strongest right as
+the head visibly swells and weakest as it settles, rather than a static fuzzy edge that merely
+rides along rigidly. `scale` was chosen as the animated attribute over `baseFrequency` because it
+smoothly scales the *amount* of an otherwise-fixed noise pattern rather than continuously
+reseeding/reshaping the pattern itself, which reads as "breathing harder or softer" instead of "the
+texture is a different texture now."
+
+This `<animate>` is the one bit of decorative motion on the mark that isn't plain CSS —
+`feTurbulence`/`feDisplacementMap` attributes aren't real CSS properties (no `var()`/`@property`
+support), so SMIL is the only declarative way to animate them at all, and SMIL doesn't honor
+`prefers-reduced-motion` the way every CSS `animation` in `logo.css` does. A small `is:inline`
+script immediately after the `<svg>` in `Header.astro` — `is:inline` specifically so it runs
+synchronously during parsing, before the animation renders even a single frame, same reasoning as
+`ThemeProvider.astro`'s own `is:inline` script avoiding a flash of the wrong theme — removes
+`#logo-melt-pulse` entirely when `matchMedia("(prefers-reduced-motion: reduce)").matches`. Removing
+the element (rather than pausing it) lets `feDisplacementMap` fall back to its own static
+`scale="3"` — the same resting value the pulse animates around, so this reads as "no pulse", not
+"frozen mid-pulse" or "no distortion at all". One-time check only, not a live `matchMedia` change
+listener — doesn't handle the preference changing *while the page is open*, an acceptable gap for
+a decorative pulse matching other documented trade-offs in this file (see `pointer-idle`'s own note
+further down).
+
+Picking `#Head` + `#BackEar1` + `#BackEar2` specifically (not the pale ear-interior cutouts
+`#FrontEar1`/`#FrontEar2`, not `#Eye1`/`#Eye2`/`#Muzzle`) keeps the face's actual features crisp —
+the distortion reads as texture on the solid silhouette's edge, not as the whole mark (including
+the lighter cutout shapes inside each ear) going fuzzy. `#BackEar1`/`#BackEar2` are targeted
+directly rather than their `#Ear1`/`#Ear2` group wrapper — filtering the group would catch the
+front-ear cutout too, since SVG filters apply to everything painted inside the filtered element's
+own subtree, not just its direct children. `#Head` already carries `logo-breathe`, an `animation`
+targeting `transform`, and `#BackEar1`/`#BackEar2` each live inside a group (`#Ear1`/`#Ear2`)
+running its own twitch animation — SVG `filter` is a separate raster pass over the
+already-transformed shape either way, unrelated to the `transform`/`translate`/`rotate`/`scale`
+properties [the Chrome repaint bug documented below](#the-chrome-bug-behind-the-track-wrappers)
+actually involves, and this was confirmed live with both animations running the whole time — no
+stale or frozen frames.
+
 ## Cursor tracking
 
 Once the reader's cursor moves, `#Eyes` and `#Muzzle` stop running `logo-look-around` and instead
@@ -364,6 +438,10 @@ bounding boxes, not to anything self-adjusting.
 already used in `lightbox.css`. Cursor tracking is deliberately left running under that same media
 query — it's 1:1 direct-manipulation feedback (it only ever moves because the reader's own pointer
 just moved), not autoplaying decorative motion, so it isn't the kind of thing that preference is
-meant to suppress. The `<svg>` itself is already `aria-hidden="true"` (the site title text next to
-it is the accessible name for the home link), so none of this has any assistive-tech surface to
-worry about beyond motion preference.
+meant to suppress. The edge-distortion filter's own pulse ([Edge distortion](#edge-distortion)
+above) is autoplaying decorative motion, same as the four idle loops, but can't be gated with the
+same CSS media query since it's SMIL, not a CSS `animation` — a small `is:inline` script handles it
+separately instead, removing that `<animate>` element outright when the preference is set. The
+`<svg>` itself is already `aria-hidden="true"` (the site title text next to it is the accessible
+name for the home link), so none of this has any assistive-tech surface to worry about beyond
+motion preference.
