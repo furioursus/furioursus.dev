@@ -84,6 +84,14 @@
 		color-scheme: light dark;
 		accent-color: var(--color-accent);
 		scrollbar-gutter: stable;
+		/* Matches --color-global-bg so iOS Safari's rubber-band bounce past the very top/bottom
+		   of the page reveals the correct flat theme color instead of a stark white flash — that
+		   revealed sliver is `html`'s own background showing through, not `body`'s, since bounce
+		   scrolls past `body`'s actual edges entirely. body::after's grain texture doesn't extend
+		   into it either (it's sized to `body`'s own box now, see that rule's comment for why),
+		   so this is only ever a flat color there, never textured — an accepted, minor gap, not
+		   worth chasing given how brief and edge-adjacent the bounce reveal actually is. */
+		background-color: var(--color-global-bg);
 		/* iOS Safari's rubber-band/touch scroll treats <html>, not <body>, as the scroll
 		   container — `overflow-x: hidden` on body (see Base.astro) only clips what's painted,
 		   it doesn't stop the drag gesture. Needs to be set here too.
@@ -120,81 +128,16 @@
 			--color-nav-hover: oklch(90% 0.18 95);
 			/* See the light-mode --grain-image/--grain-blend below — swapped here rather than
 			   just tinted, since `multiply` on an already-near-black bg is a no-op. This inverted
-			   asset (white marks on black) plus `screen` is what actually shows up in dark mode.
-			   Same three breakpoint-sized tiers as the light-mode image below, for the same
-			   reason — see that comment. */
-			--grain-image: url("../assets/images/grain-dark-960w.webp");
+			   asset (light marks on dark) plus `screen` is what actually shows up in dark mode. */
+			--grain-image: url("../assets/images/grain-dark.webp");
 			--grain-blend: screen;
-
-			@media (max-width: 39.9375rem) and (orientation: portrait) {
-				--grain-image: url("../assets/images/grain-dark-portrait.webp");
-			}
-
-			@media (min-width: 40rem) {
-				--grain-image: url("../assets/images/grain-dark-1600w.webp");
-			}
-
-			@media (min-width: 64rem) {
-				--grain-image: url("../assets/images/grain-dark.webp");
-			}
 		}
 
-		/* Ambient grain overlay, see the body::after rule below. `background-size: cover` there
-		   means this is a single image scaled to fill the viewport, not a small tile repeated —
-		   so unlike a tiled texture, its own pixel dimensions matter: serving the same full-res
-		   image to a 380px-wide phone as to a 2560px desktop is both wasted bandwidth on mobile
-		   (downloading resolution it'll never render at) and softer than it needs to be on a
-		   narrower `cover` box. Three width tiers, swapped by viewport width alone (this is about
-		   the image's own resolution, not the page's layout, so plain `min-width` — not a Tailwind
-		   breakpoint variant, this file isn't a component Tailwind processes) at Tailwind's own
-		   `sm`/`lg` breakpoints so the tiers line up with where the rest of the site already
-		   changes shape: under 40rem gets the smallest (960w) image, 40–64rem gets a mid-size one
-		   (1600w), and 64rem and up gets the original full-res source. Each tier's target width
-		   accounts for `body::after`'s own `inset: -20dvh -20dvw` box (a 1.4x-viewport box, not
-		   just 1x) plus some headroom, not the raw breakpoint value — see the generation command
-		   below.
-		   The under-40rem tier also gets an `orientation: portrait` variant, cropped and rotated
-		   from the source rather than just downscaled — for `cover`-fit, a *portrait* box's
-		   dominant dimension is its height, not its width (a tall phone's `inset`-enlarged box can
-		   easily need more source height than a landscape mobile box ever would), so reusing the
-		   landscape 960w crop there means asking a 678px-tall image to cover a box that can need
-		   1000px+ of height — real upscaling, not just a rounding margin. The portrait asset
-		   (640×960, rotated 90° from the same source — this texture has no directional structure,
-		   so a rotation reads identically to the original) is sized to roughly match the current
-		   960w tier's own file size rather than chase zero-upscale perfection on the tallest
-		   phones: at this opacity, a modest amount of extra upscale on outlier devices is
-		   genuinely invisible, and matching the crop's aspect ratio to the box's is what actually
-		   buys the size-for-sharpness improvement over reusing the landscape crop — not a bigger
-		   file. Scoped to under 40rem only (`max-width: 39.9375rem`, one px below the `min-width:
-		   40rem` tier above so the two never both match) — portrait tablets/laptops above that
-		   still get the landscape 1600w/full-res tiers as before; that's an accepted gap, not an
-		   oversight, since portrait is overwhelmingly a phone thing and doubling every tier's file
-		   count for a rare case isn't worth it.
-		   Widths, not full responsive `srcset`-style art direction: a plain CSS custom property
-		   can't express a `srcset`, and this is a background-image on a pseudo-element, not an
-		   `<img>`, so there's no `srcset` to begin with — `@media`-scoped custom property
-		   overrides are the mechanism CSS actually has for this.
-		   Regenerate any tier from a new source with the `sharp` package already in
-		   devDependencies (no CLI tool needed) — e.g. the 960w tier:
-		   `sharp(src).resize({ width: 960 }).webp({ quality: 45, effort: 6 }).toFile(out)`, or the
-		   portrait tier: `sharp(src).rotate(90).resize(640, 960, { fit: "cover" })...`. Quality 45
-		   was chosen because the noise in this texture compresses poorly regardless of quality,
-		   per the note on body::after below — file size barely moved between quality 30 and 65 in
-		   testing, so there's little to gain by going higher. */
-		--grain-image: url("../assets/images/grain-light-960w.webp");
+		/* Ambient grain overlay, see the body::after rule below. Dark ink marks on a light ground
+		   — `mix-blend-mode: multiply` treats light pixels as a no-op and only darkens where
+		   there's ink. */
+		--grain-image: url("../assets/images/grain-light.webp");
 		--grain-blend: multiply;
-
-		@media (max-width: 39.9375rem) and (orientation: portrait) {
-			--grain-image: url("../assets/images/grain-light-portrait.webp");
-		}
-
-		@media (min-width: 40rem) {
-			--grain-image: url("../assets/images/grain-light-1600w.webp");
-		}
-
-		@media (min-width: 64rem) {
-			--grain-image: url("../assets/images/grain-light.webp");
-		}
 
 		--color-mode-transition-duration: 300ms;
 		--color-mode-transition-easing: ease-in-out;
@@ -212,66 +155,48 @@
 
 	/* Ambient photocopy-grain texture — quiet paper tooth across the whole site, not a decorative
 	   "moment" (those get real riso ink-color treatment per docs/theming.md instead). Lives behind
-	   all page content, not over it: earlier this painted *above* everything (z-index:100) and blended
-	   with whatever content was underneath, which read as visible grain crawling across text/images
-	   on every scroll frame. Now it's pinned to `z-index: -1` — behind all in-flow content, blending
-	   only with body's own flat background color — so it only shows through the gaps (margins,
-	   padding, anywhere the page background is exposed) and never sits on top of anything readable.
-	   `isolate` on body (Base.astro) is required for this: without body establishing its own
-	   stacking context, a negative z-index here would escape body entirely and paint behind the
-	   `<html>` background instead of just behind body's children.
-	   A pseudo-element on `body`, not `background-image`/`background-attachment: fixed` directly
-	   on `body` itself, even though this now paints behind everything the same way a plain
-	   background would: `background-attachment: fixed` is the CSS-native way to pin a background
-	   so it doesn't scroll with content, but it has a genuinely bad history on iOS Safari — long
-	   unsupported outright, and a well-known scroll-jank source even where it now works, since it
-	   forces the browser to recomposite the background against the viewport on every scroll frame
-	   rather than letting it live on its own compositor layer, exactly the class of thing this
-	   feature already has to work around elsewhere on this same browser. `position: fixed` on a
-	   real element sidesteps that. Separately, the rubber-band overscan below (`inset:
-	   -10dvh -10dvw`) needs an actual box bigger than the viewport for `background-size: cover`
-	   to have room to bleed into — `body`'s own box is sized by its content, not independently
-	   inflatable without breaking its actual job as the scroll container. `mix-blend-mode`
-	   blending against body's own flat color, not a further-back ancestor's, is the one part that
-	   doesn't strictly need two layers — `background-blend-mode` could do that within a single
-	   element — but the fixed-positioning and oversized-box reasons above still hold regardless,
-	   so it wouldn't actually let this move onto `body` itself.
-	   Fixed, not scrolled with content, so the tile stays put and never has to cover more than one
-	   viewport's worth of page at a time. `pointer-events: none` so it never intercepts clicks.
-	   Native <dialog> (the lightbox) is unaffected either way — it paints in the browser's top
-	   layer, above any z-index at all.
-	   `background-size: cover` (not a tiled `background-repeat`, which is what this used to be) —
-	   the source asset is now one large photo-scale texture rather than a small seamless-tile
-	   crop, sized to the viewport via the breakpoint tiers on --grain-image above rather than
-	   repeated. This is noise, and noise compresses poorly regardless of format or quality
-	   setting — the breakpoint tiers above exist mainly to avoid shipping full desktop resolution
-	   to a phone that's going to downscale most of it away anyway, not because compression alone
-	   gets this small. */
+	   all page content, not over it: an early version painted *above* everything (z-index: 100)
+	   and blended with whatever content was underneath, which read as visible grain crawling
+	   across text/images on every scroll frame. Now it's pinned to `z-index: -1` — behind all
+	   in-flow content, blending only with body's own flat background color — so it only shows
+	   through the gaps (margins, padding, anywhere the page background is exposed) and never sits
+	   on top of anything readable. `isolate` on body (Base.astro) is required for this: without
+	   body establishing its own stacking context, a negative z-index here would escape body
+	   entirely and paint behind the `<html>` background instead of just behind body's children.
+	   `position: absolute`, not `fixed` — a real, confirmed regression found the hard way: an
+	   earlier version used `position: fixed` (pinned to the viewport, so the texture stayed put
+	   on screen while content scrolled past it) with a generous `inset` overscan for iOS Safari's
+	   rubber-band bounce. On a real device (iPhone 17 sim, iOS 26.5) that still failed to reach
+	   the true bottom edge on short pages — confirmed by swapping in a plain `body` background
+	   with no positioning tricks at all, which *did* reach the edge reliably. `position: fixed`
+	   elements on iOS Safari have a documented history of not always keeping pace with the
+	   dynamic toolbar's show/hide animation in real time; `absolute`, anchored to `body`'s own
+	   box (which `isolate` plus `body`'s `relative` utility already make a valid containing
+	   block), sidesteps the whole class of viewport-tracking bugs by not depending on the
+	   viewport at all — it just covers whatever `body`'s real, already-correct rendered extent
+	   turns out to be, scrolling normally with the page instead of staying pinned to the screen.
+	   That's a genuine behavior change, not just a bugfix: the grain now moves with the page like
+	   texture printed on the paper itself, rather than staying anchored to the viewport — arguably
+	   more honest to the photocopy metaphor anyway.
+	   `background-repeat: repeat`, not `background-size: cover` — a further consequence of going
+	   `absolute` instead of `fixed`: a `fixed` layer only ever needs to cover one viewport's worth
+	   of space at a time (whatever's currently on screen), so scaling one big image to `cover` it
+	   was fine. An `absolute` layer sized to `body`'s *entire* document height would need to
+	   `cover`-scale that same image across the whole page in one stretch, badly distorting it on
+	   anything longer than one screen. A small repeating tile sidesteps that entirely — same
+	   reasoning that led to a tiled asset the very first time this feature existed, before an
+	   intermediate version swapped to one large `cover`-scaled photo and needed viewport-width
+	   breakpoint tiers (removed here) to keep that from shipping desktop resolution to a phone.
+	   `pointer-events: none` so it never intercepts clicks. Native `<dialog>` (the lightbox) is
+	   unaffected either way — it paints in the browser's top layer, above any z-index at all. */
 	body::after {
 		content: "";
-		position: fixed;
-		/* `-20dvh -20dvw`, not a plain `0` or a percentage — this used to be a `-20%` overscan
-		   (for iOS Safari's rubber-band overscroll bounce, which can reveal area beyond the
-		   viewport during the bounce) before being simplified down to `inset: 0` at some point;
-		   zero overscan removes that safety margin entirely. Restored at the *same* 20% magnitude
-		   as the original, not a smaller guessed value — this session had no way to test the
-		   actual bounce distance on a real device, so there's no basis for shipping a tighter
-		   margin than the one already proven to work; an earlier pass here picked 10% out of thin
-		   air, and that was the wrong instinct — go bigger than confirmed-necessary here, not
-		   smaller, when it can't be verified.
-		   `dvh`/`dvw`, not a bare percentage, still matters independent of the magnitude choice:
-		   percentage `inset` on a `position: fixed` element resolves against whichever of iOS
-		   Safari's several *different* viewport metrics (visible/layout/large/small) its
-		   containing block happens to pick — mostly moot for a genuinely `fixed` box on current
-		   WebKit, but not something worth trusting blindly on a real device this session couldn't
-		   directly test against (see min-h-dvh's own comment in Base.astro for a case where that
-		   ambiguity *did* bite, on the exact same class of element). `dvh`/`dvw` name the
-		   *dynamic* (currently-visible) viewport explicitly instead of leaving it ambiguous. */
-		inset: -20dvh -20dvw;
+		position: absolute;
+		inset: 0;
 		z-index: -1;
 		pointer-events: none;
 		background-image: var(--grain-image);
-		background-size: cover;
+		background-repeat: repeat;
 		mix-blend-mode: var(--grain-blend);
 		opacity: 0.2;
 	}
