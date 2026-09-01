@@ -51,10 +51,10 @@ tuning wasn't necessary.
 
 ### Ambient grain texture
 
-`body::after` in `global.css` is a fixed, full-viewport, `pointer-events: none` layer that gives
-the whole site a quiet photocopy-grain tooth — one of the two texture "roles" from the queer-punk
-direction above (the other, riso color-misregistration on specific elements like a logo or
-pull-quote, is a deliberately separate, not-yet-built "moments" treatment — see the
+`body::after` in `global.css` is a `pointer-events: none` layer that gives the whole site a quiet
+photocopy-grain tooth — one of the two texture "roles" from the queer-punk direction above (the
+other, riso color-misregistration on specific elements like a logo or pull-quote, is a
+deliberately separate, not-yet-built "moments" treatment — see the
 [[furioursus-dev-color-texture-redesign]] memory for that split and why it's two techniques, not
 one).
 
@@ -67,6 +67,42 @@ version painted this *above* content at `z-index: 100` to clear other components
 z-indexes (Header's sticky bar `z-30`, its mobile menu `z-50`, BlogPost's back-to-top button
 `z-90`) — that's no longer relevant now that the layer is behind everything, not competing to be on
 top of it.
+
+`position: absolute`, not `fixed` — a real, confirmed regression, found the hard way. An earlier
+version used `position: fixed` (pinned to the viewport, so the texture stayed visually put on
+screen while content scrolled past it) with a generous `inset` overscan for iOS Safari's
+rubber-band bounce. On a real device (iPhone 17 sim, iOS 26.5) that still failed to reach the true
+bottom edge on short pages, confirmed by swapping in a plain `body` background with no positioning
+tricks at all, which *did* reach the edge reliably — `position: fixed` elements on iOS Safari have
+a documented history of not always keeping pace with the dynamic toolbar's show/hide animation in
+real time. `absolute`, anchored to `body`'s own box (`isolate` plus `body`'s `relative` utility
+already make it a valid containing block), sidesteps the whole class of viewport-tracking bugs by
+not depending on the viewport at all — it just covers whatever `body`'s real, already-correct
+rendered extent turns out to be. That makes it scroll normally with the page instead of staying
+pinned to the screen — a genuine behavior change, not just a bugfix: the grain now reads as texture
+printed on the page itself rather than an overlay hovering in front of the viewport, arguably more
+honest to the photocopy metaphor anyway.
+
+That positioning change has a knock-on effect on how the image itself is sized: `background-repeat:
+repeat` with a small tile, not `background-size: cover` with one large photo. A `fixed` layer only
+ever needs to cover one viewport's worth of space at a time (whatever's currently on screen), so
+`cover`-scaling one big image was fine there. An `absolute` layer sized to `body`'s *entire*
+document height would need to `cover`-scale that same image across the whole page in one stretch,
+badly distorting it on anything longer than one screen — every real post on this site. A repeating
+tile sidesteps that: same reasoning that led to a tiled asset the very first time this feature
+existed, before an intermediate version swapped to one large `cover`-scaled photo and needed
+viewport-width breakpoint tiers (now removed, along with the old `grain-{light,dark}-{960w,1600w,
+portrait}.webp` assets they served) to keep that from shipping desktop resolution to a phone. None
+of that tiering machinery is needed for a small repeating tile — one asset per theme, done.
+
+`<html>` also carries its own `background-color: var(--color-global-bg)` now, matching whichever
+theme is active — without the old `fixed` layer's generous overscan margin, iOS Safari's
+rubber-band bounce past the very top/bottom of the page would otherwise reveal a stark white flash
+(the browser's default canvas color) in that sliver rather than the correct flat theme color. The
+grain texture itself doesn't extend into that sliver either way — it's sized to `body`'s own box,
+and bounce scrolls past `body`'s actual edges entirely — so this is only ever a flat color there,
+never textured. An accepted, minor gap, not worth chasing given how brief and edge-adjacent the
+bounce reveal actually is.
 
 Any opaque surface sitting above that `-1` layer hides it completely, though — a solid-background
 element just paints over it. The sticky header (`Header.astro`) is the one place on the page that's
@@ -126,43 +162,12 @@ treats light pixels as a no-op and only darkens where there's ink. Dark mode swa
 multiplying an already-near-black background does nothing visible, so the blend mode has to flip
 along with the asset, not just the color.
 
-The source is a single large photocopy-texture photo (1920×1357), not a small seamless-tile crop —
-an earlier version of this used a tiny (700×354, ~36KB) tiled crop with `background-repeat`, tested
-because a broad-scale banding pattern in the original texture tiled into a visible vertical stripe
-at high opacity; that constraint no longer applies now that `body::after` uses
-`background-size: cover` to scale one full image across the viewport instead of repeating a tile.
-
-Because it's `cover`-scaled rather than tiled, the image's own resolution now matters — a full-res
-image is wasted bandwidth on a phone that's going to downscale most of it away, and unnecessarily
-soft on a narrow `cover` box if you go the other way and serve a small image everywhere. `html`'s
-`--grain-image` (light mode) and `&[data-theme="dark"]`'s copy (dark mode) each swap between three
-breakpoint-sized tiers via plain `min-width` media queries at Tailwind's own `sm`/`lg` values (so
-the tiers line up with where the rest of the site already changes shape): `grain-{light,dark}-960w.webp`
-below `40rem`, `grain-{light,dark}-1600w.webp` from `40rem` to `64rem`, and the original full-res
-`grain-{light,dark}.webp` from `64rem` up. Each tier's target width accounts for `body::after`'s own
-`inset: -20%` box being 1.4x the viewport in each dimension, not just 1x, plus some headroom — not
-the raw breakpoint value. Regenerate the smaller tiers from a new source with the `sharp` package
-already in devDependencies:
-`sharp(src).resize({ width }).webp({ quality: 45, effort: 6 }).toFile(out)`. Quality 45 was chosen
-because the noise in this texture compresses poorly regardless of quality or format — file size
-barely moved between quality 30 and 65 in testing — so there's little to gain by going higher; the
-breakpoint tiers exist to avoid shipping unnecessary *resolution*, not because compression alone
-gets this small.
-
-The under-`40rem` tier also has an `orientation: portrait` variant
-(`grain-{light,dark}-portrait.webp`, `@media (max-width: 39.9375rem) and (orientation: portrait)`).
-For `cover`-fit, a portrait box's dominant dimension is its *height*, not its width — a tall
-phone's `inset: -20%` box can need well over 1000px of source height, but the landscape 960w crop
-is only 678px tall, so reusing it in portrait means real upscaling, not just a rounding margin.
-The portrait asset is generated from the same source rotated 90° (this texture has no directional
-structure, so a rotation reads identically to the original) and cropped to 640×960 — sized to land
-close to the landscape 960w tier's own file size rather than chase zero-upscale accuracy on the
-tallest phones, since a bit of extra upscale on outliers is invisible at this opacity anyway; what
-actually buys the size-for-sharpness win over reusing the landscape crop is matching the aspect
-ratio to the box, not a bigger file. Scoped to phones only (`max-width: 39.9375rem`) — portrait
-tablets/laptops above that still fall back to the landscape 1600w/full-res tiers uncorrected; an
-accepted gap (portrait is overwhelmingly a phone thing) rather than full coverage of every tier ×
-orientation combination.
+The source is a single small seamless-tile crop (1482×888) per theme, `background-repeat: repeat`
+across whatever `body`'s actual box turns out to be — see the `position: absolute` note above for
+why a tile instead of one large `cover`-scaled photo. No viewport-width breakpoint tiers needed
+here the way an earlier `cover`-scaled version required: a repeating tile's own resolution doesn't
+need to track the viewport the way a single scaled-to-fit image's did, so one asset per theme
+covers every screen size.
 
 ## Switching themes
 
