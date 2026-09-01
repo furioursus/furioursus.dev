@@ -29,8 +29,23 @@ const {
 	</head>
 	<body class="bg-global-bg text-global-text relative isolate overflow-x-clip">
 		<PropsForAuto />
+		{
+			/* min-h-dvh, not min-h-screen (100vh) — on iOS Safari, `vh` resolves against the
+			*large* viewport (toolbar fully collapsed), even while the toolbar is actually
+			showing and eating into what's really visible. On a short page (few enough content
+			that this min-height is the only reason it's even a full screen tall — Notes with
+			only a couple of cards is exactly that case), that gap between the two viewport
+			metrics shows up as real, scrollable phantom space below the actual content:
+			`min-height` demands it exist, but body::after's fixed grain layer, sized against a
+			*different* viewport metric than whatever produced that space, doesn't reliably
+			follow into it — the flat, grain-less strip right where the real footer text sits,
+			confirmed live on iPhone 17 sim/iOS 26.5. `dvh` is the *dynamic* viewport height
+			unit, purpose-built for exactly this ambiguity: it tracks whatever's actually visible
+			right now as the toolbar animates, so there's no longer a metric mismatch for a gap
+			to open up in. */
+		}
 		<div
-			class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 pt-8 font-mono text-sm font-normal antialiased sm:px-8 md:pt-16"
+			class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-8 font-mono text-sm font-normal antialiased sm:px-8 md:pt-16"
 		>
 			<SkipLink />
 			{
