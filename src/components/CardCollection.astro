@@ -4,8 +4,19 @@
 // Magic: The Gathering collection. Mirrors VinylCollection.astro's structure (custom element
 // colocated with its markup, driving search/filter/sort entirely client-side, no re-fetch) —
 // see docs/mtg.md for the wider feature and docs/discogs.md for the pattern this follows.
+//
+// Unlike VinylCollection.astro, cards are NOT pre-rendered into ~8,300 <li>s at build time.
+// That was tried first and was the actual perf problem: even with pagination toggling `hidden`
+// on all but one page's worth, every card's markup (a <lightbox-image>, its trigger <img>, and a
+// whole <dialog> with close/prev/next buttons — a dozen-plus elements per card) still had to be
+// parsed into the DOM and every <lightbox-image> upgraded (each running its own connectedCallback
+// query/listener setup, see Lightbox.astro) on every page load, regardless of what was hidden.
+// Instead: entries are serialized to a slim JSON payload (below) and the client renders only the
+// current page's ~30 cards as real DOM, discarding and rebuilding them on filter/sort/page
+// changes. This trades away the no-JS fallback this page used to have (a no-JS visitor previously
+// got the full unpaginated grid) — search/sort/pagination were already 100% JS-only anyway, so a
+// no-JS visitor now gets a <noscript> notice instead of a dead-control page.
 import type { CollectionSummary, EnrichedCard } from "astro-mtg-collection";
-import CardTile from "@/components/CardTile.astro";
 
 interface Props {
 	entries: EnrichedCard[];
@@ -25,9 +36,88 @@ const COLORS = [
 	{ value: "C", label: "Colorless" },
 ] as const;
 
-function formatPrice(value: number): string {
+function formatPrice(value: number | null): string | null {
+	if (value === null) return null;
 	return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 }
+
+function capitalize(value: string): string {
+	return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+// The shape shipped to the client, one object per collection row — deliberately slimmer than
+// EnrichedCard (no raw ScryfallCard, no CollectionRow): only what the client actually needs to
+// filter/sort/render a card, with display text (price formatting, the meta line, the full/
+// extended-art suffix) precomputed here rather than duplicated client-side. Field names are
+// short on purpose — this repeats ~8,300 times in the page's HTML.
+interface ClientCard {
+	name: string;
+	/** Scryfall's own name for the resolved printing, falling back to the row's name — alt text. */
+	alt: string;
+	/** Lowercased "name setName", what the search box matches against. */
+	search: string;
+	/** Pipe-joined lowercase color identity, e.g. "w|u"; colorless cards get "c". */
+	color: string;
+	rarity: string;
+	foil: string;
+	fullArt: boolean;
+	extArt: boolean;
+	setCode: string;
+	collector: string;
+	quantity: number;
+	/** Raw unit price for sorting; null when Scryfall has no known price. */
+	price: number | null;
+	/** Formatted unit price for display, or null to render "Price unknown". */
+	priceText: string | null;
+	/** Precomputed " · Nx = $Y" suffix for stacks of more than one copy, or null to render nothing. */
+	lineText: string | null;
+	img: string | null;
+	href: string | null;
+	/** "Set name · Rarity · Full Art · Extended Art", already joined and capitalized. */
+	meta: string;
+}
+
+function toClientCard(entry: EnrichedCard): ClientCard {
+	const { row, card, imageUrl, unitPrice, lineValue, isFullArt, isExtendedArt } = entry;
+	const artTreatment = [isFullArt && "Full Art", isExtendedArt && "Extended Art"]
+		.filter(Boolean)
+		.join(" · ");
+	const meta = [
+		row.setName || null,
+		row.rarity ? capitalize(row.rarity) : null,
+		artTreatment || null,
+	]
+		.filter(Boolean)
+		.join(" · ");
+	return {
+		name: row.name,
+		alt: card?.name ?? row.name,
+		search: `${row.name} ${row.setName}`.toLowerCase(),
+		color: (card?.color_identity?.length ? card.color_identity : ["C"]).join("|").toLowerCase(),
+		rarity: row.rarity.toLowerCase(),
+		foil: row.foil.toLowerCase(),
+		fullArt: isFullArt,
+		extArt: isExtendedArt,
+		setCode: row.setCode.toLowerCase(),
+		collector: row.collectorNumber,
+		quantity: row.quantity,
+		price: unitPrice,
+		priceText: formatPrice(unitPrice),
+		lineText:
+			row.quantity > 1 && lineValue !== null
+				? ` · ${row.quantity}x = ${formatPrice(lineValue)}`
+				: null,
+		img: imageUrl,
+		href: card?.scryfall_uri ?? null,
+		meta,
+	};
+}
+
+// Escape `<` so the closing `</script>` sequence can never appear literally inside the payload —
+// the HTML tokenizer looks for that regardless of the script's `type`, so an unescaped card name
+// containing it would truncate the script early. `set:html` below is what makes this necessary in
+// the first place: it writes the string out raw, bypassing Astro's own HTML-escaping.
+const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\u003c");
 ---
 
 <card-collection>
@@ -38,6 +128,13 @@ function formatPrice(value: number): string {
 		total copies &middot; est. {formatPrice(stats.totalValue)}
 		{stats.knownPriceCount < stats.uniqueCards && " (known prices only)"}
 	</p>
+
+	<noscript>
+		<p class="prose prose-sm max-w-none">
+			This collection is rendered by JavaScript (search/filter/sort need it either way) —
+			enable it to browse the cards.
+		</p>
+	</noscript>
 
 	<p class="empty" data-empty hidden>No cards match your filters.</p>
 
@@ -110,375 +207,432 @@ function formatPrice(value: number): string {
 				<button data-page-next type="button">Next</button>
 			</div>
 
-			<ul class="grid" data-lightbox-gallery role="list">
-				{
-					entries.map((entry) => (
-						<li
-							class="card-item"
-							data-color={(entry.card?.color_identity?.length ? entry.card.color_identity : ["C"])
-								.join("|")
-								.toLowerCase()}
-							data-name={entry.row.name.toLowerCase()}
-							data-price={entry.unitPrice ?? ""}
-							data-quantity={entry.row.quantity}
-							data-rarity={entry.row.rarity.toLowerCase()}
-							data-foil={entry.row.foil.toLowerCase()}
-							data-full-art={entry.isFullArt}
-							data-extended-art={entry.isExtendedArt}
-							data-search={`${entry.row.name} ${entry.row.setName}`.toLowerCase()}
-							data-set={entry.row.setCode.toLowerCase()}
-							data-collector={entry.row.collectorNumber}
-						>
-							<CardTile entry={entry} titleLevel={3} />
-						</li>
-					))
-				}
-			</ul>
+			<ul class="grid" data-lightbox-gallery role="list"></ul>
 
 			<div class="pagination" data-pagination hidden>
 				<button data-page-prev type="button">Previous</button>
 				<span data-page-label></span>
 				<button data-page-next type="button">Next</button>
 			</div>
-		</div>
 
-		<style>
-			.controls {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 0.75rem;
-				margin-bottom: 1.5rem;
-			}
+			<script type="application/json" data-card-json is:inline set:html={cardDataJson} />
 
-			.control {
-				display: block;
-			}
+			<style>
+				.controls {
+					display: flex;
+					flex-wrap: wrap;
+					gap: 0.75rem;
+					margin-bottom: 1.5rem;
+				}
 
-			input[type="search"],
-			select,
-			button[data-reset-button] {
-				font: inherit;
-				font-size: 0.875rem;
-				color: var(--color-global-text);
-				background: var(--color-global-bg);
-				border: 1px dashed var(--color-muted);
-				border-radius: 2px;
-				padding: 0.4rem 0.6rem;
-			}
+				.control {
+					display: block;
+				}
 
-			input[type="search"] {
-				min-width: 14rem;
-			}
+				input[type="search"],
+				select,
+				button[data-reset-button] {
+					font: inherit;
+					font-size: 0.875rem;
+					color: var(--color-global-text);
+					background: var(--color-global-bg);
+					border: 1px dashed var(--color-muted);
+					border-radius: 2px;
+					padding: 0.4rem 0.6rem;
+				}
 
-			button[data-reset-button] {
-				cursor: pointer;
-				border-style: solid;
-			}
+				input[type="search"] {
+					min-width: 14rem;
+				}
 
-			button[data-reset-button]:hover {
-				color: var(--color-accent);
-				border-color: var(--color-accent);
-			}
+				button[data-reset-button] {
+					cursor: pointer;
+					border-style: solid;
+				}
 
-			input[type="search"]:focus-visible,
-			select:focus-visible,
-			button[data-reset-button]:focus-visible {
-				outline: 2px solid var(--color-accent);
-				outline-offset: 1px;
-			}
+				button[data-reset-button]:hover {
+					color: var(--color-accent);
+					border-color: var(--color-accent);
+				}
 
-			.empty {
-				opacity: 0.7;
-			}
+				input[type="search"]:focus-visible,
+				select:focus-visible,
+				button[data-reset-button]:focus-visible {
+					outline: 2px solid var(--color-accent);
+					outline-offset: 1px;
+				}
 
-			/* Mobile-first: a single-column list of rows (see CardTile.astro). */
-			.grid {
-				display: block;
-				padding: 0;
-				margin: 0;
-				list-style: none;
-			}
+				.empty {
+					opacity: 0.7;
+				}
 
-			@media (min-width: 640px) {
+				/* Mobile-first: a single-column list of rows (see renderCardHTML() below). */
 				.grid {
-					display: grid;
-					grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+					display: block;
+					padding: 0;
+					margin: 0;
+					list-style: none;
+				}
+
+				@media (min-width: 640px) {
+					.grid {
+						display: grid;
+						grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+						gap: 1rem;
+					}
+				}
+
+				.pagination {
+					display: flex;
+					align-items: center;
+					justify-content: center;
 					gap: 1rem;
-				}
-			}
-
-			.card-item[hidden] {
-				display: none;
-			}
-
-			.pagination {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 1rem;
-				/* Shorthand, not margin-top — this same block sits both above and below the grid now. */
-				margin: 1.5rem 0;
-				font-size: 0.875rem;
-			}
-
-			.pagination[hidden] {
-				display: none;
-			}
-
-			.pagination button {
-				font: inherit;
-				font-size: 0.875rem;
-				color: var(--color-global-text);
-				background: var(--color-global-bg);
-				border: 1px solid var(--color-muted);
-				border-radius: 2px;
-				padding: 0.4rem 0.8rem;
-				cursor: pointer;
-			}
-
-			.pagination button:hover:not(:disabled) {
-				color: var(--color-accent);
-				border-color: var(--color-accent);
-			}
-
-			.pagination button:focus-visible {
-				outline: 2px solid var(--color-accent);
-				outline-offset: 1px;
-			}
-
-			.pagination button:disabled {
-				opacity: 0.4;
-				cursor: not-allowed;
-			}
-		</style>
-
-		<script>
-			// Mirrors astro-mtg-collection's own (unexported) SortKey union — see docs/mtg.md — so this
-			// stays a drop-in match for the package's server-side sortCards() semantics, just reading
-			// from data-* attributes instead of EnrichedCard objects.
-			type SortKey =
-				"name-asc" | "name-desc" | "price-desc" | "price-asc" | "set" | "quantity-desc" | "rarity";
-
-			// Mirrors astro-mtg-collection's RARITY_ORDER (collection.ts) — kept as a small local
-			// constant rather than importing the package into client code, same as VinylCollection.astro
-			// hand-rolls its own sort comparators instead of calling back into astro-discogs-collection.
-			const RARITY_ORDER: Record<string, number> = {
-				common: 0,
-				uncommon: 1,
-				rare: 2,
-				special: 3,
-				mythic: 4,
-				bonus: 5,
-			};
-
-			// Cards per page — client-side only (see CardCollectionElement below), so a no-JS visitor
-			// still gets the full unpaginated grid, same as before pagination existed.
-			const PAGE_SIZE = 30;
-
-			function priceOf(el: HTMLElement): number {
-				const raw = el.dataset.price;
-				return raw ? Number(raw) : Number.NaN;
-			}
-
-			const sortComparators: Record<SortKey, (a: HTMLElement, b: HTMLElement) => number> = {
-				"name-asc": (a, b) => (a.dataset.name ?? "").localeCompare(b.dataset.name ?? ""),
-				"name-desc": (a, b) => (b.dataset.name ?? "").localeCompare(a.dataset.name ?? ""),
-				"price-desc": (a, b) => {
-					const av = priceOf(a);
-					const bv = priceOf(b);
-					return (Number.isNaN(bv) ? -1 : bv) - (Number.isNaN(av) ? -1 : av);
-				},
-				"price-asc": (a, b) => {
-					const av = priceOf(a);
-					const bv = priceOf(b);
-					return (Number.isNaN(av) ? Infinity : av) - (Number.isNaN(bv) ? Infinity : bv);
-				},
-				set: (a, b) =>
-					(a.dataset.set ?? "").localeCompare(b.dataset.set ?? "") ||
-					(a.dataset.collector ?? "").localeCompare(b.dataset.collector ?? "", undefined, {
-						numeric: true,
-					}),
-				"quantity-desc": (a, b) =>
-					Number(b.dataset.quantity ?? 0) - Number(a.dataset.quantity ?? 0),
-				rarity: (a, b) =>
-					(RARITY_ORDER[a.dataset.rarity ?? ""] ?? -1) -
-					(RARITY_ORDER[b.dataset.rarity ?? ""] ?? -1),
-			};
-
-			class CardCollectionElement extends HTMLElement {
-				#items: HTMLLIElement[] = [];
-				// The current filtered (not yet paginated) set, in whatever order #items is currently
-				// sorted in — #renderPage() slices a page out of this rather than out of #items directly,
-				// since #items always holds *every* card regardless of filter state.
-				#filtered: HTMLLIElement[] = [];
-				#list: HTMLUListElement | null = null;
-				#page = 0;
-				// Tallest the grid has actually rendered at this viewport width, this visit — floors
-				// #list's height at that mark so a shorter page (typically just the last one) doesn't
-				// visibly shrink the grid and yank everything below it upward. See #renderPage().
-				#maxGridHeight = 0;
-
-				connectedCallback() {
-					this.#list = this.querySelector<HTMLUListElement>(".grid");
-					this.#items = Array.from(this.querySelectorAll<HTMLLIElement>(".card-item"));
-
-					// A column count change invalidates the recorded height (mobile's single-column list is
-					// far taller than the desktop grid for the same 30 cards, and vice versa) — drop the
-					// floor and let the next page render re-establish one that's actually right for the new
-					// layout, rather than over- or under-padding against a stale number.
-					window.addEventListener("resize", () => {
-						this.#maxGridHeight = 0;
-						this.#list?.style.removeProperty("min-height");
-					});
-
-					const searchInput = this.querySelector<HTMLInputElement>("[data-search-input]");
-					const colorSelect = this.querySelector<HTMLSelectElement>("[data-color-select]");
-					const raritySelect = this.querySelector<HTMLSelectElement>("[data-rarity-select]");
-					const foilSelect = this.querySelector<HTMLSelectElement>("[data-foil-select]");
-					const artSelect = this.querySelector<HTMLSelectElement>("[data-art-select]");
-					const sortSelect = this.querySelector<HTMLSelectElement>("[data-sort-select]");
-					const resetButton = this.querySelector<HTMLButtonElement>("[data-reset-button]");
-					// Two of each now — a mirrored pagination bar above and below the grid (a page this
-					// long needs Prev/Next in reach without a full scroll either way) — so every read or
-					// write below goes through querySelectorAll, not querySelector, and updates both.
-					const prevButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-prev]");
-					const nextButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-next]");
-
-					searchInput?.addEventListener("input", () => this.#applyFilters());
-					colorSelect?.addEventListener("change", () => this.#applyFilters());
-					raritySelect?.addEventListener("change", () => this.#applyFilters());
-					foilSelect?.addEventListener("change", () => this.#applyFilters());
-					artSelect?.addEventListener("change", () => this.#applyFilters());
-					sortSelect?.addEventListener("change", () =>
-						this.#applySort(sortSelect.value as SortKey),
-					);
-
-					resetButton?.addEventListener("click", () => {
-						if (searchInput) searchInput.value = "";
-						if (colorSelect) colorSelect.value = "";
-						if (raritySelect) raritySelect.value = "";
-						if (foilSelect) foilSelect.value = "";
-						if (artSelect) artSelect.value = "";
-						this.#applyFilters();
-					});
-
-					for (const button of prevButtons) {
-						button.addEventListener("click", () => this.#goToPage(this.#page - 1));
-					}
-					for (const button of nextButtons) {
-						button.addEventListener("click", () => this.#goToPage(this.#page + 1));
-					}
-
-					// Establish page one on first connect — without this every card would render at once
-					// (matching the pre-pagination behavior, and still what a no-JS visitor gets, since
-					// nothing here runs for them at all).
-					this.#applyFilters();
+					/* Shorthand, not margin-top — this same block sits both above and below the grid now. */
+					margin: 1.5rem 0;
+					font-size: 0.875rem;
 				}
 
-				#applyFilters() {
-					const search =
-						this.querySelector<HTMLInputElement>("[data-search-input]")
-							?.value.trim()
-							.toLowerCase() ?? "";
-					const color =
-						this.querySelector<HTMLSelectElement>("[data-color-select]")?.value.toLowerCase() ?? "";
-					const rarity =
-						this.querySelector<HTMLSelectElement>("[data-rarity-select]")?.value.toLowerCase() ??
-						"";
-					const foil =
-						this.querySelector<HTMLSelectElement>("[data-foil-select]")?.value.toLowerCase() ?? "";
-					const art =
-						this.querySelector<HTMLSelectElement>("[data-art-select]")?.value.toLowerCase() ?? "";
-
-					this.#filtered = this.#items.filter((item) => {
-						const matchesSearch = !search || (item.dataset.search ?? "").includes(search);
-						const matchesColor = !color || (item.dataset.color ?? "").split("|").includes(color);
-						const matchesRarity = !rarity || item.dataset.rarity === rarity;
-						const matchesFoil = !foil || item.dataset.foil === foil;
-						const matchesArt =
-							!art ||
-							(art === "full" && item.dataset.fullArt === "true") ||
-							(art === "extended" && item.dataset.extendedArt === "true");
-						return matchesSearch && matchesColor && matchesRarity && matchesFoil && matchesArt;
-					});
-
-					// A changed filter invalidates whatever page you were on — e.g. page 4 of an
-					// unfiltered grid might not even exist once a search narrows things down.
-					this.#page = 0;
-					this.#renderPage();
+				.pagination[hidden] {
+					display: none;
 				}
 
-				#applySort(key: SortKey) {
-					const comparator = sortComparators[key] ?? sortComparators["name-asc"];
-					const sorted = [...this.#items].sort(comparator);
-					for (const item of sorted) this.#list?.append(item);
-					this.#items = sorted;
-					// Re-filter rather than just re-paginate: #filtered was built from the old DOM order,
-					// so it needs rebuilding against the new one. Cheap (same predicates, same data), and
-					// resetting to page one on a re-sort matches what changing a filter already does.
-					this.#applyFilters();
+				.pagination button {
+					font: inherit;
+					font-size: 0.875rem;
+					color: var(--color-global-text);
+					background: var(--color-global-bg);
+					border: 1px solid var(--color-muted);
+					border-radius: 2px;
+					padding: 0.4rem 0.8rem;
+					cursor: pointer;
 				}
 
-				#totalPages(): number {
-					return Math.max(1, Math.ceil(this.#filtered.length / PAGE_SIZE));
+				.pagination button:hover:not(:disabled) {
+					color: var(--color-accent);
+					border-color: var(--color-accent);
 				}
 
-				#goToPage(page: number) {
-					this.#page = Math.min(Math.max(page, 0), this.#totalPages() - 1);
-					this.#renderPage();
-					// No forced scroll here on purpose. This used to smooth-scrollIntoView(#list, {block:
-					// "start"}) to stop a short last page leaving you stranded past its own content — but
-					// #renderPage()'s height floor already rules that out entirely (the grid never renders
-					// shorter than the tallest page you've seen), so the scroll had nothing left to guard
-					// against. What it *did* keep doing: yank the whole viewport ~1000px+ up to the grid's
-					// top every time, on every click — including the bottom Prev/Next pair added alongside
-					// the top one, whose entire point is paging without leaving where you already are.
+				.pagination button:focus-visible {
+					outline: 2px solid var(--color-accent);
+					outline-offset: 1px;
 				}
 
-				#renderPage() {
-					const totalPages = this.#totalPages();
-					const start = this.#page * PAGE_SIZE;
-					const pageSlice = this.#filtered.slice(start, start + PAGE_SIZE);
-					const pageItems = new Set(pageSlice);
-					for (const item of this.#items) item.hidden = !pageItems.has(item);
+				.pagination button:disabled {
+					opacity: 0.4;
+					cursor: not-allowed;
+				}
+			</style>
 
-					// Floor the grid's height at the tallest it's actually reached this visit, so a
-					// shorter page (typically just the last one — different cards wrap their name/price
-					// text over a different number of lines, so it's not just page count that varies)
-					// doesn't visibly shrink the grid and yank the pagination bar/footer up to meet it.
-					// Set *before* measuring: that's what stops the browser laying this page out at its
-					// own shorter natural height for even a single frame before the floor kicks in.
-					const list = this.#list;
-					if (list) {
-						list.style.minHeight = `${this.#maxGridHeight}px`;
-						const height = list.getBoundingClientRect().height;
-						if (height > this.#maxGridHeight) {
-							this.#maxGridHeight = height;
-							list.style.minHeight = `${height}px`;
+			<script>
+				// Mirrors astro-mtg-collection's own (unexported) SortKey union — see docs/mtg.md — so this
+				// stays a drop-in match for the package's server-side sortCards() semantics, just reading
+				// from ClientCard fields instead of EnrichedCard objects.
+				type SortKey =
+					"name-asc" | "name-desc" | "price-desc" | "price-asc" | "set" | "quantity-desc" | "rarity";
+
+				// Mirrors astro-mtg-collection's RARITY_ORDER (collection.ts) — kept as a small local
+				// constant rather than importing the package into client code, same as VinylCollection.astro
+				// hand-rolls its own sort comparators instead of calling back into astro-discogs-collection.
+				const RARITY_ORDER: Record<string, number> = {
+					common: 0,
+					uncommon: 1,
+					rare: 2,
+					special: 3,
+					mythic: 4,
+					bonus: 5,
+				};
+
+				// Cards per page. Unlike before pagination existed, there's no unpaginated no-JS fallback
+				// to preserve here — without JS, nothing in <card-collection> renders at all (see the
+				// component's frontmatter comment and its <noscript> notice).
+				const PAGE_SIZE = 30;
+
+				// Mirrors CardCollection.astro's own ClientCard interface — see that file's comment for why
+				// entries are shipped this slim instead of the full EnrichedCard shape.
+				interface ClientCard {
+					name: string;
+					alt: string;
+					search: string;
+					color: string;
+					rarity: string;
+					foil: string;
+					fullArt: boolean;
+					extArt: boolean;
+					setCode: string;
+					collector: string;
+					quantity: number;
+					price: number | null;
+					priceText: string | null;
+					lineText: string | null;
+					img: string | null;
+					href: string | null;
+					meta: string;
+				}
+
+				const sortComparators: Record<SortKey, (a: ClientCard, b: ClientCard) => number> = {
+					"name-asc": (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
+					"name-desc": (a, b) => b.name.toLowerCase().localeCompare(a.name.toLowerCase()),
+					"price-desc": (a, b) => {
+						const av = a.price;
+						const bv = b.price;
+						return (bv ?? -1) - (av ?? -1);
+					},
+					"price-asc": (a, b) => {
+						const av = a.price;
+						const bv = b.price;
+						return (av ?? Infinity) - (bv ?? Infinity);
+					},
+					set: (a, b) =>
+						a.setCode.localeCompare(b.setCode) ||
+						a.collector.localeCompare(b.collector, undefined, { numeric: true }),
+					"quantity-desc": (a, b) => b.quantity - a.quantity,
+					rarity: (a, b) => (RARITY_ORDER[a.rarity] ?? -1) - (RARITY_ORDER[b.rarity] ?? -1),
+				};
+
+				function escapeHtml(value: string): string {
+					return value
+						.replace(/&/g, "&amp;")
+						.replace(/</g, "&lt;")
+						.replace(/>/g, "&gt;")
+						.replace(/"/g, "&quot;")
+						.replace(/'/g, "&#39;");
+				}
+
+				// Renders one card's <li> — hand-mirrors what used to be CardTile.astro (deleted, since
+				// this was its only caller once rendering moved client-side; see docs/mtg.md). Two axes of
+				// variation, same as before: whether there's card art (img) and whether there's a Scryfall
+				// page to link to (href) — a card can have either independently (an unresolved row has
+				// neither; most rows have both).
+				//
+				// Text on desktop is deliberately hidden when there's art (the "sm:hidden" class below) —
+				// the grid shows image-only tiles there, with name/set/price only surfacing in the lightbox
+				// dialog's caption; on mobile it's a flat list row of thumbnail + text instead, since
+				// there's no room for a big image-only tile. See CardTile.astro's git history / this
+				// function's structure for the two layouts this reproduces.
+				function renderCardHTML(entry: ClientCard): string {
+					const name = escapeHtml(entry.name);
+					const alt = escapeHtml(entry.alt);
+					const meta = escapeHtml(entry.meta);
+					const priceLine = escapeHtml(entry.priceText ?? "Price unknown") + (entry.lineText ?? "");
+
+					const imgBlock = entry.img
+						? `<lightbox-image class="w-14 flex-none sm:w-full [&_img]:rounded-[4.1%]" style="--lightbox-thumb-width:100%;--lightbox-thumb-fit:cover;--lightbox-thumb-aspect:61/85;">
+								<button type="button" class="lightbox-trigger" aria-haspopup="dialog">
+									<img src="${escapeHtml(entry.img)}" alt="${alt}" loading="lazy" width="480" height="669" />
+								</button>
+								<dialog class="lightbox-dialog">
+									<button type="button" class="lightbox-icon-button lightbox-close" aria-label="Close image"></button>
+									<button type="button" class="lightbox-icon-button lightbox-nav-prev" aria-label="Previous image" hidden></button>
+									<button type="button" class="lightbox-icon-button lightbox-nav-next" aria-label="Next image" hidden></button>
+									<a class="lightbox-caption group block text-inherit no-underline"${entry.href ? ` href="${escapeHtml(entry.href)}" target="_blank" rel="noopener"` : ""}>
+										<span class="block">${name}</span>
+										<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">${meta}</span>
+										${entry.priceText ? `<span class="block">${escapeHtml(entry.priceText)}</span>` : ""}
+									</a>
+								</dialog>
+							</lightbox-image>`
+						: `<div class="border-muted bg-global-bg flex aspect-square w-14 flex-none items-center justify-center rounded border border-dashed p-1 text-center text-[0.6rem] sm:aspect-card sm:w-full">${name}</div>`;
+
+					const textClass = `block min-w-0 sm:mt-2${entry.img ? " sm:hidden" : ""}`;
+					const textInner = `<p class="text-2xs m-0 opacity-70">${meta}</p>
+							<h3 class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">${name}</h3>
+							<p class="text-2xs m-0 opacity-60">${priceLine}</p>`;
+					const textBlock = entry.href
+						? `<a class="${textClass} text-inherit no-underline" href="${escapeHtml(entry.href)}" target="_blank" rel="noopener">${textInner}</a>`
+						: `<div class="${textClass}">${textInner}</div>`;
+
+					return `<li class="border-muted py-tight-4 flex items-center gap-3 border-b sm:block sm:border-b-0 sm:py-0">${imgBlock}${textBlock}</li>`;
+				}
+
+				class CardCollectionElement extends HTMLElement {
+					// The full, unfiltered collection — plain JS objects parsed once from the JSON payload
+					// below, not DOM nodes. This is the actual fix for the page's slowness: filtering,
+					// sorting, and pagination all operate on this array, and only the current page's slice
+					// ever becomes real DOM (in #renderPage()) — see this file's frontmatter comment.
+					#items: ClientCard[] = [];
+					// The current filtered (not yet paginated) set, in whatever order #items is currently
+					// sorted in — #renderPage() slices a page out of this.
+					#filtered: ClientCard[] = [];
+					#list: HTMLUListElement | null = null;
+					#page = 0;
+					// Tallest the grid has actually rendered at this viewport width, this visit — floors
+					// #list's height at that mark so a shorter page (typically just the last one) doesn't
+					// visibly shrink the grid and yank everything below it upward. See #renderPage().
+					#maxGridHeight = 0;
+
+					connectedCallback() {
+						this.#list = this.querySelector<HTMLUListElement>(".grid");
+
+						const dataScript = this.querySelector<HTMLScriptElement>("[data-card-json]");
+						this.#items = dataScript
+							? (JSON.parse(dataScript.textContent ?? "[]") as ClientCard[])
+							: [];
+
+						// A column count change invalidates the recorded height (mobile's single-column list is
+						// far taller than the desktop grid for the same 30 cards, and vice versa) — drop the
+						// floor and let the next page render re-establish one that's actually right for the new
+						// layout, rather than over- or under-padding against a stale number.
+						window.addEventListener("resize", () => {
+							this.#maxGridHeight = 0;
+							this.#list?.style.removeProperty("min-height");
+						});
+
+						const searchInput = this.querySelector<HTMLInputElement>("[data-search-input]");
+						const colorSelect = this.querySelector<HTMLSelectElement>("[data-color-select]");
+						const raritySelect = this.querySelector<HTMLSelectElement>("[data-rarity-select]");
+						const foilSelect = this.querySelector<HTMLSelectElement>("[data-foil-select]");
+						const artSelect = this.querySelector<HTMLSelectElement>("[data-art-select]");
+						const sortSelect = this.querySelector<HTMLSelectElement>("[data-sort-select]");
+						const resetButton = this.querySelector<HTMLButtonElement>("[data-reset-button]");
+						// Two of each now — a mirrored pagination bar above and below the grid (a page this
+						// long needs Prev/Next in reach without a full scroll either way) — so every read or
+						// write below goes through querySelectorAll, not querySelector, and updates both.
+						const prevButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-prev]");
+						const nextButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-next]");
+
+						searchInput?.addEventListener("input", () => this.#applyFilters());
+						colorSelect?.addEventListener("change", () => this.#applyFilters());
+						raritySelect?.addEventListener("change", () => this.#applyFilters());
+						foilSelect?.addEventListener("change", () => this.#applyFilters());
+						artSelect?.addEventListener("change", () => this.#applyFilters());
+						sortSelect?.addEventListener("change", () =>
+							this.#applySort(sortSelect.value as SortKey),
+						);
+
+						resetButton?.addEventListener("click", () => {
+							if (searchInput) searchInput.value = "";
+							if (colorSelect) colorSelect.value = "";
+							if (raritySelect) raritySelect.value = "";
+							if (foilSelect) foilSelect.value = "";
+							if (artSelect) artSelect.value = "";
+							this.#applyFilters();
+						});
+
+						for (const button of prevButtons) {
+							button.addEventListener("click", () => this.#goToPage(this.#page - 1));
 						}
+						for (const button of nextButtons) {
+							button.addEventListener("click", () => this.#goToPage(this.#page + 1));
+						}
+
+						// Establishes page one on first connect and does the first real render — nothing is
+						// in the grid until this runs (see this file's frontmatter comment on dropping the
+						// no-JS fallback).
+						this.#applyFilters();
 					}
 
-					const countEl = this.querySelector("[data-count]");
-					if (countEl) countEl.textContent = String(this.#filtered.length);
+					#applyFilters() {
+						const search =
+							this.querySelector<HTMLInputElement>("[data-search-input]")
+								?.value.trim()
+								.toLowerCase() ?? "";
+						const color =
+							this.querySelector<HTMLSelectElement>("[data-color-select]")?.value.toLowerCase() ?? "";
+						const rarity =
+							this.querySelector<HTMLSelectElement>("[data-rarity-select]")?.value.toLowerCase() ??
+							"";
+						const foil =
+							this.querySelector<HTMLSelectElement>("[data-foil-select]")?.value.toLowerCase() ?? "";
+						const art =
+							this.querySelector<HTMLSelectElement>("[data-art-select]")?.value.toLowerCase() ?? "";
 
-					const emptyEl = this.querySelector<HTMLElement>("[data-empty]");
-					if (emptyEl) emptyEl.hidden = this.#filtered.length !== 0;
+						this.#filtered = this.#items.filter((item) => {
+							const matchesSearch = !search || item.search.includes(search);
+							const matchesColor = !color || item.color.split("|").includes(color);
+							const matchesRarity = !rarity || item.rarity === rarity;
+							const matchesFoil = !foil || item.foil === foil;
+							const matchesArt =
+								!art ||
+								(art === "full" && item.fullArt) ||
+								(art === "extended" && item.extArt);
+							return matchesSearch && matchesColor && matchesRarity && matchesFoil && matchesArt;
+						});
 
-					const paginationEls = this.querySelectorAll<HTMLElement>("[data-pagination]");
-					for (const el of paginationEls) el.hidden = totalPages <= 1;
+						// A changed filter invalidates whatever page you were on — e.g. page 4 of an
+						// unfiltered grid might not even exist once a search narrows things down.
+						this.#page = 0;
+						this.#renderPage();
+					}
 
-					const pageLabels = this.querySelectorAll("[data-page-label]");
-					for (const el of pageLabels) el.textContent = `Page ${this.#page + 1} of ${totalPages}`;
+					#applySort(key: SortKey) {
+						const comparator = sortComparators[key] ?? sortComparators["name-asc"];
+						// Just reorders the backing array now — there's no DOM to physically re-append
+						// nodes into anymore, #renderPage() below builds fresh markup for whatever's on the
+						// current page in whatever order #items/#filtered are in.
+						this.#items = [...this.#items].sort(comparator);
+						// Re-filter rather than just re-paginate: #filtered was built from the old order, so
+						// it needs rebuilding against the new one. Resetting to page one on a re-sort matches
+						// what changing a filter already does.
+						this.#applyFilters();
+					}
 
-					const prevButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-prev]");
-					for (const button of prevButtons) button.disabled = this.#page === 0;
+					#totalPages(): number {
+						return Math.max(1, Math.ceil(this.#filtered.length / PAGE_SIZE));
+					}
 
-					const nextButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-next]");
-					for (const button of nextButtons) button.disabled = this.#page >= totalPages - 1;
+					#goToPage(page: number) {
+						this.#page = Math.min(Math.max(page, 0), this.#totalPages() - 1);
+						this.#renderPage();
+						// No forced scroll here on purpose. This used to smooth-scrollIntoView(#list, {block:
+						// "start"}) to stop a short last page leaving you stranded past its own content — but
+						// #renderPage()'s height floor already rules that out entirely (the grid never renders
+						// shorter than the tallest page you've seen), so the scroll had nothing left to guard
+						// against. What it *did* keep doing: yank the whole viewport ~1000px+ up to the grid's
+						// top every time, on every click — including the bottom Prev/Next pair added alongside
+						// the top one, whose entire point is paging without leaving where you already are.
+					}
+
+					#renderPage() {
+						const totalPages = this.#totalPages();
+						const start = this.#page * PAGE_SIZE;
+						const pageSlice = this.#filtered.slice(start, start + PAGE_SIZE);
+
+						// Floor the grid's height at the tallest it's actually reached this visit *before*
+						// swapping in the new page's markup, so a shorter page (typically just the last one —
+						// different cards wrap their name/price text over a different number of lines, so
+						// it's not just card count that varies) doesn't visibly shrink the grid and yank the
+						// pagination bar/footer up to meet it. Setting it first is what stops the browser
+						// laying the new page out at its own shorter natural height for even one frame before
+						// the floor kicks in.
+						const list = this.#list;
+						if (list) {
+							list.style.minHeight = `${this.#maxGridHeight}px`;
+							// Only this page's ~30 cards ever exist in the DOM at once — replacing innerHTML
+							// discards the previous page's <lightbox-image> elements entirely and lets the
+							// browser's custom-element upgrade reactions pick up the new ones automatically on
+							// insertion (no manual re-init needed; see Lightbox.astro/docs/lightbox.md). Gallery
+							// Next/Prev (data-lightbox-gallery) naturally only ever sees the current page's
+							// cards too, for the same reason — there's nothing else in the DOM for it to find.
+							list.innerHTML = pageSlice.map(renderCardHTML).join("");
+							const height = list.getBoundingClientRect().height;
+							if (height > this.#maxGridHeight) {
+								this.#maxGridHeight = height;
+								list.style.minHeight = `${height}px`;
+							}
+						}
+
+						const countEl = this.querySelector("[data-count]");
+						if (countEl) countEl.textContent = String(this.#filtered.length);
+
+						const emptyEl = this.querySelector<HTMLElement>("[data-empty]");
+						if (emptyEl) emptyEl.hidden = this.#filtered.length !== 0;
+
+						const paginationEls = this.querySelectorAll<HTMLElement>("[data-pagination]");
+						for (const el of paginationEls) el.hidden = totalPages <= 1;
+
+						const pageLabels = this.querySelectorAll("[data-page-label]");
+						for (const el of pageLabels) el.textContent = `Page ${this.#page + 1} of ${totalPages}`;
+
+						const prevButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-prev]");
+						for (const button of prevButtons) button.disabled = this.#page === 0;
+
+						const nextButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-next]");
+						for (const button of nextButtons) button.disabled = this.#page >= totalPages - 1;
+					}
 				}
-			}
 
-			customElements.define("card-collection", CardCollectionElement);
-		</script>
+				customElements.define("card-collection", CardCollectionElement);
+			</script>
+		</div>
 	</div>
 </card-collection>
