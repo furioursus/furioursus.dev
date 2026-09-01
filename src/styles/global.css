@@ -133,11 +133,17 @@
 	   them regardless of body::after being last in the DOM, since a positioned element with an
 	   explicit z-index always beats a z-index:auto one. This needs to clear the highest of those,
 	   not just exist. Native <dialog> (the lightbox) still wins regardless — it paints in the
-	   browser's top layer, above any z-index at all. */
+	   browser's top layer, above any z-index at all.
+	   `inset: -20%` (not `0`) — iOS Safari's rubber-band overscroll bounce reveals area beyond the
+	   viewport, and a `position: fixed` element sized to exactly match the viewport doesn't always
+	   keep pace with that bounce in real time; sized-to-viewport left a bare edge visible during
+	   the bounce. Overshooting well past any plausible overscroll distance (a percentage, so it
+	   scales with viewport size instead of a fixed px guess) means there's no edge to reveal.
+	   `background-repeat` already tiles infinitely, so this costs nothing extra. */
 	body::after {
 		content: "";
 		position: fixed;
-		inset: 0;
+		inset: -20%;
 		z-index: 100;
 		pointer-events: none;
 		background-image: var(--grain-image);
