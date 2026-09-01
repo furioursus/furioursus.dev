@@ -18,7 +18,8 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   reading time, admonitions, GitHub cards, external-link handling, and more.
 - [Lightbox](./lightbox.md) — click-to-enlarge images, automatic in markdown bodies or explicit via
   a customizable component.
-- [Logo idle animation](./logo.md) — the header bear mark's blink/ear-twitch/look-around loop.
+- [Logo idle animation](./logo.md) — the header bear mark's blink/ear-twitch/look-around loop,
+  cursor tracking, and its static edge-distortion filter.
 - [Theming](./theming.md) — the dark/light mode system and design tokens.
 - [Search](./search.md) — Pagefind static search integration.
 - [Webmentions](./webmentions.md) — likes/reposts/replies pulled from webmention.io.
