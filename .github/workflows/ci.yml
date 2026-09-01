@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # No `version` input — reads it from package.json's `packageManager` field instead, so this
       # and Netlify's Corepack-driven pnpm selection can't drift apart. They already did once:
@@ -25,12 +25,12 @@ jobs:
       # silently landing on different pnpm versions broke one of them regardless of which format
       # was chosen. See docs/mtg.md.
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: "pnpm"
