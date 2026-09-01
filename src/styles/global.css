@@ -198,7 +198,9 @@
 		background-image: var(--grain-image);
 		background-repeat: repeat;
 		mix-blend-mode: var(--grain-blend);
-		opacity: 0.2;
+		opacity: 0.25;
+		background-size: 50%;
+		background-attachment: fixed;
 	}
 
 	:target {
