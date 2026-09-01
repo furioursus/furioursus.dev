@@ -16,6 +16,14 @@ const socialImageURL = new URL(ogImage ? ogImage : "/social-card.png", Astro.url
 
 <meta charset="utf-8" />
 <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+{/* Colors the mobile browser chrome (iOS Safari's status bar/toolbar, Android's) to match the
+    page instead of leaving it flat white. This value is the light-mode fallback for pre-JS
+    paint; ThemeProvider.astro overwrites the content attribute to match whichever theme
+    actually gets applied — including a manual toggle that disagrees with the OS's own light/dark
+    setting, which a `prefers-color-scheme` media-queried pair of tags couldn't do. Kept in sync
+    by hand with --color-global-bg in global.css, not derived from it — there's no build step
+    that exports a CSS custom property value into HTML. */}
+<meta content="#f2eded" name="theme-color" />
 <title>{siteTitle}</title>
 
 {/* Icons */}
