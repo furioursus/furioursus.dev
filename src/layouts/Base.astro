@@ -48,15 +48,6 @@ const {
 			class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-8 font-mono text-sm font-normal antialiased sm:px-8 md:pt-16"
 		>
 			<SkipLink />
-			{
-				/* Marks where Header's own natural (unstuck) top edge sits, so Header.astro's
-				sticky-state script can tell *when* it goes stuck — see that script and
-				.header-surface in global.css. Has to live here, immediately before <Header />,
-				not inside it: once the header is actually stuck it stays fully visible in the
-				viewport no matter what, so a sentinel inside it would never register as
-				scrolled-away. `h-0` keeps it out of layout — a bare marker, not a spacer. */
-			}
-			<div aria-hidden="true" class="h-0" id="header-sentinel"></div>
 			<Header />
 			<main id="main">
 				<slot />
