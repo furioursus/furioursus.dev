@@ -9,7 +9,7 @@
 // Run manually after adding new records to your collection (needs ANTHROPIC_API_KEY,
 // e.g. in .env — DISCOGS_USERNAME/DISCOGS_TOKEN too, same as any other local build):
 //
-//   pnpm generate:cover-alt
+//   npm run generate:cover-alt
 //
 // Never regenerates or overwrites an existing entry, including ones still flagged
 // `reviewed: false` — so a hand-edit always sticks, and re-running only fills gaps for
