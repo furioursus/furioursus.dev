@@ -68,7 +68,7 @@ real, per-release descriptions of the artwork itself (subject, color, compositio
 Opus 5's vision, one sentence each, generated from the same locally-cached cover file the lightbox
 enlarges.
 
-- **Run it manually** (`pnpm generate:cover-alt`) after adding new records — it's not wired into
+- **Run it manually** (`npm run generate:cover-alt`) after adding new records — it's not wired into
   `astro dev`/`astro build`. Needs `ANTHROPIC_API_KEY` (and the usual `DISCOGS_USERNAME`/
   `DISCOGS_TOKEN`) in `.env`.
 - **Output**: `src/data/discogs-cover-alt.json`, keyed by release ID —

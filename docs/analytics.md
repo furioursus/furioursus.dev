@@ -31,7 +31,7 @@ whole site.
 ## Gotchas
 
 - **`import.meta.env.PROD`-gated** — dev-server reloads and local testing never get counted, so
-  `pnpm dev` doesn't pollute the real stats. `pnpm preview` (which builds first) does count, since
+  `npm run dev` doesn't pollute the real stats. `npm run preview` (which builds first) does count, since
   it's a production build.
 - **Unset by default.** If `GOATCOUNTER_CODE` isn't set in the environment (locally or in Netlify),
   no script tag renders at all — not a broken/empty one. Same three-state absence pattern as

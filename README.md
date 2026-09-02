@@ -55,27 +55,21 @@ Check out the site at [furioursus.dev](https://www.furioursus.dev/)
 [Create a new repo](https://github.com/furioursus/furioursus.dev-cactus/generate) from this template.
 
 ```bash
-# npm 7+
 npm create astro@latest -- --template furioursus/furioursus.dev-cactus
-
-# pnpm
-pnpm dlx create-astro --template furioursus/furioursus.dev-cactus
 ```
 
 [![Deploy with Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/furioursus/furioursus.dev-cactus) [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffurioursus%2Ffurioursus.dev-cactus&project-name=furioursus-dev)
 
 ## Commands
 
-Replace pnpm with your choice of npm / yarn
-
-| Command          | Action                                                         |
-| :--------------- | :------------------------------------------------------------- |
-| `pnpm install`   | Installs dependencies                                          |
-| `pnpm dev`       | Starts local dev server at `localhost:3000`                    |
-| `pnpm build`     | Build your production site to `./dist/`                        |
-| `pnpm postbuild` | Pagefind script to build the static search of your blog posts  |
-| `pnpm preview`   | Preview your build locally, before deploying                   |
-| `pnpm sync`      | Generate types based on your config in `src/content/config.ts` |
+| Command              | Action                                                          |
+| :------------------- | :--------------------------------------------------------------- |
+| `npm install`        | Installs dependencies                                           |
+| `npm run dev`        | Starts local dev server at `localhost:3000`                    |
+| `npm run build`      | Build your production site to `./dist/`                        |
+| `npm run postbuild`  | Pagefind script to build the static search of your blog posts  |
+| `npm run preview`    | Preview your build locally, before deploying                   |
+| `npm run sync`       | Generate types based on your config in `src/content/config.ts` |
 
 ## Configure
 
