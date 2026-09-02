@@ -128,16 +128,66 @@
 			--color-nav-hover: oklch(90% 0.18 95);
 			/* See the light-mode --grain-image/--grain-blend below — swapped here rather than
 			   just tinted, since `multiply` on an already-near-black bg is a no-op. This inverted
-			   asset (light marks on dark) plus `screen` is what actually shows up in dark mode. */
-			--grain-image: url("../assets/images/grain-dark.webp");
+			   asset (light marks on dark) plus `screen` is what actually shows up in dark mode.
+			   Same three breakpoint-sized tiers as the light-mode image below, for the same
+			   reason — see that comment. */
+			--grain-image: url("../assets/images/grain-dark-960w.webp");
 			--grain-blend: screen;
+
+			@media (max-width: 39.9375rem) and (orientation: portrait) {
+				--grain-image: url("../assets/images/grain-dark-portrait.webp");
+			}
+
+			@media (min-width: 40rem) {
+				--grain-image: url("../assets/images/grain-dark-1600w.webp");
+			}
+
+			@media (min-width: 64rem) {
+				--grain-image: url("../assets/images/grain-dark.webp");
+			}
 		}
 
-		/* Ambient grain overlay, see the body::after rule below. Dark ink marks on a light ground
-		   — `mix-blend-mode: multiply` treats light pixels as a no-op and only darkens where
-		   there's ink. */
-		--grain-image: url("../assets/images/grain-light.webp");
+		/* Ambient grain overlay, see the body::after rule below. `background-attachment: fixed`
+		   there means `background-size: cover` sizes against the *viewport*, not this element's
+		   own (body-height-tall) box — so unlike the plain `position: fixed` version this used to
+		   be, resolution only ever needs to match one screen's worth of space, not the whole page.
+		   That's still resolution the browser has to download, though: serving the same full-res
+		   image to a 380px-wide phone as to a 2560px desktop is wasted bandwidth on mobile it'll
+		   never render at native size anyway. Three width tiers, swapped by viewport width alone
+		   (this is about the image's own resolution, not the page's layout, so plain `min-width`
+		   — not a Tailwind breakpoint variant, this file isn't a component Tailwind processes) at
+		   Tailwind's own `sm`/`lg` breakpoints so the tiers line up with where the rest of the
+		   site already changes shape: under 40rem gets the smallest (960w) image, 40–64rem gets a
+		   mid-size one (1600w), and 64rem and up gets the original full-res source.
+		   The under-40rem tier also gets an `orientation: portrait` variant, cropped and rotated
+		   from the source rather than just downscaled — for `cover`-fit, a *portrait* viewport's
+		   dominant dimension is its height, not its width, so reusing the landscape 960w crop
+		   there would ask a much-shorter-than-tall image to cover a box that needs more height
+		   than it has. Scoped to under 40rem only (`max-width: 39.9375rem`, one px below the
+		   `min-width: 40rem` tier above so the two never both match) — portrait tablets/laptops
+		   above that still get the landscape 1600w/full-res tiers as before; that's an accepted
+		   gap, not an oversight, since portrait is overwhelmingly a phone thing and doubling every
+		   tier's file count for a rare case isn't worth it.
+		   Widths, not a real responsive `srcset`: a plain CSS custom property can't express a
+		   `srcset`, and this is a `background-image` on a pseudo-element, not an `<img>`, so
+		   there's no `srcset` to begin with — `@media`-scoped custom property overrides are the
+		   mechanism CSS actually has for this.
+		   Dark ink marks on a light ground — `mix-blend-mode: multiply` treats light pixels as a
+		   no-op and only darkens where there's ink. */
+		--grain-image: url("../assets/images/grain-light-960w.webp");
 		--grain-blend: multiply;
+
+		@media (max-width: 39.9375rem) and (orientation: portrait) {
+			--grain-image: url("../assets/images/grain-light-portrait.webp");
+		}
+
+		@media (min-width: 40rem) {
+			--grain-image: url("../assets/images/grain-light-1600w.webp");
+		}
+
+		@media (min-width: 64rem) {
+			--grain-image: url("../assets/images/grain-light.webp");
+		}
 
 		--color-mode-transition-duration: 300ms;
 		--color-mode-transition-easing: ease-in-out;
@@ -174,21 +224,25 @@
 	   box (which `isolate` plus `body`'s `relative` utility already make a valid containing
 	   block), sidesteps the whole class of viewport-tracking bugs by not depending on the
 	   viewport at all — it just covers whatever `body`'s real, already-correct rendered extent
-	   turns out to be, scrolling normally with the page instead of staying pinned to the screen.
-	   That's a genuine behavior change, not just a bugfix: the grain now moves with the page like
-	   texture printed on the paper itself, rather than staying anchored to the viewport — arguably
-	   more honest to the photocopy metaphor anyway.
-	   `background-repeat: repeat`, not `background-size: cover` — a further consequence of going
-	   `absolute` instead of `fixed`: a `fixed` layer only ever needs to cover one viewport's worth
-	   of space at a time (whatever's currently on screen), so scaling one big image to `cover` it
-	   was fine. An `absolute` layer sized to `body`'s *entire* document height would need to
-	   `cover`-scale that same image across the whole page in one stretch, badly distorting it on
-	   anything longer than one screen. A small repeating tile sidesteps that entirely — same
-	   reasoning that led to a tiled asset the very first time this feature existed, before an
-	   intermediate version swapped to one large `cover`-scaled photo and needed viewport-width
-	   breakpoint tiers (removed here) to keep that from shipping desktop resolution to a phone.
-	   `pointer-events: none` so it never intercepts clicks. Native `<dialog>` (the lightbox) is
-	   unaffected either way — it paints in the browser's top layer, above any z-index at all. */
+	   turns out to be. That's about the *element's own box* reaching the right size, not about
+	   whether the visible texture appears to scroll — `background-attachment: fixed` below
+	   still keeps the image itself visually pinned to the viewport as you scroll, same as the
+	   old `position: fixed` version looked, just without that version's iOS bug.
+	   `background-size: cover` on one large photo-scale texture again, not the small repeating
+	   tile this went through for a while — `background-attachment: fixed` below is what makes
+	   that safe against `position: absolute`'s own body-height-tall box: fixed attachment sizes
+	   and positions the image against the *viewport*, not the element it's set on, so `cover`
+	   only ever has to fill one screen's worth of space no matter how tall the actual page is.
+	   Without `attachment: fixed`, `cover` would size against `body`'s entire document height
+	   instead and badly distort a single image stretched across a whole page longer than one
+	   screen — which is exactly why an intermediate version dropped `cover` for a small repeating
+	   tile instead, before landing here: `attachment: fixed` sidesteps that distortion without
+	   giving up the sharper, more distinctive texture a real photo-scale image has over a small
+	   tile (visible toner-drag banding that a small seamless-tile crop had to crop *away* to
+	   avoid an obvious repeat). The four `--grain-image` breakpoint tiers above exist because of
+	   this `cover` sizing coming back — see that comment for why. `pointer-events: none` so it
+	   never intercepts clicks. Native `<dialog>` (the lightbox) is unaffected either way — it
+	   paints in the browser's top layer, above any z-index at all. */
 	body::after {
 		content: "";
 		position: absolute;
@@ -196,10 +250,9 @@
 		z-index: -1;
 		pointer-events: none;
 		background-image: var(--grain-image);
-		background-repeat: repeat;
+		background-size: cover;
 		mix-blend-mode: var(--grain-blend);
 		opacity: 0.25;
-		background-size: 50%;
 		background-attachment: fixed;
 	}
 
