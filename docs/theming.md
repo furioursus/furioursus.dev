@@ -64,8 +64,8 @@ color rather than with whatever text/images happen to be on screen — it shows 
 page scrolls. This requires `isolate` on `<body>` (`Base.astro`) so the negative z-index stays
 contained to body's own stacking context instead of escaping behind `<html>` entirely. An earlier
 version painted this *above* content at `z-index: 100` to clear other components' own stacking
-z-indexes (Header's mobile sticky bar `z-30`, BlogPost's back-to-top button `z-90`) — that's no
-longer relevant now that the layer is behind everything, not competing to be on top of it.
+z-indexes (Header's nav dropdown `z-50`, BlogPost's back-to-top button `z-90`) — that's no longer
+relevant now that the layer is behind everything, not competing to be on top of it.
 
 `position: absolute`, not `fixed` — a real, confirmed regression, found the hard way. An earlier
 version used `position: fixed` (pinned to the viewport, so the texture stayed visually put on
@@ -104,21 +104,15 @@ never textured. An accepted, minor gap, not worth chasing given how brief and ed
 bounce reveal actually is.
 
 Any opaque surface sitting above that `-1` layer hides it completely, though — a solid-background
-element just paints over it. `Header.astro`'s masthead (logo, title, nav, search, theme toggle) is
-`position: static` — it scrolls away with the rest of the page like any other content, so it never
-needs to reason about the grain layer at all; whatever's behind it is just whatever's behind it.
-
-The one thing on the page that *is* always visible is the mobile-only sticky bar at the top of
-`Header.astro` (`sm:hidden`, everything below `sm:` gets a plain in-flow masthead instead) — a slim
-`h-14` strip carrying just the wordmark and the menu button. It used to be that the *entire* header
-went sticky on mobile, which needed real machinery to avoid reading as a flat slab dropped over a
-grainy page: a transparent-until-scrolled background cross-faded in via an `IntersectionObserver`,
-plus a `mask-image` fade at its bottom edge so scrolled content dissolved into it instead of hitting
-a hard line (`.header-surface`/`.is-stuck`, both since removed). None of that survived the move to a
-slim bar: at `h-14` it reads as a normal toolbar chrome rather than a header-sized card, so it just
-carries a plain, always-opaque `bg-global-bg` with a `border-muted` bottom border to separate it
-from scrolled content — no fade, no stuck-state tracking, nothing to keep in sync with the header's
-own layout.
+element just paints over it. That used to matter for `Header.astro`: an earlier version made the
+whole header `position: sticky`, which needed real machinery to avoid reading as a flat slab dropped
+over a grainy page — a transparent-until-scrolled background cross-faded in via an
+`IntersectionObserver`, plus a `mask-image` fade at its bottom edge so scrolled content dissolved
+into it instead of hitting a hard line (`.header-surface`/`.is-stuck`, both since removed — see
+[Navigation](./navigation.md) for why the header went back to `position: static`). With nothing in
+the header sticky anymore, none of that applies: it scrolls away with the rest of the page like any
+other content, so it never needs to reason about the grain layer at all — whatever's behind it is
+just whatever's behind it.
 
 Two theme-swapped tokens drive it, same pattern as the color tokens: `--grain-image` and
 `--grain-blend`, set on `html` and overridden under `&[data-theme="dark"]`. Light mode uses

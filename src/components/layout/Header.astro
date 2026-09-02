@@ -4,69 +4,7 @@ import ThemeToggle from "@/components/ThemeToggle.astro";
 import { menuLinks, siteConfig } from "@/site.config";
 ---
 
-{
-	/* Mobile-only sticky strip: just the wordmark + menu button, pinned to the top edge while the
-	full masthead below (logo, title, nav, search, theme toggle) scrolls away normally — that
-	masthead is never sticky at any breakpoint now, so none of it needs to react to scroll position.
-	A sibling of <header>, NOT nested inside it — position: sticky can only stick for as long as its
-	*own containing block* still intersects the viewport, and <header>'s containing block is just
-	its own (fairly short) box. Nested inside it, this bar would stop sticking and scroll away right
-	along with the masthead the moment you scrolled past the header's own bottom edge — found live,
-	on this exact page, before moving it out here. As a sibling, its containing block is Base.astro's
-	full-page wrapper instead, so it keeps sticking all the way down.
-	`breakout-container` here (not inherited from a `<header>` ancestor the way it used to be) is
-	what makes it span the full viewport width edge-to-edge rather than sitting inside the
-	max-w-3xl reading column. `h-14` is a fixed, deliberately-chosen height (not measured) —
-	#mobile-menu in global.css anchors its own top offset to this same 3.5rem value, so the two only
-	need to agree on one literal number, not stay in sync via JS. Hidden entirely at `sm:` and up,
-	where the masthead's own nav/search/theme are always visible inline and there's nothing extra
-	to pin. */
-}
-<div
-	class="bg-global-bg border-muted breakout-container sticky top-0 z-30 flex h-14 items-center justify-between border-b px-4 sm:hidden"
->
-	<a aria-current={Astro.url.pathname === "/" ? "page" : false} href="/">
-		<span class="text-accent-2 text-lg font-bold">{siteConfig.title}</span>
-	</a>
-	<mobile-button>
-		<button
-			aria-controls="mobile-menu"
-			aria-expanded="false"
-			aria-haspopup="dialog"
-			class="group relative h-7 w-7"
-			id="toggle-navigation-menu"
-			type="button"
-		>
-			<span class="sr-only">Open main menu</span>
-			<svg
-				aria-hidden="true"
-				class="absolute inset-s-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 transition-all group-aria-expanded:scale-0 group-aria-expanded:opacity-0"
-				fill="none"
-				focusable="false"
-				stroke="currentColor"
-				stroke-width="1.5"
-				viewBox="0 0 24 24"
-				xmlns="http://www.w3.org/2000/svg"
-			>
-				<path d="M3.75 9h16.5m-16.5 6.75h16.5" stroke-linecap="round" stroke-linejoin="round"
-				></path>
-			</svg>
-			<svg
-				aria-hidden="true"
-				class="text-accent absolute inset-s-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-all group-aria-expanded:scale-100 group-aria-expanded:opacity-100"
-				fill="none"
-				focusable="false"
-				stroke="currentColor"
-				stroke-width="1.5"
-				viewBox="0 0 24 24"
-				xmlns="http://www.w3.org/2000/svg"
-			>
-				<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
-			</svg>
-		</button>
-	</mobile-button>
-</div>
-<header class="breakout-container mb-6" id="main-header">
+<header class="group breakout-container mb-6" id="main-header">
 	<div class="relative mx-auto max-w-3xl px-4 py-8 sm:px-8">
 		{
 			/* ps-18 lives on this innermost row specifically, not the px-4/sm:px-8 wrapper
@@ -263,99 +201,119 @@ import { menuLinks, siteConfig } from "@/site.config";
 					</span>
 				</a>
 				{
-					/* Real <dialog>, not a styled <div> — buys focus-trap, Esc-to-close, and a native
-					::backdrop for free the instant it's opened via .showModal() from the sticky bar's
-					button above. It stays in exactly this DOM position (inside the title/nav column,
-					same spot the old plain <nav> occupied) specifically so the `display: contents`
-					override at `sm:` (see #mobile-menu in global.css) can make it disappear from the box
-					model entirely on desktop — its child <nav> then lays out exactly as if the dialog
-					wrapper wasn't there, stacked below the title via this column's own sm:flex-col,
-					same as before. Desktop never calls .showModal() on it (no button to do so — the
-					toggle button only exists in the mobile sticky bar, sm:hidden), so it never becomes
-					a real modal there regardless of the `open` attribute. */
+					// max-sm: (Tailwind's max-width variant — compiles to the same `@media (width < 40rem)`
+					// range query this used to be hand-written as) — the desktop nav is always-visible
+					// (sm:flex, unconditional, above) so none of this display-toggling/animation applies there.
+					// group-[.menu-open]: reads the .menu-open class MobileNavBtn's script toggles on
+					// <header> (already used for z-50 above) — no :global()-equivalent needed since
+					// Tailwind utilities aren't scoped to begin with.
+					// top-18 (4.5rem): a plain, hardcoded offset, not measured — <header> is static now
+					// (never sticky, never resizes on scroll), so this row's own rendered height is a
+					// fixed, known quantity, the same way Astro Cactus upstream hardcodes its own
+					// equivalent (`top-12`) rather than measuring it. No JS, no ResizeObserver, no
+					// custom property to keep in sync with anything.
+					// transform/transition are arbitrary properties, not scale-*/translate-*/duration-*
+					// utilities — Tailwind v4's scale-*/translate-* utilities set the standalone `scale`/
+					// `translate` CSS properties, not `transform`, so a hand-written `transition: transform
+					// ...` list needs the matching arbitrary `[transform:...]` to actually be listing the
+					// property that's changing. [@starting-style]: is Tailwind's arbitrary at-rule variant
+					// (rather than the dedicated `starting:` shorthand) so this doesn't depend on exactly
+					// which Tailwind 4.x minor version added that shorthand.
+					// divide-muted: explicit, not incidental — `divide-x`/`divide-y` add their border with
+					// no color utility alongside them, and border-color's own CSS default is `currentColor`,
+					// so each link's own divider (Tailwind puts it on the *preceding* link, as a
+					// border-inline-end, not on the following one as a border-start) would otherwise pick
+					// up that same link's `color` — meaning the separator visibly flashed the hover/active
+					// yellow right along with whichever link was being hovered. Pinning it to --color-muted
+					// decouples the divider from any one link's interaction state.
 				}
-				<dialog aria-label="Menu" id="mobile-menu">
-					<nav
-						aria-label="Main"
-						class="divide-muted flex flex-col divide-y sm:-ms-4 sm:mt-1 sm:flex-row sm:divide-x sm:divide-y-0"
-					>
-						{
-							// "/" is excluded: the logo link right before this nav already goes home, so a
-							// "Home" item here would be an adjacent link to the same page (WAVE flags this).
-							// The footer's copy of menuLinks keeps "Home" — it has no adjacent logo link.
-							// hover:text-nav-hover + active:text-nav-hover: --color-nav-hover (global.css)
-							// is a no-op in light mode (same value as --color-accent, so this class pair
-							// changes nothing there) and swaps to a vivid yellow in dark mode — a third,
-							// distinct interaction color rather than a tint of the pink base, so the nav
-							// state changes color instead of just gaining an underline like it did before.
-							// divide-muted: explicit, not incidental — `divide-x` adds its border with no
-							// color utility alongside it, and border-color's own CSS default is
-							// `currentColor`, so each link's own divider (Tailwind puts it on the
-							// *preceding* link, as a border-inline-end) would otherwise pick up that same
-							// link's `color` — meaning the separator visibly flashed the hover/active
-							// yellow right along with whichever link was being hovered. Pinning it to
-							// --color-muted decouples the divider from any one link's interaction state.
-							menuLinks
-								.filter((link) => link.path !== "/")
-								.map((link) => (
-									<a
-										aria-current={Astro.url.pathname === link.path ? "page" : false}
-										class="text-accent hover:text-nav-hover active:text-nav-hover block px-4 py-4 font-semibold sm:py-0 sm:underline-offset-2 sm:hover:underline"
-										href={link.path}
-									>
-										{link.title}
-									</a>
-								))
-						}
-					</nav>
-				</dialog>
+				<nav
+					aria-label="Main"
+					class="bg-global-bg divide-muted absolute -inset-x-4 top-18 flex-col divide-y px-2 py-4 group-[.menu-open]:z-50 motion-reduce:transition-none max-sm:hidden max-sm:transform-[scale(0.92)_translateY(-0.5rem)] max-sm:opacity-0 max-sm:[transition:opacity_0.15s_ease-in,transform_0.15s_ease-in,display_0.15s_allow-discrete] group-[.menu-open]:max-sm:flex group-[.menu-open]:max-sm:transform-[scale(1)_translateY(0)] group-[.menu-open]:max-sm:opacity-100 group-[.menu-open]:max-sm:[transition:opacity_0.3s_cubic-bezier(0.34,1.56,0.64,1),transform_0.3s_cubic-bezier(0.34,1.56,0.64,1),display_0.3s_allow-discrete] sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0 group-[.menu-open]:max-sm:starting:transform-[scale(0.92)_translateY(-0.5rem)] group-[.menu-open]:max-sm:starting:opacity-0"
+					id="navigation-menu"
+				>
+					{
+						// "/" is excluded: the logo link right before this nav already goes home, so a
+						// "Home" item here would be an adjacent link to the same page (WAVE flags this).
+						// The footer's copy of menuLinks keeps "Home" — it has no adjacent logo link.
+						// hover:text-nav-hover + active:text-nav-hover: --color-nav-hover (global.css)
+						// is a no-op in light mode (same value as --color-accent, so this class pair
+						// changes nothing there) and swaps to a vivid yellow in dark mode — a third,
+						// distinct interaction color rather than a tint of the pink base, so the nav
+						// state changes color instead of just gaining an underline like it did before.
+						menuLinks
+							.filter((link) => link.path !== "/")
+							.map((link) => (
+								<a
+									aria-current={Astro.url.pathname === link.path ? "page" : false}
+									class="text-accent hover:text-nav-hover active:text-nav-hover px-4 py-4 font-semibold sm:py-0 sm:underline-offset-2 sm:hover:underline"
+									href={link.path}
+								>
+									{link.title}
+								</a>
+							))
+					}
+				</nav>
 			</div>
 			<Search />
 			<ThemeToggle />
+			<mobile-button>
+				<button
+					aria-expanded="false"
+					aria-haspopup="menu"
+					class="group relative ms-4 h-7 w-7 sm:invisible sm:hidden"
+					id="toggle-navigation-menu"
+					type="button"
+				>
+					<span class="sr-only">Open main menu</span>
+					<svg
+						aria-hidden="true"
+						class="absolute inset-s-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 transition-all group-aria-expanded:scale-0 group-aria-expanded:opacity-0"
+						fill="none"
+						focusable="false"
+						stroke="currentColor"
+						stroke-width="1.5"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path d="M3.75 9h16.5m-16.5 6.75h16.5" stroke-linecap="round" stroke-linejoin="round"
+						></path>
+					</svg>
+					<svg
+						aria-hidden="true"
+						class="text-accent absolute inset-s-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-all group-aria-expanded:scale-100 group-aria-expanded:opacity-100"
+						fill="none"
+						focusable="false"
+						stroke="currentColor"
+						stroke-width="1.5"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+					</svg>
+				</button>
+			</mobile-button>
 		</div>
 	</div>
 </header>
 
 <script>
-	// <mobile-button> just opens the real <dialog> below it — no more height math, no more class
-	// toggling. aria-expanded tracks the dialog's own `open` attribute via a MutationObserver
-	// rather than the dialog's "close" event — deliberately: close() removes that attribute as a
-	// synchronous, spec-guaranteed DOM mutation, where the "close" event's own firing is one more
-	// thing to depend on. Whatever closes it (Esc, backdrop click, the matchMedia listener below),
-	// the attribute changing is what this actually watches, so every close path stays in sync
-	// through one observer instead of this button having to know about all of them.
-	class MobileNavBtn extends HTMLElement {
-		connectedCallback() {
-			const dialogEl = document.getElementById("mobile-menu") as HTMLDialogElement | null;
-			const mobileButtonEl = this.querySelector<HTMLButtonElement>("button");
-			if (!dialogEl || !mobileButtonEl) return;
+	import { toggleClass } from "@/utils/domElement";
 
-			mobileButtonEl.addEventListener("click", () => dialogEl.showModal());
-			new MutationObserver(() => {
-				mobileButtonEl.setAttribute("aria-expanded", String(dialogEl.open));
-			}).observe(dialogEl, { attributeFilter: ["open"], attributes: true });
+	class MobileNavBtn extends HTMLElement {
+		#menuOpen: boolean = false;
+
+		connectedCallback() {
+			const headerEl = document.getElementById("main-header");
+			const mobileButtonEl = this.querySelector<HTMLButtonElement>("button");
+
+			mobileButtonEl?.addEventListener("click", () => {
+				if (headerEl) toggleClass(headerEl, "menu-open");
+				this.#menuOpen = !this.#menuOpen;
+				mobileButtonEl.setAttribute("aria-expanded", this.#menuOpen.toString());
+			});
 		}
 	}
 
 	customElements.define("mobile-button", MobileNavBtn);
-
-	const dialogEl = document.getElementById("mobile-menu") as HTMLDialogElement | null;
-	if (dialogEl) {
-		// Tapping the backdrop closes the dialog. A click there lands with the dialog element
-		// itself as event.target (there's nothing else to hit — ::backdrop isn't a real node),
-		// where a click on the actual menu content would target one of its children instead.
-		dialogEl.addEventListener("click", (event) => {
-			if (event.target === dialogEl) dialogEl.close();
-		});
-
-		// #mobile-menu's own CSS forces it into `display: contents` at sm: and up regardless of
-		// its `open` attribute (see global.css) — but if it's already open as a real modal (top
-		// layer, ::backdrop, focus-trapped) and the viewport crosses that breakpoint mid-session
-		// (a resize, or a rotate), none of that top-layer state clears on its own just because the
-		// box stopped rendering. Closing it explicitly here is the one bit of sync this design
-		// still needs, and it's a single listener rather than a whole observer.
-		window.matchMedia("(width >= 40rem)").addEventListener("change", (event) => {
-			if (event.matches) dialogEl.close();
-		});
-	}
 </script>

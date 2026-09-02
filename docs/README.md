@@ -20,8 +20,8 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   a customizable component.
 - [Logo idle animation](./logo.md) — the header bear mark's blink/ear-twitch/look-around loop,
   cursor tracking, and its static edge-distortion filter.
-- [Navigation](./navigation.md) — the static header, the mobile sticky bar, and the single
-  `<dialog>` that serves as both the mobile menu and the desktop nav row.
+- [Navigation](./navigation.md) — the static (non-sticky) header and its plain mobile dropdown,
+  and why the sticky/dialog-based versions that came before it were reverted.
 - [Theming](./theming.md) — the dark/light mode system and design tokens.
 - [Search](./search.md) — Pagefind static search integration.
 - [Webmentions](./webmentions.md) — likes/reposts/replies pulled from webmention.io.

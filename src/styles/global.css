@@ -236,68 +236,6 @@
 	transform: translateX(-50%);
 }
 
-/* The mobile nav menu is a single native <dialog> (Header.astro's #mobile-menu) doing double duty
-   across breakpoints, not two separate implementations to keep in sync. On mobile it's a real
-   modal — opened via .showModal() from the sticky bar's button, giving focus-trap/Esc-to-close/
-   ::backdrop for free — styled here as a sheet pinned to the top edge. At `sm:` and up it's forced
-   into `display: contents`, vanishing from the box model entirely so its child <nav> lays out as
-   a plain, always-visible flex row exactly as if this wrapper wasn't there — desktop never calls
-   .showModal() on it, so none of the modal behavior below ever applies there regardless of the
-   `open` attribute.
-   `#mobile-menu` is an ID selector specifically so it always outranks the UA stylesheet's own
-   `dialog:not([open]) { display: none }` (a class utility loses that specificity fight; an ID
-   wins it outright, no `!important` needed) — same "outside any `@layer`, wins on cascade order
-   alone" trick `.breakout-container` below relies on, just via specificity instead this time. */
-#mobile-menu {
-	position: fixed;
-	/* 3.5rem matches the sticky mobile bar's own `h-14` in Header.astro exactly, by construction —
-	   that bar's height is a fixed, deliberately-picked number (not measured), so this is the one
-	   place the two need to agree, and only on that single literal value. */
-	inset: 3.5rem 0 auto 0;
-	width: 100%;
-	max-width: none;
-	max-height: calc(100dvh - 3.5rem);
-	margin: 0;
-	overflow-y: auto;
-	border: none;
-	padding: 1rem;
-	background-color: var(--color-global-bg);
-	transform: translateY(-100%);
-	transition:
-		transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-		overlay 0.3s allow-discrete,
-		display 0.3s allow-discrete;
-
-	&[open] {
-		transform: translateY(0);
-	}
-
-	@starting-style {
-		&[open] {
-			transform: translateY(-100%);
-		}
-	}
-
-	&::backdrop {
-		background-color: rgb(0 0 0 / 50%);
-		transition: background-color 0.3s ease;
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		transition: none;
-
-		&::backdrop {
-			transition: none;
-		}
-	}
-}
-
-@media (width >= 40rem) {
-	#mobile-menu {
-		display: contents;
-	}
-}
-
 @layer components {
 	@import "./components/admonition.css";
 	@import "./components/github-card.css";
