@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"paths": {
 			"@/*": ["./src/*"],
-			"@content/*": ["./content/*"],
+			"@content/*": ["./src/content/*"],
 			"@uploads/*": ["./src/assets/uploads/*"]
 		}
 	},

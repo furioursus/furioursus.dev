@@ -3,7 +3,7 @@ title: "Getting Ready"
 description: "In the brief moments between relaxing and going out, i find intimacy and connection by watching someone’s preperation rituals."
 publishDate: "2024-01-01T00:00:00Z"
 coverImage:
-  src: "./sir-aditya-getting-ready.jpg"
+  src: "../../assets/blog/sir-aditya-getting-ready.jpg"
   aspectClass: "aspect-[14/16]"
   alt: "My partner, Sir Aditya, a lean and handsome brown-skinned Man with a a dark black and dense cropped beard stands shirtless in front of a mirror while primping and prepares to go out for the night by trimming His beard’s hairs with a pair of scissors."
 tags: ["partners", "sir aditya", "candid", "at home", "photos"]

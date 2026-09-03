@@ -3,7 +3,7 @@ title: "My Favorite Asshole"
 description: "My cat Tybalt is an asshole, but i love him dearly. He’s not great at being affectionate but he always wants to be around."
 publishDate: "2024-01-03T00:00:00Z"
 coverImage:
-  src: "./tybalt-in-my-beanie.jpg"
+  src: "../../assets/blog/tybalt-in-my-beanie.jpg"
   aspectClass: "aspect-[12/16]"
   alt: "My cat Tybalt, a white flamepoint Tabby/Siamese mix sits on a wooden platform while looking off to the side dejectedly while wearing a full-sized black skullcap beanie from Mr. S Leather that i placed on him moments ago."
 tags: ["cats", "photos", "tybalt"]

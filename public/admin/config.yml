@@ -12,16 +12,18 @@ public_folder: "/uploads"
 collections:
   - name: "blog"
     label: "Blog"
-    folder: "content/blog"
+    folder: "src/content/blog"
     create: true
     slug: "{{slug}}"
-    path: "{{slug}}/index" # only matches the folder+index.md posts
     extension: "md"
-    # Colocate uploads with the entry (content/blog/<slug>/), matching this
-    # collection's existing convention, and matching what Astro's `image()`
-    # schema helper expects: a path relative to the markdown file itself.
-    media_folder: ""
-    public_folder: ""
+    # Shared asset folder, not colocated with the entry — src/content/blog/ is flat
+    # (one file per post, matching what non-Astro-aware markdown editors expect).
+    # public_folder is a relative path (not a real URL) matching what Astro's
+    # `image()` schema helper expects from a flat content file: this is why Decap's
+    # own image-preview thumbnail won't render for an existing cover image in the
+    # editor UI, even though the path is correct and the build resolves it fine.
+    media_folder: "src/assets/blog"
+    public_folder: "../../assets/blog"
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Description", name: "description", widget: "text" }
@@ -55,13 +57,10 @@ collections:
 
   - name: "notes"
     label: "Notes"
-    folder: "content/notes"
+    folder: "src/content/notes"
     create: true
     slug: "{{slug}}"
-    path: "{{slug}}/index" # matches the folder+index.md notes
     extension: "md"
-    media_folder: ""
-    public_folder: ""
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Description", name: "description", widget: "text", required: false }
@@ -70,13 +69,10 @@ collections:
 
   - name: "tags"
     label: "Tags"
-    folder: "content/tags"
+    folder: "src/content/tags"
     create: true
     slug: "{{slug}}"
-    path: "{{slug}}/index" # matches the folder+index.md tags
     extension: "md"
-    media_folder: ""
-    public_folder: ""
     fields:
       - { label: "Title", name: "title", widget: "string", required: false }
       - { label: "Description", name: "description", widget: "text", required: false }
