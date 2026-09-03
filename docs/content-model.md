@@ -1,13 +1,26 @@
 # Content model
 
 Defined in `src/content.config.ts`, using Astro [Content Collections](https://docs.astro.build/en/guides/content-collections/).
-Three collections, each backed by a `glob()` loader over a folder in `content/`:
+Three collections, each backed by a `glob()` loader over a folder in `src/content/`:
 
-| Collection | Source folder                 | URL              | Notes                                                 |
-| ---------- | ----------------------------- | ---------------- | ----------------------------------------------------- |
-| `blog`     | `content/blog/**/*.{md,mdx}`  | `/blog/[slug]/`  | one folder per post, `index.md(x)` + colocated images |
-| `note`     | `content/notes/**/*.{md,mdx}` | `/notes/[slug]/` | shorter-form, no tags/cover image                     |
-| `tag`      | `content/tags/**/*.{md,mdx}`  | `/tags/[tag]/`   | optional override content for a tag's own page        |
+| Collection | Source folder                          | URL              | Notes                                          |
+| ---------- | --------------------------------------- | ---------------- | ------------------------------------------------ |
+| `blog`     | `src/content/blog/**/*.{md,mdx}`  | `/blog/[slug]/`  | one flat file per post, `<slug>.md(x)`          |
+| `note`     | `src/content/notes/**/*.{md,mdx}` | `/notes/[slug]/` | shorter-form, no tags/cover image               |
+| `tag`      | `src/content/tags/**/*.{md,mdx}`  | `/tags/[tag]/`   | optional override content for a tag's own page  |
+
+Content lives under `src/` (not a repo-root `content/` folder) and is flat — `src/content/blog/<slug>.md`,
+not a `<slug>/index.md` folder — both deliberate, for the same reason: anything served on the
+frontend belongs under `src/` or `public/` semantically, and a generic markdown-aware editor that
+doesn't know this repo's specific conventions (e.g. [Astro Editor](https://astroeditor.danny.is/))
+expects both a standard `src/content/` collections root and a flat file per entry, not a
+colocated-assets folder structure it has to be taught about. This used to be a root-level
+`content/blog/<slug>/index.md` with each post's images sitting right next to it; images now live in
+`src/assets/blog/` instead (see `coverImage.src` below). The glob loader's `id`/slug derivation is
+unaffected by any of this — it strips `index` from a folder+`index.md` entry the same way it strips
+`.md` from a flat one, and doesn't care where its `base` path points — so this was a zero-code-change
+migration for everything downstream: routes, RSS, and OG images all key off `entry.id`, not the
+file's actual path on disk.
 
 ## Blog frontmatter
 
@@ -17,7 +30,7 @@ description: string # required, 50–160 chars (SEO description)
 publishDate: string # required, strict ISO 8601 with offset (e.g. "2024-01-14T00:00:00Z")
 updatedDate: string # optional, same strict ISO 8601 format as publishDate
 coverImage: # optional
-  src: "./photo.jpg" # relative path, colocated with index.md — resolved via the image() schema helper
+  src: "../../assets/blog/photo.jpg" # relative path into src/assets/blog/ — resolved via the image() schema helper
   alt: string
   caption: string | boolean | null # optional — see below, default is to show `alt`
 draft: boolean # default false — filtered out of production build, feeds, og-images
@@ -36,7 +49,12 @@ engines/versions, so a bad one would have silently mis-parsed rather than failin
 
 `coverImage.src` goes through the `image()` schema helper, so it's a real optimized asset (via
 `astro:assets`), not a plain string — Astro resolves the relative path against the markdown file's
-own directory. It is **not** part of the markdown body, so it never goes through the automatic
+own directory, which is why it reads `../../assets/blog/photo.jpg` rather than a bare filename:
+`src/content/blog/` is two levels up from `src/assets/blog/` (both being siblings under `src/`).
+**All cover images share that one flat folder now — pick a filename that won't collide with another
+post's.** There's no per-post subfolder to namespace them anymore, unlike the old colocated layout.
+
+It is **not** part of the markdown body, so it never goes through the automatic
 markdown-image lightbox transform (see [lightbox.md](./lightbox.md)) — but
 `src/components/blog/Masthead.astro` renders it through `LightboxImage.astro` explicitly (`fit="cover"
 aspectRatio="16/9"`), so it's still click-to-enlarge, and shares the same caption styling. The 16:9
@@ -79,8 +97,8 @@ notes are meant to be short/disposable enough not to need the full post apparatu
 
 ## Tag pages
 
-A tag doesn't need an entry in `content/tags/` to work — any string in a post's `tags` array
-generates a `/tags/[tag]/` page automatically. A `content/tags/<name>/index.md` file is only needed
+A tag doesn't need an entry in `src/content/tags/` to work — any string in a post's `tags` array
+generates a `/tags/[tag]/` page automatically. A `src/content/tags/<name>.md` file is only needed
 when you want to _override_ that page's intro copy (see `title`/`description` in the table above).
 
 ## Editing without a local checkout

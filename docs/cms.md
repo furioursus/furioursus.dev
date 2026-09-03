@@ -27,9 +27,15 @@ Netlify Identity + Git Gateway.
   - `backend.repo` points at `furioursus/furioursus.dev` — worth double-checking this still matches
     wherever the repo actually lives if it's ever renamed/forked, since a mismatch here breaks the
     CMS's ability to commit.
-  - Media uploads are colocated per-entry (`media_folder: ""` on each collection) rather than a
-    single shared uploads folder, matching how `content/blog/<slug>/photo.jpg` is already organized
-    and what the `image()` schema helper expects (a path relative to the markdown file itself).
+  - The `blog` collection overrides `media_folder`/`public_folder` to `src/assets/blog` — a shared
+    folder, not colocated per-entry, matching `src/content/blog/`'s own flat layout (see
+    [content-model.md](./content-model.md)). `public_folder` here is a relative path
+    (`../../assets/blog`), not a real URL — it's what gets written into `coverImage.src`, and
+    the `image()` schema helper needs a path relative to the markdown file, not a browser-loadable
+    one. The tradeoff: Decap's own image-picker preview can't load that path as an `<img>`, so
+    swapping an *existing* post's cover image in `/admin` shows a blank thumbnail in the editor
+    even though the upload and the resulting build both work fine. `notes`/`tags` have no image
+    fields, so they don't override this and fall back to the top-level default below.
 - **Netlify Identity widget** (`src/layouts/Base.astro`) — loaded site-wide via the
   `identity.netlify.com` script, not scoped to `/admin`. This is deliberate (commit
   `fix(cms): move netlify identity out of decap cms admin page`) — invite/recovery email links can

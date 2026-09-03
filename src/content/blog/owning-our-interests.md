@@ -4,7 +4,7 @@ description: "Cassidy Williams recently brought up the topic of human curation o
 publishDate: "2024-01-14T00:00:00Z"
 ogImage: "/social-images/media-collection.jpg"
 coverImage:
-  src: "./media-collection.jpg"
+  src: "../../assets/blog/media-collection.jpg"
   alt: "A bookshelf containing media of various different types, books, art, comics, and vinyl records, all arranged in square cubes."
 tags: ["ai", "curation", "fyp", "social media"]
 draft: false
