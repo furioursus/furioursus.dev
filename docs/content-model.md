@@ -47,6 +47,14 @@ a freeform string like `"14 Jan 2024"`. The schema used to accept anything `new 
 every existing post happened to resolve fine, but that parsing isn't guaranteed consistent across JS
 engines/versions, so a bad one would have silently mis-parsed rather than failing the build.
 
+[Astro Editor](https://astroeditor.danny.is/) doesn't know about this strict format — it writes a
+bare `publishDate: 2024-01-14`, and (worse) names a brand-new post/note after today's date
+(`2026-09-03.md`) rather than a slug, which becomes that entry's actual `id`/URL since the glob
+loader derives both from the filename. `npm run sanitize:dates` (`scripts/sanitize-dates.mjs`)
+fixes both after an Astro Editor session: rewrites bare dates to strict ISO, and renames any
+`YYYY-MM-DD.md(x)` file to a slug derived from its `title`. Idempotent, safe to re-run; `--check`
+reports without writing, for CI.
+
 `coverImage.src` goes through the `image()` schema helper, so it's a real optimized asset (via
 `astro:assets`), not a plain string — Astro resolves the relative path against the markdown file's
 own directory, which is why it reads `../../assets/blog/photo.jpg` rather than a bare filename:
