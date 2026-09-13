@@ -23,9 +23,18 @@ when they link to a post here); this repo only fetches and displays what's accum
 
 - **`index.astro`** — fetches for the current URL, bails out entirely (renders nothing, not even the
   "Webmentions for this post" heading) if there are none.
-- **`Likes.astro`**, **`Reposts.astro`**, **`Comments.astro`** — one component per mention type,
-  each rendering its own slice of the fetched list. Comments render as actual reply content;
-  likes/reposts render as an avatar-only strip (the source post's content isn't the point there).
+- **`AvatarMentions.astro`** — the avatar-only strip, rendered twice from `index.astro`: once with
+  `property="like-of"` / `mf2="p-like"`, once with `property="repost-of"` / `mf2="p-repost"`. The
+  source post's content isn't the point for these, so only the author photo is shown.
+  It replaced separate `Likes.astro` / `Reposts.astro`, which were the same forty lines twice and
+  had drifted: reposts had lost the microformats markup (`p-repost h-cite` on the `li`, `u-url` on
+  the anchor) that likes still carried, so parsers couldn't read them at all.
+- **`Comments.astro`** — replies, rendered as actual reply content rather than avatars.
+
+Note the coupling worth remembering: a `property` passed here must also appear in
+`validWebmentionTypes` (`src/utils/webmentions.ts`), which filters _before_ the cache is written.
+`repost-of` was missing from it, so reposts were silently dead in production while local dev — which
+still had pre-filter entries in its gitignored `.data/` cache — looked fine.
 
 ## Adding webmentions to a new domain
 
