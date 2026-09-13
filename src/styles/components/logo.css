@@ -29,15 +29,6 @@
 		transform-box: fill-box;
 	}
 
-	/* Photocopy-static edge distortion, #logo-melt (defined inline on the <svg> in Header.astro).
-	   Targets #BackEar1/#BackEar2, not the #Ear1/#Ear2 groups, so the pale ear-interior cutouts
-	   stay crisp — SVG filters apply to a filtered element's whole subtree. See docs/logo.md. */
-	& #Head,
-	& #BackEar1,
-	& #BackEar2 {
-		filter: url(#logo-melt);
-	}
-
 	/* Barely-there breathing under the other loops. Origin is the jaw (50% 100%), not the center,
 	   so it reads as a chest rising rather than a pulse; Y grows more than X (1.5% vs 0.8%). */
 	& #Head {
