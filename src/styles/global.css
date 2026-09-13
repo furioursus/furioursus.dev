@@ -252,7 +252,7 @@
 		background-image: var(--grain-image);
 		background-size: cover;
 		mix-blend-mode: var(--grain-blend);
-		opacity: 0.25;
+		opacity: 0.125;
 		background-attachment: fixed;
 	}
 
