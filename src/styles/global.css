@@ -128,13 +128,19 @@
 			   above isn't needed here. See the nav-link comment in Header.astro for where this is
 			   actually used. */
 			--color-nav-hover: oklch(90% 0.18 95);
-			/* See the light-mode --grain-image/--grain-blend below — swapped here rather than
-			   just tinted, since `multiply` on an already-near-black bg is a no-op. This inverted
-			   asset (light marks on dark) plus `screen` is what actually shows up in dark mode.
-			   Same three breakpoint-sized tiers as the light-mode image below, for the same
-			   reason — see that comment. */
+			/* See the light-mode grain tokens below — swapped here rather than just tinted, since
+			   `multiply` on an already-near-black bg is a no-op. This inverted asset (light marks
+			   on dark) plus `screen` is what actually shows up in dark mode. Same three
+			   breakpoint-sized tiers as the light-mode image below, for the same reason — see that
+			   comment.
+			   --grain-opacity is halved here, and it has to be theme-swapped alongside the other
+			   two: a single shared alpha can't serve both. Tuned low enough for dark, the tooth was
+			   too faint to read in light; tuned up until light read properly, dark looked blown
+			   out. Light speckles on a near-black ground are simply more visually assertive than
+			   dark speckles on a near-white one. The ratio is empirical — set by eye, not derived. */
 			--grain-image: url("../assets/images/grain-dark-960w.webp");
 			--grain-blend: screen;
+			--grain-opacity: 0.125;
 
 			@media (max-width: 39.9375rem) and (orientation: portrait) {
 				--grain-image: url("../assets/images/grain-dark-portrait.webp");
@@ -177,6 +183,7 @@
 		   no-op and only darkens where there's ink. */
 		--grain-image: url("../assets/images/grain-light-960w.webp");
 		--grain-blend: multiply;
+		--grain-opacity: 0.25;
 
 		@media (max-width: 39.9375rem) and (orientation: portrait) {
 			--grain-image: url("../assets/images/grain-light-portrait.webp");
@@ -264,7 +271,7 @@
 		background-image: var(--grain-image);
 		background-size: cover;
 		mix-blend-mode: var(--grain-blend);
-		opacity: 0.25;
+		opacity: var(--grain-opacity);
 		/* Edge fade, pinned to the viewport along with the rest of this layer — the texture
 		   dissolves toward the device's chrome (status bar at the top, dynamic toolbar / home
 		   indicator at the bottom) at every scroll position, not just at the two ends of the page.
