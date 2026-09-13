@@ -34,21 +34,6 @@ const meta = {
 	description: tagMeta?.data.description ?? `View all posts with the tag - ${tag}`,
 	title: tagMeta?.data.title ?? `Posts about ${tag}`,
 };
-
-const paginationProps = {
-	...(page.url.prev && {
-		prevUrl: {
-			text: "← Previous Tags",
-			url: page.url.prev,
-		},
-	}),
-	...(page.url.next && {
-		nextUrl: {
-			text: "Next Tags →",
-			url: page.url.next,
-		},
-	}),
-};
 ---
 
 <PageLayout meta={meta}>
@@ -78,5 +63,5 @@ const paginationProps = {
 			</li>
 		))}
 	</ul>
-	<Pagination {...paginationProps} />
+	<Pagination page={page} />
 </PageLayout>

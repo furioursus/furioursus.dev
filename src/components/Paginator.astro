@@ -1,26 +1,31 @@
 ---
-import type { PaginationLink } from "@/types";
+import type { Page } from "astro";
 
 interface Props {
-	nextUrl?: PaginationLink;
-	prevUrl?: PaginationLink;
+	/** Astro's own paginated page object — the component derives prev/next from `page.url`. */
+	page: Page<unknown>;
+	/** Override the previous link's text. Defaults suit paginating a list of posts. */
+	prevText?: string;
+	/** Override the next link's text. */
+	nextText?: string;
 }
 
-const { nextUrl, prevUrl } = Astro.props;
+// Takes the whole `page` rather than pre-built link objects: all three callers were building the
+// identical conditional-spread shape in their own frontmatter, and the only thing that actually
+// varied was the label. Deriving it here means a caller is `<Pagination page={page} />`.
+const { page, prevText = "← Previous Page", nextText = "Next Page →" } = Astro.props;
 ---
 
-{(prevUrl || nextUrl) && (
+{(page.url.prev || page.url.next) && (
 	<nav class="mt-8 flex items-center gap-x-4">
-		{prevUrl && (
-			<a class="hover:text-accent me-auto py-2" href={prevUrl.url}>
-				{prevUrl.srLabel && <span class="sr-only">{prevUrl.srLabel}</span>}
-				{prevUrl.text ? prevUrl.text : "Previous"}
+		{page.url.prev && (
+			<a class="hover:text-accent me-auto py-2" href={page.url.prev}>
+				{prevText}
 			</a>
 		)}
-		{nextUrl && (
-			<a class="hover:text-accent ms-auto py-2" href={nextUrl.url}>
-				{nextUrl.srLabel && <span class="sr-only">{nextUrl.srLabel}</span>}
-				{nextUrl.text ? nextUrl.text : "Next"}
+		{page.url.next && (
+			<a class="hover:text-accent ms-auto py-2" href={page.url.next}>
+				{nextText}
 			</a>
 		)}
 	</nav>
