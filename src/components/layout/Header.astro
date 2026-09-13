@@ -28,28 +28,6 @@ import { menuLinks, siteConfig } from "@/site.config";
 							viewBox="0 0 68.31 64.71"
 							xmlns="http://www.w3.org/2000/svg"
 						>
-							{/* Photocopy-static edge distortion, referenced as url(#logo-melt) from logo.css.
-								Inline here rather than in a hidden <svg> just to sit with the artwork it
-								distorts; url(#id) resolves document-wide either way. See docs/logo.md. */}
-							<defs>
-								<filter height="160%" id="logo-melt" width="160%" x="-30%" y="-30%">
-									<feTurbulence
-										type="fractalNoise"
-										baseFrequency="0.5"
-										numOctaves="10"
-										result="noise"
-									/>
-									<feDisplacementMap in="SourceGraphic" in2="noise" scale="3">
-										<animate
-											attributeName="scale"
-											dur="5s"
-											id="logo-melt-pulse"
-											repeatCount="indefinite"
-											values="1;6;1"
-										/>
-									</feDisplacementMap>
-								</filter>
-							</defs>
 							<g id="Ear2Track">
 								<g id="Ear2">
 									<path
@@ -108,15 +86,6 @@ import { menuLinks, siteConfig } from "@/site.config";
 							</g>
 						</svg>
 					)}
-					{siteConfig.showLogo && <script is:inline>
-						// SMIL ignores prefers-reduced-motion, so the pulse has to be removed by hand.
-						// FOOTGUN: is:inline, not a module script — it must run during parsing, before the
-						// animation paints a frame. Removing (not pausing) falls back to scale="3", the
-						// pulse's own resting value. See docs/logo.md.
-						if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-							document.getElementById("logo-melt-pulse")?.remove();
-						}
-					</script>}
 					<span class="text-accent-2 text-xl font-bold sm:text-2xl sm:grayscale sm:group-hover:filter-none">
 						{siteConfig.title}
 					</span>
