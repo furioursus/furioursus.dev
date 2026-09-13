@@ -44,9 +44,7 @@ const metaText = [release.year || null, release.formats.join(", ") || null]
 const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 ---
 
-<div
-	class="border-muted py-tight-4 flex items-center gap-3 border-b sm:block sm:border-b-0 sm:py-0"
->
+<div class="border-muted py-tight-4 flex items-center gap-3 border-b sm:block sm:border-b-0 sm:py-0">
 	{
 		// The cover art is its own click target (opens the enlarged view) rather than living
 		// inside the link below — a <button>, which the lightbox trigger renders as, can't
@@ -161,9 +159,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 			// alongside it. Dropping the class name here would silently lose that shared styling,
 			// not just this component's own tweaks to it.
 		}
-		<TitleTag
-			class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal"
-		>
+		<TitleTag class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">
 			{release.title}
 		</TitleTag>
 		<p class="text-2xs m-0 opacity-60">{metaText}</p>

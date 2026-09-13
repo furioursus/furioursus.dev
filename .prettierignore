@@ -6,3 +6,11 @@ node_modules
 
 pnpm-lock.yaml
 dist
+
+# CSS is owned by biome's formatter (biome.json `formatter.enabled` + `css.parser`), not prettier.
+# The two genuinely disagree and can't both be satisfied: for a declaration whose value is one
+# long unbreakable token (the `mask: url("data:image/svg+xml,...")` icons in lightbox.css and
+# github-card.css), biome breaks after the colon and indents the value, prettier keeps it on the
+# `prop: value` line. Whichever one runs last leaves the other failing. `biome check` is what
+# `npm run check` gates on, so biome wins and prettier stays out of .css entirely.
+*.css

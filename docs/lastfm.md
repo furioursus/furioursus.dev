@@ -41,11 +41,11 @@ The shared client for `ws.audioscrobbler.com`'s `user.*` methods. Two entry poin
 Neither entry point fetches or renders cover art — both the ranked lists and the now-playing strip
 are text-only (rank/name/artist/playcount for one, track/artist/album for the other). That's
 deliberate, not an oversight: Last.fm retired real per-artist photos site-wide years ago —
-`artist.image` is now *always* the same gray-star placeholder
+`artist.image` is now _always_ the same gray-star placeholder
 (`2a96cbd8b46e442fc41c2b86b821562f.png`, identical hash for literally every artist, verified
 against Madonna/Gorillaz/Daft Punk-tier names, not just obscure ones) — and `user.gettoptracks`/
 `user.getrecenttracks` have the same dead-placeholder problem on their own `track.image`. Real art
-*was* recoverable in a couple of places (`user.gettopalbums`' own `image`, and a `track.getinfo`
+_was_ recoverable in a couple of places (`user.gettopalbums`' own `image`, and a `track.getinfo`
 lookup for a track's album cover), but between those and the artist/track fields that never had
 anything, art showed up inconsistently — some rows with a cover, most without. Dropped entirely
 rather than kept partial; simpler and more compact besides.
@@ -80,12 +80,12 @@ visible on tab click — no re-fetch, same "everything's already in the DOM, JS 
 philosophy as the vinyl grid's client-side filtering (see [`docs/discogs.md`](./discogs.md)'s
 "Search/filter/sort" section). That keeps the build-time API call count fixed at 4 periods × 3
 endpoints = 12 calls regardless of how often a visitor flips between tabs — there's no per-track
-art backfill here (see above), so this is the *whole* cost of the section, not just the primary
+art backfill here (see above), so this is the _whole_ cost of the section, not just the primary
 fetch.
 
 Each panel also shows a totals line ("91 artists · 99 albums · 122 tracks") above the three lists —
 that's `MusicStatsPeriod.totalArtists`/`totalAlbums`/`totalTracks`, read off each response's own
-`@attr.total`. Last.fm computes that as the *unique* count for the whole period (paging metadata
+`@attr.total`. Last.fm computes that as the _unique_ count for the whole period (paging metadata
 for a list-of-10-per-category-per-period we only ever fetch page 1 of, per `TOP_LIMIT`), not the
 sum of the top 10's playcounts — so it's a real "how many different artists/albums/tracks did I
 hear this period" number, free of any extra request beyond the primary fetch above.

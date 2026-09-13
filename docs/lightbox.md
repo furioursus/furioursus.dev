@@ -229,7 +229,7 @@ buttons move between images.
   ancestor, so `record-collection`'s search/genre/format filtering (which hides non-matching
   `.record-item`s, see [`docs/discogs.md`](./discogs.md)) never lets Next/Prev land on a record
   that's currently filtered out. Recomputed fresh on every navigation rather than cached at connect
-  — filters can't actually change *while* a dialog is open (it's modal, blocks interacting with
+  — filters can't actually change _while_ a dialog is open (it's modal, blocks interacting with
   anything behind it), but there's no reason to trust a snapshot taken once and reused indefinitely.
 - **Navigation reuses the normal open path, not a separate one.** `navigate()` calls the current
   dialog's `close()`, then `.click()`s the next member's own `.lightbox-trigger` — the exact same
@@ -242,7 +242,7 @@ buttons move between images.
   automatic markdown transform, `LightboxImage.astro`, `RecordCard.astro`'s hand-rolled fallback)
   render `.lightbox-nav-prev`/`-next` unconditionally with a `hidden` attribute — none of them can
   know at author/build time whether they'll end up inside a gallery container. `Lightbox.astro`
-  un-hides both, per dialog, right before `showModal()` — but only when that image's *live* gallery
+  un-hides both, per dialog, right before `showModal()` — but only when that image's _live_ gallery
   (post-filtering) actually has more than one member; a standalone image or a gallery filtered down
   to one match never shows dead-end nav buttons.
 

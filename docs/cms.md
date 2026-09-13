@@ -33,7 +33,7 @@ Netlify Identity + Git Gateway.
     (`../../assets/blog`), not a real URL — it's what gets written into `coverImage.src`, and
     the `image()` schema helper needs a path relative to the markdown file, not a browser-loadable
     one. The tradeoff: Decap's own image-picker preview can't load that path as an `<img>`, so
-    swapping an *existing* post's cover image in `/admin` shows a blank thumbnail in the editor
+    swapping an _existing_ post's cover image in `/admin` shows a blank thumbnail in the editor
     even though the upload and the resulting build both work fine. `notes`/`tags` have no image
     fields, so they don't override this and fall back to the top-level default below.
 - **Netlify Identity widget** (`src/layouts/Base.astro`) — loaded site-wide via the

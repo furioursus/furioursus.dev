@@ -38,10 +38,12 @@ const latestNotes = allNotes
 			// is already inline-block, unset by anything else here.
 		}
 		<h1 class="title group mb-4 flex cursor-pointer items-center gap-2" id="greeting">
-			<button class="m-0 border-0 p-0 [background:none] group-hover:animate-[wobble_1s_5]"
-				>👋</button
-			>
-			<span class="title-text" id="greeting-text">Hello, World!</span>
+			<button class="m-0 border-0 p-0 [background:none] group-hover:animate-[wobble_1s_5]">
+				👋
+			</button>
+			<span class="title-text" id="greeting-text">
+				Hello, World!
+			</span>
 		</h1>
 		<script is:inline>
 			(function () {
@@ -496,46 +498,42 @@ const latestNotes = allNotes
 		</p>
 		<SocialList />
 	</section>
-	{
-		pinnedPosts.length > 0 && (
-			<section class="mt-16">
-				<h2 class="title mb-6 text-xl">Pinned Posts</h2>
-				<ul class="space-y-4" role="list">
-					{pinnedPosts.map((p) => (
-						<li class="sm:grid-cols-auto-1fr grid gap-1">
-							<PostPreview post={p} />
-						</li>
-					))}
-				</ul>
-			</section>
-		)
-	}
-	<section class="mt-16">
-		<h2 class="title text-accent mb-6 text-xl"><a href="/blog/">Posts</a></h2>
-		<ul class="space-y-4" role="list">
-			{
-				latestPosts.map((p) => (
+	{pinnedPosts.length > 0 && (
+		<section class="mt-16">
+			<h2 class="title mb-6 text-xl">Pinned Posts</h2>
+			<ul class="space-y-4" role="list">
+				{pinnedPosts.map((p) => (
 					<li class="sm:grid-cols-auto-1fr grid gap-1">
 						<PostPreview post={p} />
 					</li>
-				))
-			}
+				))}
+			</ul>
+		</section>
+	)}
+	<section class="mt-16">
+		<h2 class="title text-accent mb-6 text-xl">
+			<a href="/blog/">Posts</a>
+		</h2>
+		<ul class="space-y-4" role="list">
+			{latestPosts.map((p) => (
+				<li class="sm:grid-cols-auto-1fr grid gap-1">
+					<PostPreview post={p} />
+				</li>
+			))}
 		</ul>
 	</section>
-	{
-		latestNotes.length > 0 && (
-			<section class="mt-16">
-				<h2 class="title text-accent mb-6 text-xl">
-					<a href="/notes/">Notes</a>
-				</h2>
-				<ul class="space-y-6" role="list">
-					{latestNotes.map((note) => (
-						<li>
-							<Note note={note} as="h3" isPreview />
-						</li>
-					))}
-				</ul>
-			</section>
-		)
-	}
+	{latestNotes.length > 0 && (
+		<section class="mt-16">
+			<h2 class="title text-accent mb-6 text-xl">
+				<a href="/notes/">Notes</a>
+			</h2>
+			<ul class="space-y-6" role="list">
+				{latestNotes.map((note) => (
+					<li>
+						<Note note={note} as="h3" isPreview />
+					</li>
+				))}
+			</ul>
+		</section>
+	)}
 </PageLayout>

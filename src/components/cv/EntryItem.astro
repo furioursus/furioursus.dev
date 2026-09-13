@@ -16,31 +16,27 @@ const hasHighlights = Astro.slots.has("highlights");
 
 <div class="cv-entry">
 	<h3>
-		{
-			boldSubtitle ? (
-				<strong>
-					{title} — {subtitle}
-				</strong>
-			) : (
-				<Fragment>
-					<strong>{title}</strong> — {subtitle}
-				</Fragment>
-			)
-		}{" "}
+		{boldSubtitle ? (
+			<strong>
+				{title} — {subtitle}
+			</strong>
+		) : (
+			<Fragment>
+				<strong>{title}</strong> — {subtitle}
+			</Fragment>
+		)}{" "}
 	</h3>
 	<p class="flex gap-4">
-		<em>{dates}</em>{url && <a href={url}>{url}</a>}{
-			urlExpired && <span class="text-red-500">— no longer active</span>
-		}
+		<em>{dates}</em>
+		{url && <a href={url}>{url}</a>}
+		{urlExpired && <span class="text-red-500">— no longer active</span>}
 	</p>
 	<p>
 		<slot />
 	</p>
 </div>
-{
-	hasHighlights && (
-		<ul class="cv-entry-highlights">
-			<slot name="highlights" />
-		</ul>
-	)
-}
+{hasHighlights && (
+	<ul class="cv-entry-highlights">
+		<slot name="highlights" />
+	</ul>
+)}

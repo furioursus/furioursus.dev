@@ -21,7 +21,7 @@ section of it — the two collections are unrelated hobbies, unlike Last.fm/viny
 - `loadCollection()`/`queryCollection()`/`summarize()`/`uniqueSorted()`/`RARITY_ORDER` are imported
   from **`astro-mtg-collection/collection`**, not the bare package — see that subpath's own doc
   comment (and the package's README) for why: the main entry also re-exports the Astro integration,
-  whose import chain reaches its Vite plugin, and importing data functions from *that* entry once
+  whose import chain reaches its Vite plugin, and importing data functions from _that_ entry once
   broke `astro build` outright (Rollup inlined a broken copy of Vite's own internals into this
   page's build). Fixed at the package level by splitting the two concerns into separate entry
   points — this site just has to keep importing from the right one.
@@ -61,14 +61,14 @@ separate reasons landed on this, worth keeping apart:
    Astro/Vite internal function that should never run during a static build. The image count
    looked like the obvious suspect at the time (~6,200 unique cards, an order of magnitude beyond
    any other page) and a batch pre-optimization step was built to sidestep it — but swapping every
-   card to plain `<img>` and removing `astro:assets` entirely reproduced the *exact same error*,
+   card to plain `<img>` and removing `astro:assets` entirely reproduced the _exact same error_,
    which ruled the image-volume theory out. The real cause was a Rollup-bundling bug in how
    `astro-mtg-collection` structured its exports (see "How it's wired" above) — fixed at the
    package level, unrelated to how card art itself is rendered.
 2. **Ephemeral hosting makes local caching pointless anyway.** Even with that bug fixed, a local
    image cache (raw JPGs, or a resized/optimized copy) buys nothing on hosts like Netlify — nothing
    persists between builds, so downloading or processing ~6,200 images just to discard the whole
-   checkout afterward is pure waste, paid on *every* build, forever. `cacheImages: false` in
+   checkout afterward is pure waste, paid on _every_ build, forever. `cacheImages: false` in
    `astro.config.ts`'s `mtgCollection()` call skips the package's own image-download step entirely
    (added specifically to support this — see its README); rendering straight against `imageUrl`
    skips the rest.
@@ -105,25 +105,25 @@ the grid at build time. It did originally — an earlier version had ~8,300 `<li
 one `hidden` unless on the current page, mirroring how the vinyl collection still works. That turned
 out to be the page's actual performance problem, and it's a subtler one than data volume: even with
 every off-page card `hidden`, all ~8,300 of them (each a `<lightbox-image>` wrapping a trigger
-`<img>` *and* a whole `<dialog>` with close/prev/next buttons — a dozen-plus elements per card) still
+`<img>` _and_ a whole `<dialog>` with close/prev/next buttons — a dozen-plus elements per card) still
 had to be parsed into the DOM, and every single `<lightbox-image>` still upgraded (running its own
 `connectedCallback` query/listener setup, see [`docs/lightbox.md`](./lightbox.md)) on every page
-load, `hidden` or not. `loading="lazy"` on the `<img>`s meant the *images themselves* were never the
+load, `hidden` or not. `loading="lazy"` on the `<img>`s meant the _images themselves_ were never the
 bottleneck — DOM node count and custom-element upgrade cost were.
 
 The fix: `entries` gets serialized to a slim JSON payload (a `ClientCard` per row — see
 `CardCollection.astro`'s frontmatter, one array of plain objects, not DOM nodes) and embedded in a
 `<script type="application/json" data-card-json>` tag, written with `set:html` (Astro's directive
 for injecting a string as raw, unescaped content) since a normal `{expr}` interpolation would
-HTML-entity-escape it — harmless for a JSON *value*, but a script element's content isn't
+HTML-entity-escape it — harmless for a JSON _value_, but a script element's content isn't
 HTML-entity-decoded by the browser, so an escaped `&amp;` would land in the parsed JSON as literal
-text instead of `&`. The one thing that string *does* need is a manual `<` → `\u003c` escape before
+text instead of `&`. The one thing that string _does_ need is a manual `<` → `\u003c` escape before
 embedding, so a card name or URL can never contain a literal `</script>` sequence and truncate the
 tag early — see the frontmatter comment above `cardDataJson` for why that's still needed even with
 `set:html` bypassing Astro's own escaping.
 
 The `<card-collection>` custom element parses that payload once, on connect, into `#items` — this
-*is* the "paginated cached JavaScript objects" idea, if you're looking for it by that name — and
+_is_ the "paginated cached JavaScript objects" idea, if you're looking for it by that name — and
 `#renderPage()` builds real `<li>` markup (via `renderCardHTML()`, a hand-rolled template-string
 function mirroring what used to be a separate `CardTile.astro` component — deleted, since this was
 its only caller once rendering moved client-side) for only the current page's slice, writing it into
@@ -149,7 +149,7 @@ performance win, not an oversight.
   (different cards wrap their name/price text over a different number of lines, so it's not purely a
   card-count thing) would otherwise visibly shrink `.grid` and yank the pagination bar/footer up to
   meet it. `#renderPage()` tracks the tallest `.grid` has actually rendered this visit
-  (`#maxGridHeight`) and sets `min-height` to that floor *before* swapping in the new page's markup —
+  (`#maxGridHeight`) and sets `min-height` to that floor _before_ swapping in the new page's markup —
   doing it in that order is what stops the browser from laying the shorter page out at its own
   natural height for even one frame first. A column-count change (a resize crossing the
   mobile/desktop breakpoint) invalidates that recorded number outright — a single-column mobile list
@@ -157,13 +157,13 @@ performance win, not an oversight.
   `resize` listener drops the floor back to zero rather than carrying over a number that's now
   meaningless; the next page render re-establishes one that's actually right for the new layout. An
   earlier version of this tried padding the last page with cloned filler grid cells instead, sized to
-  match a real card — it kept the *cell count* constant but not the height, since a page of identical
+  match a real card — it kept the _cell count_ constant but not the height, since a page of identical
   clones can't reproduce the natural height variance real cards have from wrapping differently.
   Measuring and flooring against what was actually rendered sidesteps that assumption entirely.
 
 - **Color** filters against `item.color`, a pipe-separated list built from the card's
   `color_identity` (a colorless card gets `["C"]`) — picking "White" matches any card whose identity
-  *includes* white, multicolor cards included, mirroring `queryCollection()`'s own `where.color`
+  _includes_ white, multicolor cards included, mirroring `queryCollection()`'s own `where.color`
   semantics server-side.
 - **Sort** keys (`name-asc`/`name-desc`/`price-desc`/`price-asc`/`set`/`quantity-desc`/`rarity`)
   intentionally match `astro-mtg-collection`'s own (type-only exported) `SortKey` union — the
@@ -183,13 +183,13 @@ performance win, not an oversight.
 ## Gotchas
 
 - **Collection scale.** This export is ~8,300 rows / ~6,200 unique cards — about 20x the size of
-  the vinyl collection, and specifically *why* this page departs from `/music/`'s pattern of
+  the vinyl collection, and specifically _why_ this page departs from `/music/`'s pattern of
   rendering every entry into the DOM at build time — see "Rendering is client-side too, not just
-  filtering" above. This scale is also *why* card art skips local caching/`astro:assets` entirely —
+  filtering" above. This scale is also _why_ card art skips local caching/`astro:assets` entirely —
   see "Card images load directly from Scryfall" above.
 - `.cache/mtg-collection/` (the Scryfall JSON/bulk-data cache — prices, card details) is gitignored
   and regenerable from `src/data/collection.csv`, same treatment as `astro-discogs-collection`'s
-  equivalent cache. With `cacheImages: false`, the package's *image* cache directory
+  equivalent cache. With `cacheImages: false`, the package's _image_ cache directory
   (`imageCacheDir`, `src/assets/mtg-collection/` by default) is never created at all.
 - `/mtg/` is listed in `menuLinks` in `src/site.config.ts`. If `src/data/collection.csv` is ever
   removed (e.g. a fork without the real export), the page still builds and loads — `loadCollection()`

@@ -91,25 +91,27 @@ const style = Object.fromEntries(
 
 <lightbox-image class:list={["not-prose", "lightbox", className]} style={style}>
 	<button type="button" class="lightbox-trigger" aria-haspopup="dialog">
-		{
-			width && height ? (
-				<Image
-					src={src}
-					alt={alt}
-					layout="constrained"
-					width={width}
-					height={height}
-					sizes={sizes}
-					priority={priority ?? false}
-				/>
-			) : (
-				<Image src={src} alt={alt} priority={priority ?? false} />
-			)
-		}
+		{width && height ? (
+			<Image
+				src={src}
+				alt={alt}
+				layout="constrained"
+				width={width}
+				height={height}
+				sizes={sizes}
+				priority={priority ?? false}
+			/>
+		) : (
+			<Image src={src} alt={alt} priority={priority ?? false} />
+		)}
 	</button>
 	{captionText && <p class="lightbox-caption">{captionText}</p>}
 	<dialog class="lightbox-dialog">
-		<button type="button" class="lightbox-icon-button lightbox-close" aria-label="Close image"></button>
+		<button
+			type="button"
+			class="lightbox-icon-button lightbox-close"
+			aria-label="Close image"
+		></button>
 		<button
 			type="button"
 			class="lightbox-icon-button lightbox-nav-prev"
@@ -124,13 +126,11 @@ const style = Object.fromEntries(
 		></button>
 		{needsSeparateDialogImage && <Image src={src} alt={alt} width={Math.min(src.width, 1600)} />}
 		{captionText && <p class="lightbox-caption">{captionText}</p>}
-		{
-			/* For a caller that needs richer, dialog-only caption content (a link, multiple
+		{/* For a caller that needs richer, dialog-only caption content (a link, multiple
 			pieces of styled text) that the plain-string `caption` prop above can't express —
 			renders nothing when unfilled, so every existing caller is unaffected. See
 			RecordCard.astro for the one current use: cover art's artist/title/format info,
-			hidden from the card on desktop and shown here instead (docs/discogs.md). */
-		}
+			hidden from the card on desktop and shown here instead (docs/discogs.md). */}
 		<slot name="dialog-caption" />
 	</dialog>
 </lightbox-image>

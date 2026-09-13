@@ -28,45 +28,35 @@ const meta = {
 <PageLayout meta={meta}>
 	<h1 class="title mb-6">Music</h1>
 
-	{
-		musicStats.missingConfig && (
-			<p class="prose prose-sm max-w-none">
-				Set <code>LASTFM_API_KEY</code> and <code>LASTFM_USERNAME</code> in <code>.env</code> to
-				show live listening stats here.
-			</p>
-		)
-	}
+	{musicStats.missingConfig && (
+		<p class="prose prose-sm max-w-none">
+			Set <code>LASTFM_API_KEY</code> and <code>LASTFM_USERNAME</code> in <code>.env</code> to show
+			live listening stats here.
+		</p>
+	)}
 
-	{
-		musicStats.error && (
-			<p class="prose prose-sm max-w-none">Couldn't load from Last.fm: {musicStats.error}</p>
-		)
-	}
+	{musicStats.error && (
+		<p class="prose prose-sm max-w-none">Couldn't load from Last.fm: {musicStats.error}</p>
+	)}
 
 	{!musicStats.missingConfig && <LastfmNowPlaying />}
 
 	<h2 class="mt-10 mb-3 text-lg font-semibold">Vinyl collection</h2>
 
-	{
-		vinylMissingConfig && (
-			<p class="prose prose-sm max-w-none">
-				Set <code>DISCOGS_USERNAME</code> and <code>DISCOGS_TOKEN</code> in <code>.env</code> to
-				populate this section.
-			</p>
-		)
-	}
+	{vinylMissingConfig && (
+		<p class="prose prose-sm max-w-none">
+			Set <code>DISCOGS_USERNAME</code> and <code>DISCOGS_TOKEN</code> in <code>.env</code> to
+			populate this section.
+		</p>
+	)}
 
 	{vinylError && <p class="prose prose-sm max-w-none">Couldn't load from Discogs: {vinylError}</p>}
 
-	{
-		!vinylMissingConfig && !vinylError && (
-			<VinylCollection formats={formats} releases={sortedReleases} stats={vinylStats} />
-		)
-	}
+	{!vinylMissingConfig && !vinylError && (
+		<VinylCollection formats={formats} releases={sortedReleases} stats={vinylStats} />
+	)}
 
-	{
-		!musicStats.missingConfig && !musicStats.error && (
-			<LastfmListeningStats periods={musicStats.periods} />
-		)
-	}
+	{!musicStats.missingConfig && !musicStats.error && (
+		<LastfmListeningStats periods={musicStats.periods} />
+	)}
 </PageLayout>

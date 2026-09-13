@@ -3,11 +3,11 @@
 Defined in `src/content.config.ts`, using Astro [Content Collections](https://docs.astro.build/en/guides/content-collections/).
 Three collections, each backed by a `glob()` loader over a folder in `src/content/`:
 
-| Collection | Source folder                          | URL              | Notes                                          |
-| ---------- | --------------------------------------- | ---------------- | ------------------------------------------------ |
-| `blog`     | `src/content/blog/**/*.{md,mdx}`  | `/blog/[slug]/`  | one flat file per post, `<slug>.md(x)`          |
-| `note`     | `src/content/notes/**/*.{md,mdx}` | `/notes/[slug]/` | shorter-form, no tags/cover image               |
-| `tag`      | `src/content/tags/**/*.{md,mdx}`  | `/tags/[tag]/`   | optional override content for a tag's own page  |
+| Collection | Source folder                     | URL              | Notes                                          |
+| ---------- | --------------------------------- | ---------------- | ---------------------------------------------- |
+| `blog`     | `src/content/blog/**/*.{md,mdx}`  | `/blog/[slug]/`  | one flat file per post, `<slug>.md(x)`         |
+| `note`     | `src/content/notes/**/*.{md,mdx}` | `/notes/[slug]/` | shorter-form, no tags/cover image              |
+| `tag`      | `src/content/tags/**/*.{md,mdx}`  | `/tags/[tag]/`   | optional override content for a tag's own page |
 
 Content lives under `src/` (not a repo-root `content/` folder) and is flat — `src/content/blog/<slug>.md`,
 not a `<slug>/index.md` folder — both deliberate, for the same reason: anything served on the
@@ -66,7 +66,7 @@ install, so a bad commit still fails loudly there — otherwise `prebuild`'s aut
 patch the ephemeral checkout and let CI go green while the actual committed file stayed broken. It
 sits ahead of `npm run check` deliberately: a bare `publishDate` parses as a YAML date object, so
 `astro check` fails first with an opaque `InvalidContentEntryDataError` that buries the real cause.
-The `--check` step also catches something `astro check` can't — a `YYYY-MM-DD.md` *filename* whose
+The `--check` step also catches something `astro check` can't — a `YYYY-MM-DD.md` _filename_ whose
 frontmatter dates are already valid ISO passes the schema fine and is only flagged here.
 
 `coverImage.src` goes through the `image()` schema helper, so it's a real optimized asset (via

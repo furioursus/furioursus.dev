@@ -14,15 +14,13 @@ secret, it's embedded directly in the tracking script's own `src` for anyone to 
 `src/components/BaseHead.astro` renders the tracking script when `GOATCOUNTER_CODE` is set:
 
 ```astro
-{
-	import.meta.env.PROD && GOATCOUNTER_CODE && (
-		<script
-			async
-			data-goatcounter={`https://${GOATCOUNTER_CODE}.goatcounter.com/count`}
-			src="https://gc.zgo.at/count.js"
-		/>
-	)
-}
+{import.meta.env.PROD && GOATCOUNTER_CODE && (
+	<script
+		async
+		data-goatcounter={`https://${GOATCOUNTER_CODE}.goatcounter.com/count`}
+		src="https://gc.zgo.at/count.js"
+	></script>
+)}
 ```
 
 Since `BaseHead.astro` is included on every page via `Base.astro`, that one conditional covers the

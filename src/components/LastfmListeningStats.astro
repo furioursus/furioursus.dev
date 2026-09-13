@@ -18,47 +18,43 @@ const DEFAULT_PERIOD = LASTFM_PERIODS[0].value;
 <lastfm-period-tabs>
 	<h2 class="mt-10 mb-3 text-lg font-semibold">Listening stats</h2>
 	<div class="mb-4 flex flex-wrap gap-2" role="tablist">
-		{
-			LASTFM_PERIODS.map(({ value, label }, index) => (
-				<button
-					class="border-muted bg-global-bg px-tight-6 py-tight-4 text-2xs text-global-text hover:border-accent hover:text-accent aria-selected:border-accent aria-selected:text-accent cursor-pointer rounded-xs border border-dashed [font:inherit] focus-visible:[outline:2px_solid_var(--color-accent)] focus-visible:outline-offset-1 aria-selected:border-solid"
-					aria-selected={index === 0}
-					data-period-tab={value}
-					role="tab"
-					type="button"
-				>
-					{label}
-				</button>
-			))
-		}
+		{LASTFM_PERIODS.map(({ value, label }, index) => (
+			<button
+				class="border-muted bg-global-bg px-tight-6 py-tight-4 text-2xs text-global-text hover:border-accent hover:text-accent aria-selected:border-accent aria-selected:text-accent cursor-pointer rounded-xs border border-dashed [font:inherit] focus-visible:[outline:2px_solid_var(--color-accent)] focus-visible:outline-offset-1 aria-selected:border-solid"
+				aria-selected={index === 0}
+				data-period-tab={value}
+				role="tab"
+				type="button"
+			>
+				{label}
+			</button>
+		))}
 	</div>
 
-	{
-		LASTFM_PERIODS.map(({ value }) => {
-			const period = periods[value];
-			return (
-				// No display override needed for the [hidden] state here (unlike LastfmNowPlaying's
-				// custom element) — this panel has no competing `display` utility of its own to lose
-				// a specificity fight against, so the browser's native `[hidden]` default just works.
-				<div data-period-panel={value} hidden={value !== DEFAULT_PERIOD}>
-					<p class="text-muted mb-3 text-sm">
-						{(period?.totalArtists ?? 0).toLocaleString()} artists &middot;{" "}
-						{(period?.totalAlbums ?? 0).toLocaleString()} albums &middot;{" "}
-						{(period?.totalTracks ?? 0).toLocaleString()} tracks
-					</p>
-					<div class="breakout-container">
-						<div class="mx-auto max-w-7xl px-4 sm:px-8">
-							<div class="mb-8 grid gap-6 sm:grid-cols-3">
-								<LastfmRankedList title="Top Artists" items={period?.artists ?? []} />
-								<LastfmRankedList title="Top Albums" items={period?.albums ?? []} showArtist />
-								<LastfmRankedList title="Top Tracks" items={period?.tracks ?? []} showArtist />
-							</div>
+	{LASTFM_PERIODS.map(({ value }) => {
+		const period = periods[value];
+		return (
+			// No display override needed for the [hidden] state here (unlike LastfmNowPlaying's
+			// custom element) — this panel has no competing `display` utility of its own to lose
+			// a specificity fight against, so the browser's native `[hidden]` default just works.
+			<div data-period-panel={value} hidden={value !== DEFAULT_PERIOD}>
+				<p class="text-muted mb-3 text-sm">
+					{(period?.totalArtists ?? 0).toLocaleString()} artists &middot;{" "}
+					{(period?.totalAlbums ?? 0).toLocaleString()} albums &middot;{" "}
+					{(period?.totalTracks ?? 0).toLocaleString()} tracks
+				</p>
+				<div class="breakout-container">
+					<div class="mx-auto max-w-7xl px-4 sm:px-8">
+						<div class="mb-8 grid gap-6 sm:grid-cols-3">
+							<LastfmRankedList title="Top Artists" items={period?.artists ?? []} />
+							<LastfmRankedList title="Top Albums" items={period?.albums ?? []} showArtist />
+							<LastfmRankedList title="Top Tracks" items={period?.tracks ?? []} showArtist />
 						</div>
 					</div>
 				</div>
-			);
-		})
-	}
+			</div>
+		);
+	})}
 </lastfm-period-tabs>
 
 <script>
