@@ -63,6 +63,22 @@ Both directive plugins share a small helper, `h()` in `src/utils/remark.ts` — 
 `data.hName`/`data.hProperties`, the standard remark convention for "render this mdast node as an
 arbitrary HTML element" during the mdast→hast conversion.
 
+Gotcha: `hName`/`hProperties` aren't part of mdast's own `Data` type — they only exist because
+`mdast-util-to-hast`'s `index.d.ts` declares `declare module 'mdast'` to augment it. TypeScript
+only applies that augmentation if the module is actually in the program, so `src/utils/remark.ts`
+keeps an explicit type-only side-effect import for it:
+
+```ts
+import type {} from "mdast-util-to-hast";
+```
+
+This used to work without the import, because astro's `@astrojs/markdown-remark` pulled in
+`remark-rehype` (and with it `mdast-util-to-hast`) where it got hoisted and picked up incidentally.
+Astro 7.3 dropped that dependency edge and `astro check` immediately started failing with
+`ts(2353): 'hName' does not exist in type 'ParagraphData'`. `mdast-util-to-hast` is therefore a
+direct `devDependency` rather than a transitive one we hope stays hoisted — if you ever see that
+error again, that import or that dependency went missing.
+
 Any inline/leaf directive (`::name{...}` or `:name`) that neither plugin claims — not just an
 unrecognized admonition type — falls through to `admonitions.ts`'s `textDirective`/`leafDirective`
 handlers, which serialize it back to its original markdown text rather than silently dropping it.
