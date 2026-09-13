@@ -30,6 +30,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+        # catch an unfixed Astro Editor date/filename before `npm run build`'s own `prebuild`
+        # hook would silently auto-fix it in this ephemeral checkout — without this, a bad commit
+        # on main would build green here while staying broken in the repo. Runs *before* the checks
+        # below on purpose: a bare `publishDate` makes `astro check` fail first with an opaque
+        # InvalidContentEntryDataError, burying the actual cause.
+      - name: Check content dates/filenames
+        run: npm run sanitize:dates -- --check
+
         # astro check for type/template issues, biome check for lint/format issues
       - name: Run checks
         run: npm run check
