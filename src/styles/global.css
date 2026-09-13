@@ -149,10 +149,6 @@
 			@media (min-width: 40rem) {
 				--grain-image: url("../assets/images/grain-dark-1600w.webp");
 			}
-
-			@media (min-width: 64rem) {
-				--grain-image: url("../assets/images/grain-dark.webp");
-			}
 		}
 
 		/* Ambient grain overlay, see the body::after rule below. That layer is `position: fixed`
@@ -160,19 +156,24 @@
 		   screen's worth of space — resolution never needs to scale with page length.
 		   That's still resolution the browser has to download, though: serving the same full-res
 		   image to a 380px-wide phone as to a 2560px desktop is wasted bandwidth on mobile it'll
-		   never render at native size anyway. Three width tiers, swapped by viewport width alone
+		   never render at native size anyway. Two width tiers, swapped by viewport width alone
 		   (this is about the image's own resolution, not the page's layout, so plain `min-width`
-		   — not a Tailwind breakpoint variant, this file isn't a component Tailwind processes) at
-		   Tailwind's own `sm`/`lg` breakpoints so the tiers line up with where the rest of the
-		   site already changes shape: under 40rem gets the smallest (960w) image, 40–64rem gets a
-		   mid-size one (1600w), and 64rem and up gets the original full-res source.
+		   — not a Tailwind breakpoint variant, this file isn't a component Tailwind processes):
+		   under 40rem gets the 960w image, 40rem and up gets the 1600w one.
+		   There used to be a third tier serving the full-res source (1920w, 1058KB) above 64rem.
+		   It was 88% of a desktop page load on its own and cost 1.87x more per pixel than every
+		   other tier — grain is incompressible noise, so quality can't recover it, only resolution
+		   can. Deleted: above 40rem now upscales the 1600w tier instead, which is invisible on a
+		   noise texture rendered at `opacity: 0.25` behind all content. The full-res
+		   `grain-{light,dark}.webp` stay in src/assets as the masters the tiers are generated
+		   from; nothing references them, so they no longer ship.
 		   The under-40rem tier also gets an `orientation: portrait` variant, cropped and rotated
 		   from the source rather than just downscaled — for `cover`-fit, a *portrait* viewport's
 		   dominant dimension is its height, not its width, so reusing the landscape 960w crop
 		   there would ask a much-shorter-than-tall image to cover a box that needs more height
 		   than it has. Scoped to under 40rem only (`max-width: 39.9375rem`, one px below the
 		   `min-width: 40rem` tier above so the two never both match) — portrait tablets/laptops
-		   above that still get the landscape 1600w/full-res tiers as before; that's an accepted
+		   above that still get the landscape 1600w tier; that's an accepted
 		   gap, not an oversight, since portrait is overwhelmingly a phone thing and doubling every
 		   tier's file count for a rare case isn't worth it.
 		   Widths, not a real responsive `srcset`: a plain CSS custom property can't express a
@@ -191,10 +192,6 @@
 
 		@media (min-width: 40rem) {
 			--grain-image: url("../assets/images/grain-light-1600w.webp");
-		}
-
-		@media (min-width: 64rem) {
-			--grain-image: url("../assets/images/grain-light.webp");
 		}
 
 		--color-mode-transition-duration: 300ms;
