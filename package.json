@@ -5,8 +5,10 @@
 	"private": false,
 	"scripts": {
 		"postinstall": "SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm rebuild sharp --force",
-		"dev": "astro dev",
+		"predev": "node scripts/sanitize-dates.mjs",
+		"dev": "trap 'kill 0' EXIT; node scripts/sanitize-dates.mjs --watch & astro dev",
 		"start": "astro dev",
+		"prebuild": "node scripts/sanitize-dates.mjs",
 		"build": "astro build",
 		"postbuild": "pagefind --site dist",
 		"preview": "astro preview",
@@ -14,7 +16,8 @@
 		"lint": "biome check --write",
 		"format": "prettier -w . --cache",
 		"generate:cover-alt": "node scripts/generate-cover-alt.mjs",
-		"sanitize:dates": "node scripts/sanitize-dates.mjs"
+		"sanitize:dates": "node scripts/sanitize-dates.mjs",
+		"sanitize:watch": "node scripts/sanitize-dates.mjs --watch"
 	},
 	"dependencies": {
 		"@astrojs/markdown-satteri": "^0.3.3",

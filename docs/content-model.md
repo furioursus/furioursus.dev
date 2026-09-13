@@ -55,6 +55,20 @@ fixes both after an Astro Editor session: rewrites bare dates to strict ISO, and
 `YYYY-MM-DD.md(x)` file to a slug derived from its `title`. Idempotent, safe to re-run; `--check`
 reports without writing, for CI.
 
+This also runs automatically, so an Astro Editor mistake doesn't need a manual fix: `predev` runs
+it once before `astro dev` starts, `npm run dev` itself backgrounds `--watch` mode alongside
+`astro dev` (killed together on exit via `trap 'kill 0' EXIT`) so a save mid-session gets fixed
+within ~150ms, and `prebuild` runs it once more before `astro build`. `--watch` uses `fs.watch`'s
+recursive option, which is macOS/Windows only — fine for local dev, not something CI can rely on.
+
+CI (`.github/workflows/ci.yml`) runs its own `sanitize:dates -- --check` as the first step after
+install, so a bad commit still fails loudly there — otherwise `prebuild`'s auto-fix would silently
+patch the ephemeral checkout and let CI go green while the actual committed file stayed broken. It
+sits ahead of `npm run check` deliberately: a bare `publishDate` parses as a YAML date object, so
+`astro check` fails first with an opaque `InvalidContentEntryDataError` that buries the real cause.
+The `--check` step also catches something `astro check` can't — a `YYYY-MM-DD.md` *filename* whose
+frontmatter dates are already valid ISO passes the schema fine and is only flagged here.
+
 `coverImage.src` goes through the `image()` schema helper, so it's a real optimized asset (via
 `astro:assets`), not a plain string — Astro resolves the relative path against the markdown file's
 own directory, which is why it reads `../../assets/blog/photo.jpg` rather than a bare filename:

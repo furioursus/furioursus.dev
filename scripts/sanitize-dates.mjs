@@ -22,6 +22,12 @@
 // Add --check to report without writing/renaming (exits 1 if anything needs fixing) — e.g. as a
 // pre-build guard in CI.
 //
+// Add --watch to run once and then keep re-running on every change under the content dirs, so
+// Astro Editor's bare dates and date-named files get fixed the moment they're saved during a dev
+// session — see `npm run dev`, which starts this in the background alongside `astro dev`. Uses
+// fs.watch's recursive option, which is macOS/Windows only (not Linux) — fine for local dev, not
+// something to rely on in CI.
+//
 // Frontmatter is read with a small line-based regex, not a full YAML parser (matching how little
 // of it this actually needs to touch) — an unusual title (multiline, embedded `title:`-looking
 // text) could confuse the slug derivation. Review a rename before committing it.
@@ -39,6 +45,7 @@ const TITLE_FIELD = /^\s*title:\s*(['"]?)(.*)\1\s*$/m;
 const DATE_FILENAME = /^\d{4}-\d{2}-\d{2}$/;
 
 const checkOnly = process.argv.includes("--check");
+const watch = process.argv.includes("--watch");
 
 function walk(dir) {
 	let entries;
@@ -104,12 +111,14 @@ function renameIfDateNamed(file) {
 	const titleMatch = content.match(TITLE_FIELD);
 	const title = titleMatch?.[2]?.trim();
 	if (!title) {
-		console.warn(`  ! ${path.relative(ROOT, file)}: date-named but no title to slugify from — skipping rename`);
+		console.warn(
+			`  ! ${path.relative(ROOT, file)}: date-named but no title to slugify from — skipping rename`,
+		);
 		return { file, renamed: false };
 	}
 
 	const dir = path.dirname(file);
-	let slug = slugify(title) || base;
+	const slug = slugify(title) || base;
 	let candidate = path.join(dir, `${slug}${ext}`);
 	let suffix = 2;
 	while (fs.existsSync(candidate) && candidate !== file) {
@@ -142,14 +151,18 @@ function main() {
 	}
 
 	if (renamed.length === 0 && dateFixed.length === 0) {
-		console.log("Nothing to sanitize — filenames and publishDate/updatedDate values all look right.");
+		console.log(
+			"Nothing to sanitize — filenames and publishDate/updatedDate values all look right.",
+		);
 		return;
 	}
 
 	if (renamed.length > 0) {
 		console.log(`${renamed.length} date-named file(s) ${checkOnly ? "need" : "were"} renamed:`);
 		for (const r of renamed) {
-			console.log(`  ${checkOnly ? "✗" : "✓"} ${path.relative(ROOT, r.from)} -> ${path.relative(ROOT, r.to)}`);
+			console.log(
+				`  ${checkOnly ? "✗" : "✓"} ${path.relative(ROOT, r.from)} -> ${path.relative(ROOT, r.to)}`,
+			);
 		}
 	}
 	if (dateFixed.length > 0) {
@@ -161,3 +174,25 @@ function main() {
 }
 
 main();
+
+if (watch) {
+	console.log("\nWatching src/content/{blog,notes,tags} for bare dates and date-named files...");
+
+	// Astro Editor's writes (and our own fixes) fire several fs events in quick succession —
+	// debounce so one save triggers one pass instead of a handful of overlapping ones.
+	let pending = null;
+	const rerun = () => {
+		clearTimeout(pending);
+		pending = setTimeout(main, 150);
+	};
+
+	for (const dir of ALL_CONTENT_DIRS) {
+		try {
+			fs.watch(path.join(ROOT, dir), { recursive: true }, (_event, filename) => {
+				if (filename && /\.mdx?$/.test(filename)) rerun();
+			});
+		} catch (err) {
+			if (err.code !== "ENOENT") throw err; // e.g. src/content/tags/ — no override files exist yet
+		}
+	}
+}
