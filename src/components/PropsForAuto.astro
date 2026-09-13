@@ -1,7 +1,12 @@
 {/*
 	Site-wide prop-for-that integration point — included once in Base.astro.
 
-	1. Registers the declarative `auto` entry (see the <script> below). From here on, any
+	1. Registers the declarative `auto` entry (see the script block below — written here as
+	   "script block", not the literal tag, on purpose: Vite's dependency-scan step greps
+	   Astro files for `<script>` with a naive regex, and the literal tag appearing in this
+	   prose comment gets misread as the block's real opening tag, feeding everything between
+	   here and the actual `</script>` to the scanner as one garbled module and failing dev
+	   startup with a parse error). From here on, any
 	   element anywhere in the site can opt into a live JS→CSS source just by adding
 	   `data-props-for="<key>"` (and `data-props-to="<selector>"` to hoist the write to an
 	   ancestor) — no further JS wiring needed. Plugin sources beyond the core
