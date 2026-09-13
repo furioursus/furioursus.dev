@@ -58,43 +58,62 @@ deliberately separate, not-yet-built "moments" treatment — see the
 [[furioursus-dev-color-texture-redesign]] memory for that split and why it's two techniques, not
 one).
 
-It sits at `z-index: -1`, behind all page content, blending only with `body`'s own flat background
-color rather than with whatever text/images happen to be on screen — it shows through the gaps
-(margins, padding, any exposed page background) instead of crawling visibly across content as the
-page scrolls. This requires `isolate` on `<body>` (`Base.astro`) so the negative z-index stays
+It sits at `z-index: -1`, behind all page content, blending only with `body`'s own flat
+background color rather than with whatever text/images happen to be on screen — it shows through the
+gaps (margins, padding, any exposed page background) instead of crawling visibly across content as
+the page scrolls. This requires `isolate` on `<body>` (`Base.astro`) so the negative z-index stays
 contained to body's own stacking context instead of escaping behind `<html>` entirely. An earlier
 version painted this _above_ content at `z-index: 100` to clear other components' own stacking
 z-indexes (Header's nav dropdown `z-50`, BlogPost's back-to-top button `z-90`) — that's no longer
 relevant now that the layer is behind everything, not competing to be on top of it.
 
-`position: absolute`, not `fixed` — a real, confirmed regression, found the hard way. An earlier
-version used `position: fixed` (pinned to the viewport, so the texture stayed visually put on
-screen while content scrolled past it) with a generous `inset` overscan for iOS Safari's
-rubber-band bounce. On a real device (iPhone 17 sim, iOS 26.5) that still failed to reach the true
-bottom edge on short pages, confirmed by swapping in a plain `body` background with no positioning
-tricks at all, which _did_ reach the edge reliably — `position: fixed` elements on iOS Safari have
-a documented history of not always keeping pace with the dynamic toolbar's show/hide animation in
-real time. `absolute`, anchored to `body`'s own box (`isolate` plus `body`'s `relative` utility
-already make it a valid containing block), sidesteps the whole class of viewport-tracking bugs by
-not depending on the viewport at all — it just covers whatever `body`'s real, already-correct
-rendered extent turns out to be. That's about the _element's own box_ reaching the right size, not
-about whether the visible texture appears to scroll — `background-attachment: fixed` (below) is
-what still keeps the image itself visually pinned to the viewport as you scroll, same as the old
-`position: fixed` version looked, just without that version's iOS bug.
+#### Why `position: fixed` with an explicit `100lvh`
 
-That combination is what makes `background-size: cover` on one large photo-scale texture safe
-again, rather than the small repeating tile this went through for a while: `attachment: fixed`
-sizes and positions the image against the _viewport_, not against the element it's set on, so
-`cover` only ever has to fill one screen's worth of space no matter how tall the actual page is.
-Without it, `cover` would size against `body`'s entire document height instead and badly distort a
-single image stretched across a whole page longer than one screen — which is exactly why an
-intermediate version dropped `cover` for a small repeating tile in the first place. Reintroducing
-`attachment: fixed` undoes that trade-off without giving back the iOS bug `position: absolute`
-originally fixed, since the two are independent: the _element_ is `absolute` (correct box size),
-the _image inside it_ is `attachment: fixed` (visually pinned, viewport-sized). The payoff is a
-sharper, more distinctive texture than a small tile can offer — a small seamless-tile crop has to
-crop _away_ any visible directional structure (this texture's source has real toner-drag banding)
-to avoid an obvious repeat, where a full photo-scale image keeps it.
+Two earlier versions failed in opposite directions, and the sizing is what reconciles them.
+
+**Version 1 — `position: fixed` with a negative `inset` overscan.** On a real device (iPhone 17 sim,
+iOS 26.5) it failed to reach the true bottom edge on short pages, confirmed by swapping in a plain
+`body` background with no positioning tricks, which _did_ reach the edge reliably. A bare `inset`
+sizes the element against whatever Safari currently calls the viewport, and that _shrinks_ while the
+dynamic toolbar is expanded; fixed elements have a documented history of not keeping pace with that
+toolbar's show/hide animation in real time.
+
+**Version 2 — `position: absolute; inset: 0`.** Anchoring to `body`'s own box fixed coverage by not
+depending on the viewport at all, but it makes the element **document-tall**, so `background-size:
+cover` has to cover the entire page height. On a long post that scales the image up enormously and
+crops it to a narrow slice — uniform upscale, not distortion, but the visible result is soft cloudy
+mush instead of sharp toner grain. `background-attachment: fixed` was meant to rescue that by sizing
+the image against the viewport instead, and it does on desktop, but **iOS Safari has never reliably
+supported it**. Verified on the simulator by swapping the image for a hard-striped repeating
+gradient: after a swipe that moved content ~958px the stripes had moved ~220px, so the layer was
+neither pinned (0) nor scrolling with the page.
+
+**Current — `position: fixed` sized `height: 100lvh`.** `lvh` is the _large_ viewport height: the
+viewport with the dynamic toolbar retracted, the largest it can ever be, and a value that **does not
+change** as the toolbar shows and hides (`dvh` is the live one that jitters; `svh` is the smallest).
+Sizing to the maximum means the element can never come up short the way version 1 did — while the
+toolbar is expanded it simply overflows behind it, harmlessly. And because the element is one screen
+tall rather than document-tall, `cover` only ever covers one screen, so version 2's upscaling is gone
+with no dependence on `background-attachment` at all. That property is removed entirely.
+
+Verified on device after the change: with stripes armed, they sat at screenshot-y ≈ 155 / 520 / 885 /
+1250 / 1615 before a swipe and at exactly the same positions after, while content moved ~1650px —
+zero drift. A short page's bottom edge with the toolbar collapsed is covered cleanly.
+
+Two gotchas worth keeping in mind:
+
+- **`left`/`right` insets, not `width: 100lvw`.** Viewport _width_ units ignore the scrollbar, and
+  `scrollbar-gutter: stable` on `html` guarantees there is one, so `100lvw` overhangs by the
+  scrollbar's width on desktop. Insets resolve against the viewport's real content box.
+- **Nothing in the ancestor chain may create a containing block for `fixed`.** A `transform`,
+  `filter`, `backdrop-filter`, `perspective`, `contain`, or `will-change` on `html` or `body` would
+  silently re-anchor this layer to that element and put you straight back to the version 2 behaviour.
+  Both are currently clean; check before adding any of them.
+
+Keeping `cover` on one large photo-scale texture (rather than the small repeating tile this went
+through for a while) is worth the bandwidth cost below: a small seamless-tile crop has to crop _away_
+any visible directional structure — this texture's source has real toner-drag banding — to avoid an
+obvious repeat, where a full photo-scale image keeps it.
 
 Bringing `cover` back reintroduces the bandwidth problem a small tile didn't have: shipping the same
 full-res image to a 380px phone as to a 2560px desktop is real waste on mobile. Three width tiers
@@ -112,10 +131,94 @@ landscape tiers, an accepted gap since portrait is overwhelmingly a phone thing.
 theme is active — without the old `fixed` layer's generous overscan margin, iOS Safari's
 rubber-band bounce past the very top/bottom of the page would otherwise reveal a stark white flash
 (the browser's default canvas color) in that sliver rather than the correct flat theme color. The
-grain texture itself doesn't extend into that sliver either way — it's sized to `body`'s own box,
-and bounce scrolls past `body`'s actual edges entirely — so this is only ever a flat color there,
-never textured. An accepted, minor gap, not worth chasing given how brief and edge-adjacent the
-bounce reveal actually is.
+grain texture itself doesn't extend into that sliver either way — it's pinned to the viewport, and
+bounce scrolls past `body`'s actual edges entirely — so this is only ever a flat color there, never
+textured.
+
+#### The edge fade, pinned to the chrome
+
+Matching the color isn't quite enough on its own, because the texture tints whatever it covers
+slightly off that flat token: lighter under `screen` in dark mode, darker under `multiply` in light.
+So an abrupt edge reads as a tonal seam against the untinted flat color beyond it.
+
+The texture layer carries a `mask-image` that ramps its own alpha to zero over the first and last
+`--grain-edge-fade` of its box. Because the element is `position: fixed`, that box _is_ the viewport
+— so the texture dissolves toward the device's chrome (status bar at the top, dynamic toolbar and
+home indicator at the bottom) at **every** scroll position:
+
+```css
+--grain-edge-fade: 6rem;
+
+/* phone-shaped viewports only: short axis <= 30rem */
+@media (max-width: 30rem), (max-height: 30rem) {
+	--grain-fade-axis: to bottom;
+	mask-image: linear-gradient(
+		var(--grain-fade-axis),
+		transparent 0,
+		#000 var(--grain-edge-fade),
+		#000 calc(100% - var(--grain-edge-fade)),
+		transparent 100%
+	);
+
+	@media (orientation: landscape) {
+		--grain-fade-axis: to right;
+	}
+}
+```
+
+Worth knowing:
+
+- **The fade axis follows the viewport's long side**, and that's a bug fix, not only a look. Top/
+  bottom in portrait, left/right in landscape. A flat `6rem` ramp at each end is ~22% of an
+  874pt-tall portrait viewport — but the same two ramps are **49%** of a 390pt-tall landscape one,
+  so rotating a phone used to leave half the screen faded out. Fading along whichever axis is longer
+  holds it at ~22% in both orientations, because the faded axis is by definition the larger
+  dimension. It also tracks where the chrome actually is: status bar and toolbar in portrait, notch
+  and home indicator rotated to the left/right edges in landscape.
+- **A custom property carries the direction**, rather than restating the whole gradient under the
+  media query. `linear-gradient()` takes its direction as a plain token, so one substituted property
+  is the entire orientation switch and the stop positions stay defined once. Physical directions
+  (`to bottom`/`to right`), not logical ones — this frames the device's own edges, which don't
+  reorder with writing mode.
+- **Only the mask axis swaps.** The `--grain-image` tiers already handle orientation separately and
+  correctly: a landscape phone is wider than 40rem, so it picks up the landscape 1600w source rather
+  than the portrait crop, which is what `cover` wants for a wide-and-short box.
+- **The fade is scoped to phone-shaped viewports.** `(max-width: 30rem), (max-height: 30rem)` — two
+  queries in an `or` — is exactly "the viewport's _short_ axis is at most 30rem", since the only way
+  neither matches is both dimensions exceeding it. 30rem (480px) clears the widest phones (the
+  simulator's iPhone 17 Pro measures 402pt across; the Pro Max / large-Android class runs to roughly
+  440–450pt) while sitting well under the narrowest tablet in portrait (iPad mini at 744pt).
+  Verified at 402×874, 874×402, 744×1133 and 1000×700: mask present and vertical, present and
+  horizontal, absent, absent.
+- **Only the fade is gated — the texture is not.** Desktop and tablets still get the `position:
+fixed` / `100lvh` layer and the float effect; they just get no mask. The seam the fade fixes is an
+  iOS rubber-band artifact, and a ramp wide enough to register on a phone is only a dimmed band on a
+  large display. One consequence worth knowing: macOS browsers do have their own mild rubber-band, so
+  the tonal seam can still appear there briefly. That's accepted rather than unnoticed.
+- **Viewport-anchored, not document-anchored — and that collapsed the design.** An intermediate
+  version put the fade on a separate absolutely-positioned `body::before`, because a mask on a
+  _document-tall_ texture layer is what puts the fade at the page's true ends. Once the texture
+  became `position: fixed`, that mismatch was the only thing justifying a second element. Both are
+  pinned to the viewport now, so the fade is just a mask on the same element again and
+  `body::before` is gone — along with the z-index ordering that two sibling pseudo-elements needed
+  between them.
+- **It handles iOS rubber-band without any overscan.** A fixed element isn't truly pinned during the
+  bounce — it drifts with the page — but the texture nearest the screen's edges is already faded
+  out, so whatever the bounce reveals has nothing sharply-edged to sit against. This is what
+  replaced the old negative-`inset` overscan.
+- **A flat `6rem`, not the old `min(6rem, 10%)`.** That guard existed so a short page (a `min-h-dvh`
+  view with little content) wouldn't spend most of its height fading. The element is now always
+  exactly one viewport tall, so page length can't shrink it and the guard protects nothing.
+- **The mask creates a stacking context, harmlessly.** `mix-blend-mode` still blends the masked
+  result against its backdrop, and `opacity` already made it a stacking context anyway. No
+  `-webkit-` twin either; Safari has shipped unprefixed `mask-image` since 15.4 — the same baseline
+  `100lvh` already requires.
+- It fades the **texture**, not `html`'s color. Fading `html` toward the grain's average instead
+  would mean tracking an average that changes per theme, per breakpoint image, and per blend mode.
+
+The trade-off to be aware of: the texture is permanently a little weaker near the top and bottom of
+the screen, which reads as a mild vignette. That's the intended look — the texture framing the
+chrome rather than butting against it — but it does mean the layer is no longer uniform edge to edge.
 
 Any opaque surface sitting above that `-1` layer hides it completely, though — a solid-background
 element just paints over it. That used to matter for `Header.astro`: an earlier version made the
