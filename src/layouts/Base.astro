@@ -23,6 +23,15 @@ const {
 <html class="scroll-smooth" lang={siteConfig.lang}>
 	<head>
 		<BaseHead articleDate={articleDate} description={description} ogImage={ogImage} title={title} />
+		{
+			/* No `preload` here, deliberately — measured, not assumed. `<Font>` preloads every
+			   variant of the family, so it would fetch the 126KB italic at high priority on every
+			   page against ~2 italic elements of actual use, competing with the LCP image. And the
+			   @font-face block is inlined in a <style> in this head rather than an external
+			   sheet, so the font is already discovered on first parse; preload buys no meaningful
+			   head start. Selective preload would need the family split in two, which would stop
+			   <em> picking up the italic face automatically — worse. */
+		}
 		<Font cssVariable="--font-monolisa" />
 		<ThemeProvider />
 		<Lightbox />
