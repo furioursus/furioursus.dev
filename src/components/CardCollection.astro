@@ -17,6 +17,7 @@
 // got the full unpaginated grid) — search/sort/pagination were already 100% JS-only anyway, so a
 // no-JS visitor now gets a <noscript> notice instead of a dead-control page.
 import type { CollectionSummary, EnrichedCard } from "astro-mtg-collection";
+import type { ClientCard } from "@/types";
 
 interface Props {
 	entries: EnrichedCard[];
@@ -50,32 +51,6 @@ function capitalize(value: string): string {
 // filter/sort/render a card, with display text (price formatting, the meta line, the full/
 // extended-art suffix) precomputed here rather than duplicated client-side. Field names are
 // short on purpose — this repeats ~8,300 times in the page's HTML.
-interface ClientCard {
-	name: string;
-	/** Scryfall's own name for the resolved printing, falling back to the row's name — alt text. */
-	alt: string;
-	/** Lowercased "name setName", what the search box matches against. */
-	search: string;
-	/** Pipe-joined lowercase color identity, e.g. "w|u"; colorless cards get "c". */
-	color: string;
-	rarity: string;
-	foil: string;
-	fullArt: boolean;
-	extArt: boolean;
-	setCode: string;
-	collector: string;
-	quantity: number;
-	/** Raw unit price for sorting; null when Scryfall has no known price. */
-	price: number | null;
-	/** Formatted unit price for display, or null to render "Price unknown". */
-	priceText: string | null;
-	/** Precomputed " · Nx = $Y" suffix for stacks of more than one copy, or null to render nothing. */
-	lineText: string | null;
-	img: string | null;
-	href: string | null;
-	/** "Set name · Rarity · Full Art · Extended Art", already joined and capitalized. */
-	meta: string;
-}
 
 function toClientCard(entry: EnrichedCard): ClientCard {
 	const { row, card, imageUrl, unitPrice, lineValue, isFullArt, isExtendedArt } = entry;
@@ -340,6 +315,8 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 			</style>
 
 			<script>
+				import type { ClientCard } from "@/types";
+
 				// Mirrors astro-mtg-collection's own (unexported) SortKey union — see docs/mtg.md — so this
 				// stays a drop-in match for the package's server-side sortCards() semantics, just reading
 				// from ClientCard fields instead of EnrichedCard objects.
@@ -368,28 +345,6 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 				// to preserve here — without JS, nothing in <card-collection> renders at all (see the
 				// component's frontmatter comment and its <noscript> notice).
 				const PAGE_SIZE = 30;
-
-				// Mirrors CardCollection.astro's own ClientCard interface — see that file's comment for why
-				// entries are shipped this slim instead of the full EnrichedCard shape.
-				interface ClientCard {
-					name: string;
-					alt: string;
-					search: string;
-					color: string;
-					rarity: string;
-					foil: string;
-					fullArt: boolean;
-					extArt: boolean;
-					setCode: string;
-					collector: string;
-					quantity: number;
-					price: number | null;
-					priceText: string | null;
-					lineText: string | null;
-					img: string | null;
-					href: string | null;
-					meta: string;
-				}
 
 				const sortComparators: Record<SortKey, (a: ClientCard, b: ClientCard) => number> = {
 					"name-asc": (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()),

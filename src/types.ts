@@ -15,12 +15,6 @@ export interface SiteConfig {
 	url: string;
 }
 
-export interface PaginationLink {
-	srLabel?: string;
-	text?: string;
-	url: string;
-}
-
 export interface SiteMeta {
 	articleDate?: string | undefined;
 	description?: string;
@@ -85,3 +79,40 @@ export interface Summary {
 }
 
 export type AdmonitionType = "tip" | "note" | "important" | "caution" | "warning";
+
+/**
+ * The slim, client-side shape of one MTG card, shipped as JSON inside
+ * `CardCollection.astro` and consumed by its filter/sort/render script.
+ *
+ * Deliberately much smaller than the server-side `EnrichedCard` — see that component's
+ * frontmatter comment for why entries are shipped this slim. Lives here rather than in the
+ * component because Astro's frontmatter and its `<script>` are separate module graphs: each
+ * declared its own copy, and nothing could keep the two in sync. Both now `import type` from
+ * here, which is erased at build time and ships no bytes.
+ */
+export interface ClientCard {
+	name: string;
+	/** Scryfall's own name for the resolved printing, falling back to the row's name — alt text. */
+	alt: string;
+	/** Lowercased "name setName", what the search box matches against. */
+	search: string;
+	/** Pipe-joined lowercase color identity, e.g. "w|u"; colorless cards get "c". */
+	color: string;
+	rarity: string;
+	foil: string;
+	fullArt: boolean;
+	extArt: boolean;
+	setCode: string;
+	collector: string;
+	quantity: number;
+	/** Raw unit price for sorting; null when Scryfall has no known price. */
+	price: number | null;
+	/** Formatted unit price for display, or null to render "Price unknown". */
+	priceText: string | null;
+	/** Precomputed " · Nx = $Y" suffix for stacks of more than one copy, or null to render nothing. */
+	lineText: string | null;
+	img: string | null;
+	href: string | null;
+	/** "Set name · Rarity · Full Art · Extended Art", already joined and capitalized. */
+	meta: string;
+}
