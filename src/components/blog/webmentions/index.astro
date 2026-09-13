@@ -1,8 +1,7 @@
 ---
 import { getWebmentionsForUrl } from "@/utils/webmentions";
+import AvatarMentions from "./AvatarMentions.astro";
 import Comments from "./Comments.astro";
-import Likes from "./Likes.astro";
-import Reposts from "./Reposts.astro";
 
 const url = new URL(Astro.url.pathname, Astro.site);
 
@@ -15,8 +14,8 @@ if (!webMentions.length) return;
 <hr class="border-solid" />
 <h2 class="mb-8 before:hidden">Webmentions for this post</h2>
 <div class="space-y-10">
-	<Likes mentions={webMentions} />
-	<Reposts mentions={webMentions} />
+	<AvatarMentions mentions={webMentions} property="like-of" verb="liked this" mf2="p-like" />
+	<AvatarMentions mentions={webMentions} property="repost-of" verb="reposted this" mf2="p-repost" />
 	<Comments mentions={webMentions} />
 </div>
 <p class="mt-8">

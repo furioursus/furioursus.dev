@@ -1,0 +1,60 @@
+---
+import type { WebmentionsChildren } from "@/types";
+
+interface Props {
+	mentions: WebmentionsChildren[];
+	/** Which webmention type to render. Must also be in `validWebmentionTypes` (utils/webmentions.ts) or nothing is ever cached for it. */
+	property: "like-of" | "repost-of";
+	/** Past-tense verb completing "N People ___", e.g. "liked this". */
+	verb: string;
+	/** microformats2 class for the `<li>`, paired with `h-cite` — `p-like` or `p-repost`. */
+	mf2: "p-like" | "p-repost";
+}
+
+const { mentions, property, verb, mf2 } = Astro.props;
+const MAX_AVATARS = 10;
+
+const matching = mentions.filter((mention) => mention["wm-property"] === property);
+const toShow = matching
+	.filter((mention) => mention.author?.photo && mention.author.photo !== "")
+	.slice(0, MAX_AVATARS);
+---
+
+{/* Replaced separate Likes.astro / Reposts.astro, which were the same 40 lines twice. The
+    duplication had let them drift: reposts had lost their microformats markup (`p-repost h-cite`
+    on the li, `u-url` on the anchor) that likes still had, so parsers couldn't read them. */}
+{!!matching.length && (
+	<div>
+		<p class="text-accent-2 mb-0">
+			<strong>{matching.length}</strong>
+			{matching.length > 1 ? " People" : " Person"} {verb}
+		</p>
+		{!!toShow.length && (
+			<ul class="flex list-none flex-wrap overflow-hidden ps-2" role="list">
+				{toShow.map((mention) => (
+					<li class:list={[mf2, "h-cite", "-ms-2"]}>
+						<a
+							class="u-url not-prose ring-global-text hover:ring-link focus-visible:ring-link relative inline-block overflow-hidden rounded-full ring-2 hover:z-10 hover:ring-4 focus-visible:z-10 focus-visible:ring-4"
+							href={mention.author?.url}
+							rel="noopener noreferrer"
+							target="_blank"
+							title={mention.author?.name}
+						>
+							<span class="p-author h-card">
+								<img
+									alt={mention.author!.name}
+									class="u-photo my-0 inline-block h-12 w-12"
+									decoding="async"
+									height={48}
+									loading="lazy"
+									src={mention.author!.photo}
+									width={48}
+								/>
+							</span>
+						</a>
+					</li>
+				))}
+			</ul>
+		)}
+	</div>
+)}
