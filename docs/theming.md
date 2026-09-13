@@ -231,13 +231,32 @@ the header sticky anymore, none of that applies: it scrolls away with the rest o
 other content, so it never needs to reason about the grain layer at all — whatever's behind it is
 just whatever's behind it.
 
-Two theme-swapped tokens drive it, same pattern as the color tokens: `--grain-image` and
-`--grain-blend`, set on `html` and overridden under `&[data-theme="dark"]`. Light mode uses
-`grain-light.webp` (dark ink marks on a mostly-light ground) with `mix-blend-mode: multiply`, which
-treats light pixels as a no-op and only darkens where there's ink. Dark mode swaps to
-`grain-dark.webp` — the same texture with colors inverted — and `mix-blend-mode: screen` instead:
-multiplying an already-near-black background does nothing visible, so the blend mode has to flip
-along with the asset, not just the color.
+Three theme-swapped tokens drive the texture, same pattern as the color tokens: `--grain-image`,
+`--grain-blend` and `--grain-opacity`, set on `html` and overridden under `&[data-theme="dark"]`.
+Light mode uses `grain-light.webp` (dark ink marks on a mostly-light ground) with
+`mix-blend-mode: multiply`, which treats light pixels as a no-op and only darkens where there's ink.
+Dark mode swaps to `grain-dark.webp` — the same texture with colors inverted — and
+`mix-blend-mode: screen` instead: multiplying an already-near-black background does nothing visible,
+so the blend mode has to flip along with the asset, not just the color.
+
+The alpha has to flip too, and not symmetrically: light sits at `0.25`, dark at `0.125`. A single
+shared value doesn't serve both — tuned low enough for dark, the tooth was too faint to read in
+light; tuned up until light read properly, dark looked blown out. Light speckles on a near-black
+ground are simply more visually assertive than dark speckles on a near-white one. The ratio is
+empirical, set by eye rather than derived.
+
+`--grain-opacity` is deliberately a **token rather than a nested `body::after { opacity }` override**
+in the dark block. The override does work — nested under `html[data-theme="dark"]` it resolves to a
+descendant selector that outranks the standalone `body::after` on specificity — but it puts a
+higher-specificity rule ~120 lines above the lower-specificity one it beats, which biome flags as
+`noDescendingSpecificity`. A custom property has no specificity interaction at all, and it keeps all
+three theme knobs declared together instead of splitting one of them off into a distant rule.
+
+One gotcha if you tune any of these: **Vite's CSS hot-update in dev is not reliable for this file.**
+Observed with a nested rule, where an edit appeared to do nothing while the browser kept serving the
+old stylesheet — long enough to look like a broken selector rather than a stale cache. Hard-reload
+before concluding a change didn't take, and don't rewrite CSS on the strength of a hot-reloaded
+measurement.
 
 Regenerate any tier from a new source with the `sharp` package already in devDependencies (no CLI
 tool needed) — e.g. the 960w tier: `sharp(src).resize({ width: 960 }).webp({ quality: 45, effort: 6
