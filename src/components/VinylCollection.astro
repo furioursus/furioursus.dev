@@ -29,13 +29,14 @@ const DEFAULT_COVER_SIZE = COVER_SIZES[1].value;
 
 <record-collection>
 	<p class="text-muted mb-6 text-sm">
-		<span data-count>{stats.totalRecords}</span> of {stats.totalRecords} records &middot; {
-			stats.uniqueArtists
-		}
+		<span data-count>{stats.totalRecords}</span> of {stats.totalRecords} records &middot;{" "}
+		{stats.uniqueArtists}
 		artists
 	</p>
 
-	<p class="empty" data-empty hidden>No records match your filters.</p>
+	<p class="empty" data-empty hidden>
+		No records match your filters.
+	</p>
 
 	<div class="breakout-container">
 		<div class="mx-auto max-w-7xl px-4 sm:px-8">
@@ -55,7 +56,9 @@ const DEFAULT_COVER_SIZE = COVER_SIZES[1].value;
 					<span class="sr-only">Filter by genre</span>
 					<select data-genre-select id="vinyl-genre">
 						<option value="">All genres</option>
-						{stats.genres.map((genre) => <option value={genre}>{genre}</option>)}
+						{stats.genres.map((genre) => (
+							<option value={genre}>{genre}</option>
+						))}
 					</select>
 				</label>
 
@@ -63,7 +66,9 @@ const DEFAULT_COVER_SIZE = COVER_SIZES[1].value;
 					<span class="sr-only">Filter by format</span>
 					<select data-format-select id="vinyl-format">
 						<option value="">All formats</option>
-						{formats.map((format) => <option value={format}>{format}</option>)}
+						{formats.map((format) => (
+							<option value={format}>{format}</option>
+						))}
 					</select>
 				</label>
 
@@ -78,42 +83,40 @@ const DEFAULT_COVER_SIZE = COVER_SIZES[1].value;
 					</select>
 				</label>
 
-				<button data-reset-button type="button"> Reset </button>
+				<button data-reset-button type="button">
+					Reset
+				</button>
 
 				<fieldset class="size-toggle" data-size-toggle>
 					<legend class="sr-only">Cover size</legend>
-					{
-						COVER_SIZES.map(({ value, label }) => (
-							<label class="size-option">
-								<input
-									checked={value === DEFAULT_COVER_SIZE}
-									name="cover-size"
-									type="radio"
-									value={value}
-								/>
-								{label}
-							</label>
-						))
-					}
+					{COVER_SIZES.map(({ value, label }) => (
+						<label class="size-option">
+							<input
+								checked={value === DEFAULT_COVER_SIZE}
+								name="cover-size"
+								type="radio"
+								value={value}
+							/>
+							{label}
+						</label>
+					))}
 				</fieldset>
 			</div>
 			<ul class="grid" data-lightbox-gallery role="list">
-				{
-					releases.map((release) => (
-						<li
-							class="record-item"
-							data-artist={release.artist.toLowerCase()}
-							data-date-added={release.dateAdded ?? ""}
-							data-formats={release.formats.join("|").toLowerCase()}
-							data-genres={release.genres.join("|").toLowerCase()}
-							data-search={`${release.artist} ${release.title} ${release.labels.join(" ")}`.toLowerCase()}
-							data-title={release.title.toLowerCase()}
-							data-year={release.year}
-						>
-							<RecordCard release={release} titleLevel={3} />
-						</li>
-					))
-				}
+				{releases.map((release) => (
+					<li
+						class="record-item"
+						data-artist={release.artist.toLowerCase()}
+						data-date-added={release.dateAdded ?? ""}
+						data-formats={release.formats.join("|").toLowerCase()}
+						data-genres={release.genres.join("|").toLowerCase()}
+						data-search={`${release.artist} ${release.title} ${release.labels.join(" ")}`.toLowerCase()}
+						data-title={release.title.toLowerCase()}
+						data-year={release.year}
+					>
+						<RecordCard release={release} titleLevel={3} />
+					</li>
+				))}
 			</ul>
 		</div>
 

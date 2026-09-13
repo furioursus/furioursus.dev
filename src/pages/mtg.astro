@@ -37,20 +37,16 @@ const meta = {
 <PageLayout meta={meta}>
 	<h1 class="title mb-6">MTG Collection</h1>
 
-	{
-		missingFile && (
-			<p class="prose prose-sm max-w-none">
-				Export a collection from ManaBox and save it to <code>src/data/collection.csv</code> to populate
-				this page.
-			</p>
-		)
-	}
+	{missingFile && (
+		<p class="prose prose-sm max-w-none">
+			Export a collection from ManaBox and save it to <code>src/data/collection.csv</code> to
+			populate this page.
+		</p>
+	)}
 
 	{error && <p class="prose prose-sm max-w-none">Couldn't load the collection: {error}</p>}
 
-	{
-		!missingFile && !error && (
-			<CardCollection entries={sortedCards} foils={foils} rarities={rarities} stats={stats} />
-		)
-	}
+	{!missingFile && !error && (
+		<CardCollection entries={sortedCards} foils={foils} rarities={rarities} stats={stats} />
+	)}
 </PageLayout>

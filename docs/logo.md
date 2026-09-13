@@ -48,9 +48,20 @@ defined inline on the `<svg>` itself in `Header.astro`, right alongside the artw
 
 ```html
 <filter id="logo-melt" x="-30%" y="-30%" width="160%" height="160%">
-	<feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="10" result="noise" />
+	<feTurbulence
+		type="fractalNoise"
+		baseFrequency="0.5"
+		numOctaves="10"
+		result="noise"
+	/>
 	<feDisplacementMap in="SourceGraphic" in2="noise" scale="3">
-		<animate id="logo-melt-pulse" attributeName="scale" dur="5s" values="1;6;1" repeatCount="indefinite" />
+		<animate
+			id="logo-melt-pulse"
+			attributeName="scale"
+			dur="5s"
+			values="1;6;1"
+			repeatCount="indefinite"
+		/>
 	</feDisplacementMap>
 </filter>
 ```
@@ -69,18 +80,18 @@ animated value alone.
 
 **The distortion already moves with the shape for free**, before any animation on the filter
 itself: `feTurbulence`/`feDisplacementMap` default to `primitiveUnits="userSpaceOnUse"` (unset
-here), which resolves against the *current* user-space coordinate system — the one CSS `transform`
+here), which resolves against the _current_ user-space coordinate system — the one CSS `transform`
 on the filtered element already establishes. So the noise rotates/scales rigidly along with
 `#Head`'s `logo-breathe` and `#Ear1`/`#Ear2`'s twitch without anything extra — confirmed by forcing
 a large manual rotation on `#Ear1` and watching the fuzzy edge track it exactly, not stay fixed in
 place while the shape rotated underneath.
 
 **On top of that**, the `<animate>` on `feDisplacementMap`'s own `scale` (`id="logo-melt-pulse"`)
-pulses the distortion's *intensity* over the same 5s duration as `#Head`'s `logo-breathe` — both
+pulses the distortion's _intensity_ over the same 5s duration as `#Head`'s `logo-breathe` — both
 start unoffset at page load, so they stay in lockstep indefinitely: the melt is strongest right as
 the head visibly swells and weakest as it settles, rather than a static fuzzy edge that merely
 rides along rigidly. `scale` was chosen as the animated attribute over `baseFrequency` because it
-smoothly scales the *amount* of an otherwise-fixed noise pattern rather than continuously
+smoothly scales the _amount_ of an otherwise-fixed noise pattern rather than continuously
 reseeding/reshaping the pattern itself, which reads as "breathing harder or softer" instead of "the
 texture is a different texture now."
 
@@ -95,7 +106,7 @@ synchronously during parsing, before the animation renders even a single frame, 
 the element (rather than pausing it) lets `feDisplacementMap` fall back to its own static
 `scale="3"` — the same resting value the pulse animates around, so this reads as "no pulse", not
 "frozen mid-pulse" or "no distortion at all". One-time check only, not a live `matchMedia` change
-listener — doesn't handle the preference changing *while the page is open*, an acceptable gap for
+listener — doesn't handle the preference changing _while the page is open_, an acceptable gap for
 a decorative pulse matching other documented trade-offs in this file (see `pointer-idle`'s own note
 further down).
 
@@ -143,7 +154,7 @@ That div writes three properties onto `<body>`, inherited by everything on the p
 today but kept for any future consumer — see [Reusing this for something
 else](#return-to-idle)). A second, separate source (also registered in `PropsForAuto.astro`,
 covered in [Return to idle](#return-to-idle) below) writes `--live-idle` (1/0) onto `<html>`.
-`logo.css` reads the pointer ratios for *where* to point, and `--live-idle` for *whether* to be
+`logo.css` reads the pointer ratios for _where_ to point, and `--live-idle` for _whether_ to be
 tracking at all:
 
 ```css
@@ -190,7 +201,7 @@ devtools, that worked fine. On a real device with a real cursor, in Chrome speci
 didn't — the muzzle visibly tracked the cursor while the eyes and ears stayed completely frozen in
 place, confirmed with a screen recording of real cursor movement (scaled-up frame grabs compared
 side by side; the muzzle's swing was obvious, the eyes' and ears' motion was literally zero, not
-just small). The confusing part: `getComputedStyle` reported the *correct* `translate`/`rotate`
+just small). The confusing part: `getComputedStyle` reported the _correct_ `translate`/`rotate`
 value on the eyes and ears the whole time. The style system had the right answer — Chrome just
 never repainted it. `getComputedStyle` and `getBoundingClientRect` both force a synchronous layout
 flush as a side effect of being called, which happens to paper over the bug; testing this from the
@@ -202,7 +213,7 @@ own `animation` got fully turned off during tracking (`& #Eyes, & #Muzzle { anim
 still true today). `#Eye1`/`#Eye2` keep `logo-blink` running the whole time tracking is active
 (deliberately — blinking shouldn't stop just because the cursor moved), and `#Ear1`/`#Ear2` keep
 their twitch loop running too. Both of those are `animation`s targeting `transform`. Whenever an
-element has a still-running keyframe `animation` targeting `transform` *and* a `transition` on an
+element has a still-running keyframe `animation` targeting `transform` _and_ a `transition` on an
 independent transform property (`translate`/`scale`/`rotate`) at the same time, Chrome computes
 the transition's value correctly but never repaints it — even though the CSS spec treats
 `transform` and the standalone `translate`/`rotate`/`scale` properties as independent and
@@ -213,7 +224,7 @@ tracking, never hit this and always worked.
 The fix is the wrapper split: put the tracking `translate`/`scale`/`rotate` on a separate element
 from the one still running a `transform`-targeting `animation`. The animated leaf and the
 transitioned wrapper compose visually exactly like `transform` and `translate`/`scale`/`rotate`
-were always supposed to — they're just no longer the *same* element, which is what sidesteps
+were always supposed to — they're just no longer the _same_ element, which is what sidesteps
 whatever Chrome's compositor is doing wrong here. No isolated repro was built and no upstream bug
 was filed, so this is empirical, not fully understood — if a future refactor ever moves an idle
 animation back onto the same element as a tracking transition, retest with an actual cursor
@@ -261,7 +272,7 @@ edge-of-screen extreme no matter what raw value comes through.
 
 ### Tracking on top of the mark itself
 
-`--live-local-pointer-x/y-ratio` are ratios across the *whole viewport*. That's fine anywhere else
+`--live-local-pointer-x/y-ratio` are ratios across the _whole viewport_. That's fine anywhere else
 on the page, but the mark itself is only around 70px across — crossing the entire face barely
 nudges a ratio meant to span a 1000+ px-wide viewport, so the eyes read as frozen exactly when the
 reader's cursor is closest to them (measured: sweeping the full width of the face moved the eye's
@@ -341,7 +352,7 @@ and restarts a fresh fast start — a string of velocity discontinuities that re
 than one continuous motion. `linear`'s constant velocity per leg blends far more smoothly across
 repeated retargets. 0.1s prioritizes immediacy over smoothing — tight enough that the mark reads
 as following the cursor directly rather than catching up to it a beat later. This transition is
-declared *inside* the container query, so it only applies while `--live-idle: 0` — see the next
+declared _inside_ the container query, so it only applies while `--live-idle: 0` — see the next
 section for what takes over the instant that stops being true.
 
 ## Return to idle
@@ -349,7 +360,7 @@ section for what takes over the instant that stops being true.
 The moment `--live-idle` flips to `1`, the container query above stops matching, and every
 tracking value on the `*Track` wrappers reverts to its initial `none`. Left alone, that's an
 instant snap — not what a bear "settling back into looking around on his own" should look like.
-`logo.css` declares a second, slower transition on the same wrappers, *outside* the container
+`logo.css` declares a second, slower transition on the same wrappers, _outside_ the container
 query:
 
 ```css
@@ -379,10 +390,10 @@ snap it'd be with `linear`.
 `#MuzzleTrack` exists for this as much as for tracking itself — an earlier version of this file
 didn't need a wrapper for the muzzle at all, since the muzzle's own `animation` was always fully
 stopped during tracking and putting its `translate`/`scale` directly on `#Muzzle` never hit the
-Chrome bug above. But *leaving* tracking resumes `#Muzzle`'s `logo-look-around` animation in the
+Chrome bug above. But _leaving_ tracking resumes `#Muzzle`'s `logo-look-around` animation in the
 exact same style recalc that reverts its tracking `translate`/`scale` back toward neutral — which
 is the same animation-plus-transition-on-one-element shape that broke the eyes and ears while
-entering tracking. So the muzzle needed the same wrapper split, just to make the *exit* safe rather
+entering tracking. So the muzzle needed the same wrapper split, just to make the _exit_ safe rather
 than the entry. Same fix, same reasoning, just triggered by the other edge of the transition this
 time.
 

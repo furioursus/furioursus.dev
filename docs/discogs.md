@@ -54,7 +54,7 @@ a searchable, filterable grid of my vinyl collection, pulled from Discogs at bui
   [`docs/lightbox.md`](./lightbox.md)'s "Gallery grouping and navigation" for how that's detected
   (structurally, not a per-image prop) and why filtered-out records are excluded.
 - `RecordCard`'s title renders as an `<h2>` by default, via a `titleLevel?: 1 | 2 | 3 | 4 | 5 | 6 |
-  false` prop (`false` renders a plain `<p>` instead). `VinylCollection.astro` passes
+false` prop (`false` renders a plain `<p>` instead). `VinylCollection.astro` passes
   `titleLevel={3}` since cards sit under that section's own "Vinyl collection" `<h2>` (rendered by
   `music.astro`, one level up), not directly under the page's `<h1>` — reach for the prop again if
   `RecordCard` ever moves to yet another heading depth.
@@ -120,7 +120,7 @@ there'd be nothing for the control to do.
 Picked via native radio inputs, not a custom click handler on styled `<button>`s (contrast the
 period tabs in `docs/lastfm.md`) — a `type="radio"` group gets mutually-exclusive selection and
 arrow-key navigation for free, which fits a "pick one of three" control better than tabs (which
-imply switching between different *content*, not a display preference). The inputs themselves are
+imply switching between different _content_, not a display preference). The inputs themselves are
 visually hidden (clipped, not `display: none`, so they stay focusable) via `.size-option input`;
 `.size-option:has(input:checked)` gives the checked one the same active look the tabs use.
 

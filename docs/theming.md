@@ -63,7 +63,7 @@ color rather than with whatever text/images happen to be on screen — it shows 
 (margins, padding, any exposed page background) instead of crawling visibly across content as the
 page scrolls. This requires `isolate` on `<body>` (`Base.astro`) so the negative z-index stays
 contained to body's own stacking context instead of escaping behind `<html>` entirely. An earlier
-version painted this *above* content at `z-index: 100` to clear other components' own stacking
+version painted this _above_ content at `z-index: 100` to clear other components' own stacking
 z-indexes (Header's nav dropdown `z-50`, BlogPost's back-to-top button `z-90`) — that's no longer
 relevant now that the layer is behind everything, not competing to be on top of it.
 
@@ -72,28 +72,28 @@ version used `position: fixed` (pinned to the viewport, so the texture stayed vi
 screen while content scrolled past it) with a generous `inset` overscan for iOS Safari's
 rubber-band bounce. On a real device (iPhone 17 sim, iOS 26.5) that still failed to reach the true
 bottom edge on short pages, confirmed by swapping in a plain `body` background with no positioning
-tricks at all, which *did* reach the edge reliably — `position: fixed` elements on iOS Safari have
+tricks at all, which _did_ reach the edge reliably — `position: fixed` elements on iOS Safari have
 a documented history of not always keeping pace with the dynamic toolbar's show/hide animation in
 real time. `absolute`, anchored to `body`'s own box (`isolate` plus `body`'s `relative` utility
 already make it a valid containing block), sidesteps the whole class of viewport-tracking bugs by
 not depending on the viewport at all — it just covers whatever `body`'s real, already-correct
-rendered extent turns out to be. That's about the *element's own box* reaching the right size, not
+rendered extent turns out to be. That's about the _element's own box_ reaching the right size, not
 about whether the visible texture appears to scroll — `background-attachment: fixed` (below) is
 what still keeps the image itself visually pinned to the viewport as you scroll, same as the old
 `position: fixed` version looked, just without that version's iOS bug.
 
 That combination is what makes `background-size: cover` on one large photo-scale texture safe
 again, rather than the small repeating tile this went through for a while: `attachment: fixed`
-sizes and positions the image against the *viewport*, not against the element it's set on, so
+sizes and positions the image against the _viewport_, not against the element it's set on, so
 `cover` only ever has to fill one screen's worth of space no matter how tall the actual page is.
 Without it, `cover` would size against `body`'s entire document height instead and badly distort a
 single image stretched across a whole page longer than one screen — which is exactly why an
 intermediate version dropped `cover` for a small repeating tile in the first place. Reintroducing
 `attachment: fixed` undoes that trade-off without giving back the iOS bug `position: absolute`
-originally fixed, since the two are independent: the *element* is `absolute` (correct box size),
-the *image inside it* is `attachment: fixed` (visually pinned, viewport-sized). The payoff is a
+originally fixed, since the two are independent: the _element_ is `absolute` (correct box size),
+the _image inside it_ is `attachment: fixed` (visually pinned, viewport-sized). The payoff is a
 sharper, more distinctive texture than a small tile can offer — a small seamless-tile crop has to
-crop *away* any visible directional structure (this texture's source has real toner-drag banding)
+crop _away_ any visible directional structure (this texture's source has real toner-drag banding)
 to avoid an obvious repeat, where a full photo-scale image keeps it.
 
 Bringing `cover` back reintroduces the bandwidth problem a small tile didn't have: shipping the same

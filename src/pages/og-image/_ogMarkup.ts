@@ -11,7 +11,9 @@ export const ogMarkup = (title: string, pubDate: string) =>
 			<p tw="text-2xl mb-6">${pubDate}</p>
 			<h1 tw="text-6xl font-bold leading-snug text-white">${title}</h1>
 		</div>
-		<div tw="flex items-center justify-between w-full p-10 border-t-2 border-[${siteConfig.themeColor}] text-white">
+		<div
+			tw="flex items-center justify-between w-full p-10 border-t-2 border-[${siteConfig.themeColor}] text-white"
+		>
 			<p tw="text-2xl ml-3 font-semibold">${siteConfig.title}</p>
 			<p>by ${siteConfig.author}</p>
 		</div>
