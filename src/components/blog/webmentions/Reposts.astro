@@ -18,7 +18,7 @@ const repostsToShow = reposts
 	<div>
 		<p class="text-accent-2 mb-0">
 			<strong>{reposts.length}</strong>
-			{reposts.length > 1 ? " People" : " Person"} repostd this
+			{reposts.length > 1 ? " People" : " Person"} reposted this
 		</p>
 		{!!repostsToShow.length && (
 			<ul class="flex list-none flex-wrap overflow-hidden ps-2" role="list">
@@ -26,7 +26,7 @@ const repostsToShow = reposts
 					<li class="-ms-2">
 						<a
 							href={repost.author?.url}
-							class="not-prose ring-textColor hover:ring-link focus-visible:ring-link relative inline-block overflow-hidden rounded-full ring-2 outline-none hover:z-10 hover:ring-4 focus-visible:z-10 focus-visible:ring-4"
+							class="not-prose ring-global-text hover:ring-link focus-visible:ring-link relative inline-block overflow-hidden rounded-full ring-2 outline-none hover:z-10 hover:ring-4 focus-visible:z-10 focus-visible:ring-4"
 							target="_blank"
 							rel="noopener noreferrer"
 							title={repost.author?.name}

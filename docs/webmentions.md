@@ -6,7 +6,7 @@ when they link to a post here); this repo only fetches and displays what's accum
 
 ## Fetching + caching — `src/utils/webmentions.ts`
 
-- Calls `https://webmention.io/api/mentions.jf2`, filtered to `like-of` / `mention-of` / `in-reply-to`
+- Calls `https://webmention.io/api/mentions.jf2`, filtered to `like-of` / `repost-of` / `mention-of` / `in-reply-to`
   types, authenticated via `WEBMENTION_API_KEY` (see `.example.env` / repo root `README.md`).
 - Domain used for the lookup defaults to the `site` hostname in `astro.config.ts`, overridable via
   `WEBMENTION_DOMAIN` for cases like a verified `www.` subdomain differing from the canonical host.
