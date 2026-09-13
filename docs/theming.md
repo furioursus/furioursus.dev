@@ -116,11 +116,23 @@ any visible directional structure — this texture's source has real toner-drag 
 obvious repeat, where a full photo-scale image keeps it.
 
 Bringing `cover` back reintroduces the bandwidth problem a small tile didn't have: shipping the same
-full-res image to a 380px phone as to a 2560px desktop is real waste on mobile. Three width tiers
-(`grain-{light,dark}-{960w,1600w}.webp` plus the base `grain-{light,dark}.webp` for the largest),
+full-res image to a 380px phone as to a 2560px desktop is real waste on mobile. Two width tiers
+(`grain-{light,dark}-{960w,1600w}.webp`),
 swapped by plain `min-width` media queries (not a Tailwind variant — this file isn't a component
 Tailwind processes) at Tailwind's own `sm`/`lg` breakpoints, handle that: under 40rem gets 960w,
-40–64rem gets 1600w, 64rem and up gets the full-res source. Under 40rem also gets an
+40rem and up gets 1600w.
+
+There used to be a third tier serving the full-res `grain-{light,dark}.webp` (1920w, 1058 KB) above
+64rem. Measured, it was **88% of a desktop page load on its own** — every other asset on the site
+combined came to 138 KB — and it cost 1.87x more per pixel than any other tier. Re-encoding confirmed
+quality can't recover that (grain is incompressible noise; even q=60 still cost 863 KB), so
+resolution was the only lever. Deleting the tier lets 40rem-and-up upscale the 1600w file instead:
+**394 KB instead of 1058 KB, a 664 KB saving per desktop page view**, and invisible on a noise
+texture rendered at `opacity: 0.25` behind all content. Note the breakpoint was `64rem` = 1024px, so
+this was hitting every laptop, not just large displays. The full-res files stay in `src/assets/` as
+the masters the tiers are generated from; nothing references them, so they no longer ship.
+
+Under 40rem also gets an
 `orientation: portrait` variant (`grain-{light,dark}-portrait.webp`), cropped and rotated from the
 source rather than downscaled — for `cover`-fit, a portrait viewport's dominant dimension is height,
 not width, so the landscape 960w crop doesn't have enough height to cover a tall phone screen
