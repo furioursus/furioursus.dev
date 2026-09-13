@@ -47,8 +47,10 @@ it is a wall between the reader and the code.
 **Placement, which is what actually makes a file hard to read:**
 
 - No comment block longer than the rule or function it documents.
-- In-template `{/* … */}` comments in `.astro`: **one line, hard cap.** Longer rationale goes in the
-  frontmatter or in `docs/`. A 26-line comment between `</a>` and `<nav>` is the failure mode.
+- In-template `{/* … */}` comments in `.astro`: **one line for narrative, hard cap.** A 26-line
+  comment between `</a>` and `<nav>` is the failure mode. Footguns are the exception — a couple of
+  lines guarding the element directly below them is correct and should stay there, because moving a
+  warning away from the thing it protects defeats the point of it being inline at all.
 - No frontmatter comment that pushes the closing `---` fence far down the file — you should not
   have to scroll past an essay to reach the markup.
 

@@ -30,6 +30,14 @@ pattern takes a very long time to visibly repeat.
   cycle (a real double-blink), then holds the eyes open for most of the remaining time.
 - **Ear twitch** — `#Ear1`/`#Ear2` each `rotate()` a few degrees and settle, `ease-in-out`, mostly
   sitting at `0deg`.
+- **Breathe** — `#Head` runs `logo-breathe` (5s), a barely-there scale under everything else.
+  `transform-origin: 50% 100%` anchors it at the head's own jaw rather than its center, so the
+  swell reads as a chest rising from a fixed base instead of the whole head growing outward in
+  every direction — which looked more like a pulse than a breath. Y grows slightly more than X
+  (1.5% vs. 0.8%), since a real breath expands a torso vertically more than it widens it. `#Head`
+  needs no `*Track` wrapper split: it carries no `transition` on a standalone
+  `translate`/`scale`/`rotate`, so there's nothing for [the Chrome repaint
+  bug](#the-chrome-bug-behind-the-track-wrappers) to trip over.
 - **Look around** — `#Eyes` (the group, not the individual eyes) and `#Muzzle` both run
   `logo-look-around` — same keyframes, same 13s duration, no relative delay between them — each
   `translateX`-ing left then right then back to center in exact lockstep. `#Muzzle` is a sibling
@@ -141,12 +149,18 @@ does two things:
 1. Imports `prop-for-that/auto`, the library's zero-config entry — from then on, any element
    anywhere in the site can opt into a live source just by adding `data-props-for="<key>"`.
 2. Renders one shared, invisible, `position: fixed; inset: 0` div bound to the `pointer-local`
-   plugin, with its writes hoisted onto `<body>` via `data-props-to="body"`. Read that file's own
-   comment for why a full-viewport `fixed` div specifically (not `<body>` or `<html>` directly) —
-   short version: `pointerLocal` measures the cursor against _its bound element's own
-   `getBoundingClientRect()`_, and only a `fixed; inset: 0` element's box is guaranteed to equal
-   the viewport at every scroll position; binding straight to `<body>` would compress the usable
-   range on any page taller than one screen.
+   plugin, with its writes hoisted onto `<body>` via `data-props-to="body"`. It has to be a
+   full-viewport `fixed` div specifically, not `<body>` or `<html>` directly: `pointerLocal`
+   measures the cursor against _its bound element's own `getBoundingClientRect()`_, and only a
+   `fixed; inset: 0` element's box is guaranteed to equal the viewport at every scroll position;
+   binding straight to `<body>` would compress the usable range on any page taller than one
+   screen. `data-props-to="body"` is then what gets the written properties to the rest of the
+   page at all — custom properties inherit downward only, and that div is a sibling of the real
+   content rather than an ancestor of it (prop-for-that documents the same gotcha itself).
+
+   The div is `pointer-events: none`, and that is safe here specifically because `pointerLocal`
+   listens on `window` and only ever uses the element for its rect — it never needs real pointer
+   events delivered to the div itself (confirmed by reading prop-for-that's source, not assumed).
 
 That div writes three properties onto `<body>`, inherited by everything on the page:
 `--live-local-pointer-x-ratio` / `-y-ratio` (0–1 across the viewport) and

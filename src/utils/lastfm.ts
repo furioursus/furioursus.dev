@@ -1,5 +1,3 @@
-// src/utils/lastfm.ts
-//
 // Thin client for the bits of Last.fm's user.* API the /music/ page needs. Safe to import from
 // both server code (music.astro's frontmatter, at build time) and a browser <script> (the live
 // now-playing widget) — everything here is plain `fetch`, and the env vars are "client" context

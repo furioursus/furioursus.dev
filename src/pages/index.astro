@@ -32,10 +32,7 @@ const latestNotes = allNotes
 <PageLayout meta={{ title: "Home" }}>
 	<section>
 		{
-			// `wobble` is animate.css's keyframe (imported globally, see Base.astro) — not defined
-			// here, just referenced by name via the animate-[] arbitrary utility. Dropped this
-			// hover rule's old `display: inline-block` as redundant: a <button>'s default display
-			// is already inline-block, unset by anything else here.
+			// `wobble` is animate.css's keyframe, imported globally in Base.astro, not defined here.
 		}
 		<h1 class="title group mb-4 flex cursor-pointer items-center gap-2" id="greeting">
 			<button class="m-0 border-0 p-0 [background:none] group-hover:animate-[wobble_1s_5]">
