@@ -20,7 +20,7 @@ import type { WebmentionsCache, WebmentionsChildren, WebmentionsFeed } from "@/t
 const DOMAIN = import.meta.env.SITE;
 const CACHE_DIR = path.join(fileURLToPath(root), ".data");
 const filePath = path.join(CACHE_DIR, "webmentions.json");
-const validWebmentionTypes = ["like-of", "mention-of", "in-reply-to"];
+const validWebmentionTypes = ["like-of", "repost-of", "mention-of", "in-reply-to"];
 
 // Falls back to the `site` hostname, but can be overridden via WEBMENTION_DOMAIN
 // when the domain verified with webmention.io differs (e.g. a `www.` subdomain).
