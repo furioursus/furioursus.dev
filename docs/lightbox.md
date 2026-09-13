@@ -114,6 +114,43 @@ reduce` disables both.
 - Unsupported browsers (`@starting-style`/`allow-discrete` need a roughly 2024-or-later engine) fall
   back to the old instant show/hide — this is pure progressive enhancement, nothing to guard in JS.
 
+### Suppressing the transition mid-gallery-navigation
+
+Next/Prev doesn't reuse one `<dialog>` — every gallery member has its own, each with its own
+independent `::backdrop`. Animating the current one's fade-out concurrently with the next one's
+fade-in let the actual page underneath show through for a beat mid-crossfade, which reads as the
+background flashing rather than as a transition.
+
+`navigate()` in `Lightbox.astro` adds `.lightbox-navigating` to `<html>` for exactly that swap, and
+`lightbox.css` zeroes the transitions under it:
+
+```css
+html.lightbox-navigating &,
+html.lightbox-navigating &[open] {
+	transition: none;
+}
+```
+
+Two details worth knowing:
+
+- **Those rules win on specificity, not source order.** The extra class plus type selector outranks
+  the bare `.lightbox-dialog` rules above them, so they can sit anywhere in the file — unlike the
+  `prefers-reduced-motion` overrides alongside them, which do rely on coming later.
+- **The class is removed a frame later, in a `requestAnimationFrame`,** not in the same synchronous
+  tick it was added. Transitions key off the computed style at the next style recalc, not off each
+  individual synchronous mutation, so removing it immediately risks the browser never applying it
+  at all. (The `.lightbox-locked` toggle in the same swap needs no such care: `overflow-y` doesn't
+  transition, so removing and re-adding it before either change paints is a no-op.)
+
+### Caption headroom on the enlarged image
+
+The dialog's `<img>` is capped at `calc(90vh - 3rem)`, below the dialog's own `90vh`, so an optional
+caption always has room to render without pushing the stack past the viewport. A flexbox
+shrink-to-fit version — letting the image size dynamically around whatever caption height is
+actually present — was tried first and abandoned: `fit-content` sizing on the dialog plus a
+shrinking, aspect-ratio-linked flex item collapsed the image to 0×0 in testing. The fixed-headroom
+version is less exact for a very long, multi-line caption, but reliable.
+
 ### Background scroll lock
 
 `showModal()` traps focus and clicks, but a native `<dialog>` does **not** stop the page behind it

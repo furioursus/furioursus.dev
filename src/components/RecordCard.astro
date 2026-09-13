@@ -1,5 +1,4 @@
 ---
-// src/components/RecordCard.astro
 import type { DiscogsRelease } from "astro-discogs-collection/collection";
 import { getLocalCoverImage } from "astro-discogs-collection/images";
 import LightboxImage from "@/components/LightboxImage.astro";
@@ -27,20 +26,10 @@ const coverAlt = generatedAlt ?? `${release.artist} – ${release.title}`;
 const metaText = [release.year || null, release.formats.join(", ") || null]
 	.filter(Boolean)
 	.join(" ");
-// From sm up, the info link below is hidden (via a plain `sm:hidden` utility, conditionally
-// applied) in favor of this same artist/title/meta info shown inside the lightbox dialog instead
-// (see the `dialog-caption` slot below) — but only when there's actually a cover/dialog to show it
-// in. The no-cover placeholder path has no lightbox at all, so that link stays the only place that
-// information ever appears, at every width.
-//
-// `sm:hidden` specifically (not a scoped <style> rule) is safe here now that this component has no
-// scoped <style> block left to conflict with it — it used to: Astro tacks a `[data-astro-cid-xxx]`
-// attribute selector onto every rule in a component's scoped <style>, so a same-file
-// `.info { display: block }` outranked a plain `.sm\:hidden` utility on specificity regardless of
-// media query or source order, silently losing (see docs/discogs.md, and git history on this file
-// from before its CSS was ported to Tailwind utilities). With no more competing scoped rule, the
-// two Tailwind utilities (`block` / `sm:hidden`) have equal specificity and normal cascade order
-// resolves it correctly, same as this exact pattern works everywhere else in the codebase.
+// From sm up the info link below is hidden in favor of the same info in the lightbox dialog — but
+// only where there is a dialog, since the no-cover placeholder path has none. FOOTGUN: that
+// `sm:hidden` only works while this file has no scoped <style>; Astro's [data-astro-cid-*] boost
+// would outrank it on specificity regardless of source order. See docs/discogs.md.
 const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 ---
 
@@ -51,18 +40,10 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 		// legally nest inside an <a>. So the card has two separate interactive pieces: the
 		// image opens the lightbox, the text links out to the Discogs release page.
 		localImage ? (
-			// width/height downsize the on-page thumbnail (astro:assets really does generate a
-			// smaller physical file, not just a CSS-cropped view) — passing them also makes
-			// LightboxImage render the dialog's own separate, full-resolution <Image> instead of
-			// reusing that thumbnail, so the enlarged view is the largest cover art we have, not
-			// just the 500×500 crop. See LightboxImage.astro's `needsSeparateDialogImage`.
-			// The thumbnail never actually renders wider than the grid's own "Large" cell size
-			// (18rem/288px, see VinylCollection.astro's COVER_SIZES) or the mobile row's fixed
-			// 3.5rem/56px (the flex-none/w-14 classes below) — 500 was Discogs's own thumbnail
-			// resolution, not a real display size, and was making Astro generate (and browsers
-			// fetch) a candidate roughly 3x heavier than anything ever shown on-page.
-			// width/height only set the *thumbnail's* resolution here; the dialog still gets
-			// its own full-res Image regardless (see needsSeparateDialogImage above).
+			// width/height size the on-page thumbnail only — 288 is the grid's largest cell
+			// (VinylCollection.astro's COVER_SIZES); Discogs's own 500 was ~3x heavier than
+			// anything ever displayed. Passing them also makes LightboxImage give the dialog its
+			// own full-res <Image> — see `needsSeparateDialogImage` there.
 			<LightboxImage
 				class="w-14 flex-none sm:w-full [&_img]:rounded"
 				src={localImage}

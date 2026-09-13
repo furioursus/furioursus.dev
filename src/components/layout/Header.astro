@@ -6,14 +6,8 @@ import { menuLinks, siteConfig } from "@/site.config";
 
 <header class="group breakout-container mb-6" id="main-header">
 	<div class="relative mx-auto max-w-3xl px-4 py-8 sm:px-8">
-		{/* ps-18 lives on this innermost row specifically, not the px-4/sm:px-8 wrapper
-			above — Tailwind's ps-* replaces (not adds to) px-*'s start-side value, so
-			stacking both on one element would make the logo's -inset-s-18 pull-back cancel
-			against the wrong edge (the raw breakout edge instead of the content column's
-			edge), landing it 32px too far left of the h1 below. Mirrors this file's
-			pre-sticky-header structure, where ps-18 sat on <header> itself while px-4/sm:px-8
-			lived one level up on Base.astro's wrapper — same two-level relationship, just
-			both levels now live inside the breakout shell instead of one being Base.astro's. */}
+		{/* FOOTGUN: ps-18 belongs on this row, not the px-4/sm:px-8 wrapper — Tailwind's ps-* replaces
+			px-*'s start value rather than adding to it. See docs/navigation.md. */}
 		<div class:list={["flex items-center", siteConfig.showLogo && "sm:relative sm:ps-18"]}>
 			<div class="flex sm:flex-col sm:items-start">
 				<a
@@ -21,29 +15,9 @@ import { menuLinks, siteConfig } from "@/site.config";
 					class="group inline-flex items-center sm:inline-block"
 					href="/"
 				>
-					{/* grayscale/hover-color lives on the logo and title individually
-						(via group-hover, scoped to this <a>) instead of on <a> itself — a
-						CSS filter on an element makes it a containing block for absolutely
-						positioned descendants regardless of its own `position`, which broke
-						the logo's vertical centering below (it was centering against <a>'s
-						own ~32px title-text height instead of the full row height). */}
-					{/* The logo bleeds left into the ps-18 gutter reserved on the row above,
-						sized bigger than that gutter on purpose so it reads as a prominent mark
-						rather than a small icon — sizing it via height with an auto width (to
-						keep the artwork's own aspect ratio, not the odd one a fixed w-* would
-						force) means its rendered width isn't a static number to subtract by
-						hand. `inset-s-18` + `-translate-x-[calc(100%+0.5rem)]` sidesteps that:
-						positioned at the gutter's *far* edge (start + ps-18, i.e. flush with the
-						title text's own start) then shifted left by its own width *plus* a fixed
-						0.5rem via `translate`, landing its right edge a consistent half-rem
-						before the title regardless of what the width actually resolves to —
-						stays correct if the height (and so the auto width) ever changes again.
-						h-18 specifically (not just "smaller") is chosen to leave clear space
-						above and below within this row's own height (136px at sm: 72px logo +
-						2×32px from py-8 on the row above). Vertical centering
-						(inset-y-0 + my-auto) is a separate,
-						unrelated mechanism — see the containing-block note above for why that
-						one specifically needed <a> to stop being a filtered element. */}
+					{/* FOOTGUN: grayscale stays on the logo/title, not this <a> — a CSS `filter` makes an
+						element a containing block for abspos descendants, which breaks the logo's vertical
+						centering. Logo sizing and the -translate-x pull-back: docs/navigation.md. */}
 					{siteConfig.showLogo && (
 						<svg
 							data-name="Bear Face"
@@ -54,26 +28,9 @@ import { menuLinks, siteConfig } from "@/site.config";
 							viewBox="0 0 68.31 64.71"
 							xmlns="http://www.w3.org/2000/svg"
 						>
-							{/* feTurbulence + feDisplacementMap — a photocopy-static edge distortion,
-									referenced as `url(#logo-melt)` from logo.css, applied there to #Head +
-									#BackEar1 + #BackEar2 only (the body silhouette and the two solid-dark
-									outer-ear shapes), not the pale ear-interior cutouts
-									(#FrontEar1/#FrontEar2) or the eyes/muzzle — see docs/logo.md for which
-									paths and why. Defined here rather than as a separate hidden <svg>
-									elsewhere in the page since `url(#id)` filter references resolve against
-									the whole document either way — keeping it inline with the artwork it's
-									for is just easier to find.
-									This distortion already rotates/scales rigidly along with #Head's
-									`logo-breathe`/#Ear1/#Ear2's twitch CSS animations for free — SVG filter
-									primitives with `primitiveUnits="userSpaceOnUse"` (the default, unset here)
-									resolve against the *current* user-space coordinate system, which already
-									includes whatever CSS `transform` is live on the filtered element, so the
-									noise moves with the shape without this needing anything extra. The
-									`<animate>` below is a separate, additional effect on top of that: the
-									distortion's own *intensity* pulsing over time, synced to logo-breathe's
-									same 5s duration so it's stronger right as the head visibly swells and
-									weaker as it settles — the melt visibly breathing along with the shape,
-									not just a static fuzzy edge that happens to ride along rigidly. */}
+							{/* Photocopy-static edge distortion, referenced as url(#logo-melt) from logo.css.
+								Inline here rather than in a hidden <svg> just to sit with the artwork it
+								distorts; url(#id) resolves document-wide either way. See docs/logo.md. */}
 							<defs>
 								<filter height="160%" id="logo-melt" width="160%" x="-30%" y="-30%">
 									<feTurbulence
@@ -83,15 +40,6 @@ import { menuLinks, siteConfig } from "@/site.config";
 										result="noise"
 									/>
 									<feDisplacementMap in="SourceGraphic" in2="noise" scale="3">
-										{/* id="logo-melt-pulse": the one bit of decorative motion on this
-												mark that isn't plain CSS — feTurbulence/feDisplacementMap
-												attributes aren't real CSS properties (no `var()`/`@property`
-												support), so SMIL's `<animate>` is the only declarative way to
-												animate them at all. Unlike every CSS `animation` in logo.css,
-												SMIL doesn't honor `prefers-reduced-motion` on its own — see the
-												small inline script right after this SVG for the one-time check
-												that removes this element entirely for readers with that
-												preference set, before it ever plays a single frame. */}
 										<animate
 											attributeName="scale"
 											dur="5s"
@@ -161,21 +109,10 @@ import { menuLinks, siteConfig } from "@/site.config";
 						</svg>
 					)}
 					{siteConfig.showLogo && <script is:inline>
-						// SMIL <animate> (id="logo-melt-pulse", inside the #logo-melt filter above)
-						// doesn't honor prefers-reduced-motion on its own — CSS's `@media
-						// (prefers-reduced-motion: reduce)`, which every other idle-loop in logo.css
-						// relies on, has no SMIL equivalent. is:inline (not the module script further
-						// below) specifically so this runs synchronously during parsing, before the
-						// animation has a chance to render even one frame — same reasoning as
-						// ThemeProvider.astro's own is:inline script avoiding a flash of the wrong
-						// theme. Removing the element entirely (rather than pausing it) lets
-						// #logo-melt fall back to feDisplacementMap's own static `scale="3"` — the
-						// same resting frame the pulse animates around, so this reads as "no pulse",
-						// not "frozen mid-pulse" or "no distortion at all".
-						// One-time check, not a live matchMedia listener — doesn't handle the
-						// preference changing *while the page is open*, an acceptable gap for a
-						// decorative pulse matching other documented trade-offs in this file (see
-						// pointer-idle's own note in docs/logo.md).
+						// SMIL ignores prefers-reduced-motion, so the pulse has to be removed by hand.
+						// FOOTGUN: is:inline, not a module script — it must run during parsing, before the
+						// animation paints a frame. Removing (not pausing) falls back to scale="3", the
+						// pulse's own resting value. See docs/logo.md.
 						if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
 							document.getElementById("logo-melt-pulse")?.remove();
 						}
@@ -185,31 +122,11 @@ import { menuLinks, siteConfig } from "@/site.config";
 					</span>
 				</a>
 				{
-					// max-sm: (Tailwind's max-width variant — compiles to the same `@media (width < 40rem)`
-					// range query this used to be hand-written as) — the desktop nav is always-visible
-					// (sm:flex, unconditional, above) so none of this display-toggling/animation applies there.
-					// group-[.menu-open]: reads the .menu-open class MobileNavBtn's script toggles on
-					// <header> (already used for z-50 above) — no :global()-equivalent needed since
-					// Tailwind utilities aren't scoped to begin with.
-					// top-18 (4.5rem): a plain, hardcoded offset, not measured — <header> is static now
-					// (never sticky, never resizes on scroll), so this row's own rendered height is a
-					// fixed, known quantity, the same way Astro Cactus upstream hardcodes its own
-					// equivalent (`top-12`) rather than measuring it. No JS, no ResizeObserver, no
-					// custom property to keep in sync with anything.
-					// transform/transition are arbitrary properties, not scale-*/translate-*/duration-*
-					// utilities — Tailwind v4's scale-*/translate-* utilities set the standalone `scale`/
-					// `translate` CSS properties, not `transform`, so a hand-written `transition: transform
-					// ...` list needs the matching arbitrary `[transform:...]` to actually be listing the
-					// property that's changing. [@starting-style]: is Tailwind's arbitrary at-rule variant
-					// (rather than the dedicated `starting:` shorthand) so this doesn't depend on exactly
-					// which Tailwind 4.x minor version added that shorthand.
-					// divide-muted: explicit, not incidental — `divide-x`/`divide-y` add their border with
-					// no color utility alongside them, and border-color's own CSS default is `currentColor`,
-					// so each link's own divider (Tailwind puts it on the *preceding* link, as a
-					// border-inline-end, not on the following one as a border-start) would otherwise pick
-					// up that same link's `color` — meaning the separator visibly flashed the hover/active
-					// yellow right along with whichever link was being hovered. Pinning it to --color-muted
-					// decouples the divider from any one link's interaction state.
+					// FOOTGUN: transform/transition are arbitrary properties on purpose — Tailwind v4's
+					// scale-*/translate-* set the standalone `scale`/`translate` properties, not
+					// `transform`, so a hand-written `transition: transform` would list nothing that
+					// changes. FOOTGUN: divide-muted is required — divide-* falls back to currentColor,
+					// so the separator would flash each link's hover color. See docs/navigation.md.
 				}
 				<nav
 					aria-label="Main"
@@ -217,14 +134,8 @@ import { menuLinks, siteConfig } from "@/site.config";
 					id="navigation-menu"
 				>
 					{
-						// "/" is excluded: the logo link right before this nav already goes home, so a
-						// "Home" item here would be an adjacent link to the same page (WAVE flags this).
-						// The footer's copy of menuLinks keeps "Home" — it has no adjacent logo link.
-						// hover:text-nav-hover + active:text-nav-hover: --color-nav-hover (global.css)
-						// is a no-op in light mode (same value as --color-accent, so this class pair
-						// changes nothing there) and swaps to a vivid yellow in dark mode — a third,
-						// distinct interaction color rather than a tint of the pink base, so the nav
-						// state changes color instead of just gaining an underline like it did before.
+						// "/" is excluded: the logo link just before this nav is already an adjacent link
+						// to the same page, which WAVE flags. The footer's copy keeps "Home".
 						menuLinks
 							.filter((link) => link.path !== "/")
 							.map((link) => (

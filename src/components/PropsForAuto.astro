@@ -1,78 +1,6 @@
-{/*
-	Site-wide prop-for-that integration point — included once in Base.astro.
-
-	1. Registers the declarative `auto` entry (see the script block below — written here as
-	   "script block", not the literal tag, on purpose: Vite's dependency-scan step greps
-	   Astro files for `<script>` with a naive regex, and the literal tag appearing in this
-	   prose comment gets misread as the block's real opening tag, feeding everything between
-	   here and the actual `</script>` to the scanner as one garbled module and failing dev
-	   startup with a parse error). From here on, any
-	   element anywhere in the site can opt into a live JS→CSS source just by adding
-	   `data-props-for="<key>"` (and `data-props-to="<selector>"` to hoist the write to an
-	   ancestor) — no further JS wiring needed. Plugin sources beyond the core
-	   viewport/size/visibility/range set are lazy-loaded on first reference. Full source/plugin
-	   catalog: node_modules/prop-for-that/README.md (or
-	   https://github.com/argyleink/prop-for-that).
-
-	2. Provides one shared, invisible, full-viewport pointer-tracking surface (below), hoisted
-	   onto `<body>`. `pointerLocal` maths the cursor's position against *its bound element's*
-	   `getBoundingClientRect()` — bind it to something document-sized (`<body>`, `<html>`) and
-	   the ratio gets compressed/inaccurate on any page taller than one screen, since the box
-	   being measured is the whole scrollable document, not what's actually on screen. A
-	   `position: fixed; inset: 0` div's rect *is* the viewport, exactly, at all scroll
-	   positions — so this element exists purely to give `pointerLocal` a correctly-sized
-	   surface to measure against; `data-props-to="body"` is what makes the properties it writes
-	   actually reach the rest of the page (custom properties only inherit to descendants, and
-	   this div is a sibling of the real content, not an ancestor of it — see prop-for-that's own
-	   "Custom properties inherit downward only" gotcha).
-
-	   Result: `--live-local-pointer-x-ratio`/`-y-ratio` (0–1 across the whole viewport) and
-	   `--live-local-pointer-inside` (1/0, cursor anywhere in the browser window) are available
-	   from `<body>`'s inherited custom properties anywhere on the page. The header logo's
-	   cursor-tracking glance (`logo.css`) is the first consumer; any future feature that wants
-	   "where's the cursor, roughly" can read the same three properties instead of standing up
-	   its own tracking element.
-
-	   `pointer-events: none` is safe here specifically because `pointerLocal` listens on
-	   `window` and only uses the element for its rect — it doesn't need real pointer events
-	   delivered to this div itself (confirmed by reading prop-for-that's source directly, not
-	   assumed).
-
-	3. Registers one custom source, pointer-idle, using prop-for-that's own public register()
-	   extension API rather than raw addEventListener/setProperty. There's no built-in plugin for
-	   "how long since the pointer last moved" (checked the plugin catalog directly), and CSS
-	   itself has no primitive for "time since a value last changed", so this is the smallest
-	   piece of custom JS that still routes through the same batched writer as everything else
-	   here. It writes --live-idle (1/0) onto :root, flipping to 1 after 3s with no pointermove
-	   anywhere on the page and back to 0 the instant one arrives. .logo-mark reads it as the
-	   trigger for logo.css's cursor-tracking container query, replacing an earlier, narrower
-	   --live-local-pointer-inside-based trigger that only fired when the cursor physically left
-	   the browser window, not when it just stopped moving (see logo.css for the full story).
-
-	   Deliberately not gated by --live-local-pointer-inside here: with no more pointermove events
-	   arriving once the cursor leaves the window, the idle timer already fires on its own within
-	   3s, so one signal covers both cases, at the cost of up to a 3s lag specifically on the
-	   window-leave case, which is an acceptable trade for a decorative idle state.
-
-	4. Registers a second custom source, logo-pointer, bound directly to the header's .logo-mark
-	   element (not hoisted — its own descendants, #Eye1Track/#Eye2Track/#MuzzleTrack/etc., are
-	   inside it, so they inherit its inline-written properties for free). This exists because the
-	   viewport-wide --live-local-pointer-*-ratio above goes practically flat once the cursor is
-	   near the mark itself: those ratios span the whole viewport, but the mark is maybe 70px
-	   across, so moving the real cursor all the way across the bear's own face barely nudges the
-	   ratio (measured: crossing the full face shifted the eye's translate by a few tenths of a
-	   pixel) — the eyes read as frozen exactly when the reader is closest to them, which is the
-	   worst place for this to be true. logo-pointer is the same rect-relative-ratio math as the
-	   built-in pointer-local plugin (clientX/Y against the bound element's own
-	   getBoundingClientRect(), unclamped, plus an "inside" boolean for whether the raw ratio
-	   landed in [0,1]) but under different property names (--live-logo-pointer-x/-y-ratio,
-	   --live-logo-pointer-inside) so it can coexist with, rather than shadow, the viewport-wide
-	   one — the built-in plugin's local names are hardcoded, so a second instance bound to the
-	   mark would otherwise overwrite the same inherited properties instead of adding a distinct
-	   pair logo.css can blend against. logo.css uses --live-logo-pointer-inside to blend this
-	   face-relative ratio in only while the cursor is actually over the mark, and the
-	   viewport-wide ratio otherwise — see logo.css for the blend itself.
-	*/}
+{/* Site-wide prop-for-that integration point, included once in Base.astro — see docs/logo.md. */}
+{/* FOOTGUN: never write a literal script tag in an .astro comment. Vite's dep-scan greps for it
+	with a naive regex, mistakes it for this file's real block, and dev startup dies parsing. */}
 <div
 	aria-hidden="true"
 	class="pointer-events-none fixed inset-0"
@@ -108,11 +36,9 @@
 	});
 	propsFor(["pointer-idle"]);
 
-	// Face-relative pointer ratio, bound to the logo mark itself rather than the viewport --
-	// see point 4 in the comment above for why the viewport-wide pointer-local isn't enough on
-	// its own. Mirrors pointer-local's own math (not reused directly: its local property names
-	// are hardcoded, so a second binding to the mark would overwrite rather than add to the
-	// inherited viewport-wide values logo.css also needs).
+	// Face-relative pointer ratio, bound to the mark itself -- deliberately NOT reusing
+	// pointer-local, whose local property names are hardcoded and would overwrite the
+	// viewport-wide values logo.css blends against. See docs/logo.md.
 	register({
 		key: "logo-pointer",
 		scope: "element",

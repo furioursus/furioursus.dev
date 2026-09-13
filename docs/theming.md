@@ -223,8 +223,9 @@ fixed` / `100lvh` layer and the float effect; they just get no mask. The seam th
   exactly one viewport tall, so page length can't shrink it and the guard protects nothing.
 - **The mask creates a stacking context, harmlessly.** `mix-blend-mode` still blends the masked
   result against its backdrop, and `opacity` already made it a stacking context anyway. No
-  `-webkit-` twin either; Safari has shipped unprefixed `mask-image` since 15.4 — the same baseline
-  `100lvh` already requires.
+  `-webkit-` twin is authored either; Safari has shipped unprefixed `mask-image` since 15.4 — the
+  same baseline `100lvh` already requires. Don't hand-add one: lightningcss emits a `-webkit-`
+  twin into the built CSS on its own, per browserslist.
 - It fades the **texture**, not `html`'s color. Fading `html` toward the grain's average instead
   would mean tracking an average that changes per theme, per breakpoint image, and per blend mode.
 

@@ -1,21 +1,7 @@
 ---
-// src/components/CardCollection.astro
-// The /mtg/ page's card collection — a searchable, filterable grid over a ManaBox-exported
-// Magic: The Gathering collection. Mirrors VinylCollection.astro's structure (custom element
-// colocated with its markup, driving search/filter/sort entirely client-side, no re-fetch) —
-// see docs/mtg.md for the wider feature and docs/discogs.md for the pattern this follows.
-//
-// Unlike VinylCollection.astro, cards are NOT pre-rendered into ~8,300 <li>s at build time.
-// That was tried first and was the actual perf problem: even with pagination toggling `hidden`
-// on all but one page's worth, every card's markup (a <lightbox-image>, its trigger <img>, and a
-// whole <dialog> with close/prev/next buttons — a dozen-plus elements per card) still had to be
-// parsed into the DOM and every <lightbox-image> upgraded (each running its own connectedCallback
-// query/listener setup, see Lightbox.astro) on every page load, regardless of what was hidden.
-// Instead: entries are serialized to a slim JSON payload (below) and the client renders only the
-// current page's ~30 cards as real DOM, discarding and rebuilding them on filter/sort/page
-// changes. This trades away the no-JS fallback this page used to have (a no-JS visitor previously
-// got the full unpaginated grid) — search/sort/pagination were already 100% JS-only anyway, so a
-// no-JS visitor now gets a <noscript> notice instead of a dead-control page.
+// The /mtg/ page's card collection — a searchable, filterable grid over a ManaBox export.
+// Cards are serialized to a slim JSON payload and rendered client-side a page at a time, NOT
+// pre-rendered; that shape is load-bearing for perf and costs the no-JS fallback. See docs/mtg.md.
 import type { CollectionSummary, EnrichedCard } from "astro-mtg-collection";
 import type { ClientCard } from "@/types";
 

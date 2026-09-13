@@ -32,6 +32,64 @@ quantity, the same way upstream Cactus hardcodes its own equivalent (`top-12`) r
 it. `-inset-x-4` on the nav cancels the padded row's own `px-4`, so the open dropdown spans
 edge-to-edge within that padding rather than sitting inset — also lifted directly from upstream.
 
+## The masthead logo
+
+The mark bleeds left out of the title column into a gutter reserved for it, and it is deliberately
+sized **bigger than that gutter** so it reads as a prominent mark rather than a small icon.
+
+`sm:ps-18` reserves the gutter, and it lives on the innermost flex row specifically — not on the
+`px-4 sm:px-8` wrapper above it. **Tailwind's `ps-*` replaces `px-*`'s start-side value rather than
+adding to it**, so stacking both on one element would make the logo's `-inset-s-18` pull-back cancel
+against the raw breakout edge instead of the content column's edge, landing the mark about 32px too
+far left of the `h1`. This mirrors the file's pre-sticky-header structure, where `ps-18` sat on
+`<header>` itself while `px-4 sm:px-8` lived one level up in `Base.astro` — the same two-level
+relationship, with both levels now inside the breakout shell.
+
+The mark is sized by height with an auto width, to keep the artwork's own aspect ratio rather than
+the odd one a fixed `w-*` would force — which means its rendered width is not a static number
+anything can subtract by hand. `sm:inset-s-18` + `sm:-translate-x-[calc(100%+0.5rem)]` sidesteps
+that: position it at the gutter's _far_ edge (flush with the title text's own start), then shift it
+left by its own width plus a fixed `0.5rem`. Its right edge lands a consistent half-rem before the
+title no matter what the width resolves to, and stays correct if the height ever changes again.
+`h-18` in particular leaves clear space above and below within the row's own 136px height at `sm:`
+(a 72px logo plus 2×32px from the `py-8` on the row above).
+
+Vertical centering (`sm:inset-y-0 sm:my-auto`) is a separate mechanism, and it is the reason the
+grayscale/hover-color utilities sit on the logo and title **individually** (via `group-hover`, scoped
+to the `<a>`) rather than on the `<a>` itself. **A CSS `filter` on an element makes it a containing
+block for absolutely positioned descendants regardless of its own `position`** — with the filter on
+the `<a>`, the logo centered against the `<a>`'s own ~32px title-text height instead of the full row
+height.
+
+## Tailwind v4 gotchas in this file
+
+- **`transform` and `transition` are written as arbitrary properties**
+  (`max-sm:transform-[scale(0.92)_translateY(-0.5rem)]`,
+  `max-sm:[transition:opacity_0.15s_ease-in,transform_0.15s_ease-in,display_0.15s_allow-discrete]`),
+  not `scale-*`/`translate-*`/`duration-*` utilities. Tailwind v4's `scale-*`/`translate-*` set the
+  **standalone** `scale`/`translate` CSS properties, not `transform` — so a hand-written
+  `transition: transform ...` list paired with them would be listing a property that never changes.
+- **`[@starting-style]:`**, Tailwind's arbitrary at-rule variant, rather than the dedicated
+  `starting:` shorthand, so this doesn't depend on which Tailwind 4.x minor added that shorthand.
+- **`divide-muted` is explicit, not incidental.** `divide-x`/`divide-y` add their border with no
+  color utility alongside, and `border-color`'s CSS default is `currentColor`. Tailwind puts the
+  divider on the _preceding_ link as a `border-inline-end`, so each separator would otherwise pick
+  up that same link's own `color` — visibly flashing the hover/active yellow along with whichever
+  link was hovered. Pinning it to `--color-muted` decouples the divider from any one link's state.
+- **`max-sm:`** is Tailwind's max-width variant, compiling to the same `@media (width < 40rem)`
+  range query this file used to hand-write. The desktop nav is unconditionally `sm:flex`, so none
+  of the display-toggling or animation applies there.
+
+## Why `menuLinks` drops `/` here
+
+The nav filters `link.path !== "/"`: the logo link immediately before the `<nav>` already goes home,
+so a "Home" item here would be an **adjacent link to the same destination**, which WAVE flags as a
+failure. The footer's copy of `menuLinks` keeps "Home" — it has no adjacent logo link.
+
+Nav links carry `hover:text-nav-hover active:text-nav-hover` alongside their normal `text-accent`.
+`--color-nav-hover` is a no-op in light mode and a vivid yellow in dark — see
+[theming](./theming.md#current-palette).
+
 ## Search and theme toggle
 
 `<Search />` and `<ThemeToggle />` are unconditionally inline in the masthead at every breakpoint,
