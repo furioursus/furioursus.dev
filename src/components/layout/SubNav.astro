@@ -37,19 +37,8 @@ const links = section ? [section, ...(section.children ?? [])] : [];
 )}
 
 <style>
-	/* FOOTGUN: `view-transition-name` values are global even from an Astro-scoped <style> — scoping
-		rewrites the selector, not the name. Both names here must stay unique across the document.
-		See docs/view-transitions.md. */
-	.subnav {
-		view-transition-name: section-subnav;
-	}
-
-	/* The active marker is a real box rather than `text-decoration`, because only a box can carry a
-		`view-transition-name` and slide between tabs. Exactly one link per page is `aria-current`,
-		so the name stays unique and the browser morphs the bar from the old position to the new.
-		Its ::view-transition-* rules live in styles/components/view-transitions.css — Astro rewrites
-		selectors in this scoped block, and those pseudos are children of the document root, not of
-		anything this component owns. */
+	/* The active marker is a bar rather than `text-decoration` so it can sit flush under the text
+		regardless of descenders, and so its colour is independent of the link's own. */
 	.subnav a[aria-current="page"]::after {
 		background: var(--color-accent);
 		block-size: 2px;
@@ -57,6 +46,5 @@ const links = section ? [section, ...(section.children ?? [])] : [];
 		inset-block-end: 0;
 		inset-inline: 1rem;
 		position: absolute;
-		view-transition-name: subnav-indicator;
 	}
 </style>

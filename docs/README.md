@@ -22,9 +22,6 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   cursor tracking, and its static edge-distortion filter.
 - [Navigation](./navigation.md) — the static (non-sticky) header and its plain mobile dropdown,
   the nested `menuLinks` / About-section subnav, how the footer mirrors the header, and why the sticky/dialog-based versions that came before the current header were reverted.
-- [View transitions](./view-transitions.md) — native cross-document transitions that make the About
-  section read as one page: what gets a `view-transition-name`, what must not, and why not Astro's
-  `<ClientRouter />`.
 - [Theming](./theming.md) — the dark/light mode system and design tokens.
 - [Search](./search.md) — Pagefind static search integration.
 - [Webmentions](./webmentions.md) — likes/reposts/replies pulled from webmention.io.
