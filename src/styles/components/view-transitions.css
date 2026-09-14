@@ -1,0 +1,80 @@
+/* Cross-document view transitions — see docs/view-transitions.md.
+   The `@view-transition { navigation: auto }` switch itself lives in global.css's base layer;
+   this file only shapes what the transition does once it runs. */
+
+/* FOOTGUN: every `view-transition-name` below must stay unique *per document*. A duplicate name
+   makes the browser skip the whole transition, silently — not just that element. This is why the
+   page `<h1>` is deliberately unnamed: `.title` is reused by Note.astro and CardCollection.astro,
+   so /about/music/ carries 73 of them. */
+
+/* Persistent chrome. Named elements are lifted out of the `root` snapshot, so these are the two
+   things that do NOT inherit root's cross-fade and drift — they hold still across a navigation,
+   which is the whole trick behind the About section reading as one page.
+   FOOTGUN: the footer is deliberately absent. It sits at `mt-auto` in a `min-h-dvh` column, so its
+   y-position depends on content height (~700px on /about/, ~9000px on /about/mtg/). Naming it
+   would morph between those two positions and streak it down the viewport. */
+#main-header {
+	view-transition-name: site-header;
+}
+
+/* FOOTGUN: zeroing only `::view-transition-group(...)` here would NOT stop the header animating —
+   the group drives geometry, while a separate default 250ms cross-fade runs on the old/new image
+   pair. Both need `animation: none`, or the header visibly fades on every navigation.
+   `mix-blend-mode: normal` goes with it: the UA cross-fade relies on `plus-lighter`, which blows
+   out to white once two opaque snapshots are drawn over each other without it. The header is
+   pixel-identical across pages, so drawing the new one statically is all that's wanted. */
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+/* The subnav's sliding active marker. `SubNav.astro` names the bar; the travel is shaped here,
+   because Astro rewrites selectors inside its scoped <style> and these pseudos belong to the
+   document root rather than to the component. */
+::view-transition-group(subnav-indicator) {
+	animation-duration: 320ms;
+	animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	/* Movement is the vestibular trigger, not opacity — the bar snaps, the page still cross-fades. */
+	::view-transition-group(subnav-indicator) {
+		animation-duration: 0s;
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	::view-transition-old(root) {
+		animation: vt-fade-out 120ms cubic-bezier(0.4, 0, 1, 1) both;
+	}
+
+	::view-transition-new(root) {
+		animation:
+			vt-fade-in 260ms cubic-bezier(0, 0, 0.2, 1) 40ms both,
+			vt-rise 260ms cubic-bezier(0.16, 1, 0.3, 1) 40ms both;
+	}
+
+	/* Small on purpose: the root snapshot includes the footer, whose y-position varies by page, so
+	   any larger travel here reads as the footer sliding rather than the content settling. */
+	@keyframes vt-rise {
+		from {
+			translate: 0 6px;
+		}
+		to {
+			translate: 0 0;
+		}
+	}
+}
+
+@keyframes vt-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes vt-fade-in {
+	from {
+		opacity: 0;
+	}
+}
