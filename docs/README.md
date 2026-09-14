@@ -40,6 +40,8 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
 - [Deploy notifications](./deploy-notifications.md) — a local Netlify Build Plugin that posts
   deploy success/failure to Telegram.
 - [Analytics](./analytics.md) — GoatCounter pageview tracking, on only when `GOATCOUNTER_CODE` is set.
+- [Dev server over Tailscale](./dev-server.md) — `npm run dev:remote`: MagicDNS host detection, a
+  QR code for the phone, and the vite `allowedHosts` entry that makes it actually load.
 
 ## Conventions worth knowing before you edit any of the above
 

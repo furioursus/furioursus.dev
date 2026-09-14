@@ -159,6 +159,13 @@ export default defineConfig({
 	},
 	vite: {
 		plugins: [tailwind(), rawFonts([".ttf", ".woff", ".woff2"])],
+		server: {
+			// Vite rejects any request whose Host header isn't in this list, so reaching the dev
+			// server by its tailnet name needs the name allowed here or it serves a blank error
+			// page. `npm run dev:remote` sets TAILSCALE_HOST; the `.ts.net` fallback keeps a bare
+			// `astro dev --host` working too. See docs/dev-server.md.
+			allowedHosts: [process.env.TAILSCALE_HOST ?? ".ts.net"],
+		},
 	},
 	env: {
 		schema: {
