@@ -8,6 +8,7 @@ import {
 import LastfmListeningStats from "@/components/LastfmListeningStats.astro";
 import LastfmNowPlaying from "@/components/LastfmNowPlaying.astro";
 import SubNav from "@/components/layout/SubNav.astro";
+import PageTitle from "@/components/PageTitle.astro";
 import VinylCollection from "@/components/VinylCollection.astro";
 import PageLayout from "@/layouts/Base.astro";
 import { loadMusicStats } from "@/utils/lastfm";
@@ -27,7 +28,7 @@ const meta = {
 ---
 
 <PageLayout meta={meta}>
-	<h1 class="title mb-6">Music</h1>
+	<PageTitle>Music</PageTitle>
 	<SubNav />
 
 	{musicStats.missingConfig && (

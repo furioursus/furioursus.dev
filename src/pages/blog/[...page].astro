@@ -2,6 +2,7 @@
 import type { CollectionEntry } from "astro:content";
 import type { GetStaticPaths, Page } from "astro";
 import { Icon } from "astro-icon/components";
+import PinnedPosts from "@/components/blog/PinnedPosts.astro";
 import PostPreview from "@/components/blog/PostPreview.astro";
 import Pagination from "@/components/Paginator.astro";
 import { getAllPosts, getUniqueTags, groupPostsByYear } from "@/data/blog";
@@ -53,18 +54,7 @@ const descYearKeys = Object.keys(groupedByYear).sort((a, b) => +b - +a);
 	</div>
 	<div class="grid sm:grid-cols-[3fr_1fr] sm:gap-x-8 sm:gap-y-16">
 		<div>
-			{pinnedPosts.length > 0 && (
-				<section class="mb-16">
-					<h2 class="title mb-6 text-xl">Pinned Posts</h2>
-					<ul class="space-y-4" role="list">
-						{pinnedPosts.map((p) => (
-							<li class="sm:grid-cols-auto-1fr grid gap-1">
-								<PostPreview post={p} />
-							</li>
-						))}
-					</ul>
-				</section>
-			)}
+			<PinnedPosts posts={pinnedPosts} class="mb-16" />
 			{descYearKeys.map((yearKey) => (
 				<section class="mb-16">
 					<h2 id={`year-${yearKey}`} class="title text-lg">

@@ -2,6 +2,7 @@
 import aboutPhoto from "@/assets/images/about-photo.jpg";
 import LightboxImage from "@/components/LightboxImage.astro";
 import SubNav from "@/components/layout/SubNav.astro";
+import PageTitle from "@/components/PageTitle.astro";
 import PageLayout from "@/layouts/Base.astro";
 
 const meta = {
@@ -11,7 +12,7 @@ const meta = {
 ---
 
 <PageLayout meta={meta}>
-	<h1 class="title mb-6">About Me</h1>
+	<PageTitle>About Me</PageTitle>
 	<SubNav />
 	<div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-8">
 		<LightboxImage
