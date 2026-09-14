@@ -15,7 +15,7 @@ are the textbook case for `immutable`.
 Under Netlify's default, the browser instead had to send a conditional request for each of them on
 **every single navigation** and wait for a `304 Not Modified` before it could use the copy already
 sitting in its cache. Per page load that meant a round trip for the 192KB stylesheet, both woff2
-faces (129KB + 104KB), and the ~400KB grain texture.
+faces (129KB + 104KB), and the grain texture (394KB at the time, 252KB since).
 
 What that looked like, per engine:
 
@@ -65,11 +65,14 @@ curl -s https://www.furioursus.dev/ | grep -oE '/_astro/fonts/[^)"]*' | sort -u
 The file lives in `public/`, so it is copied verbatim into `dist/` at build time — same mechanism as
 `public/_redirects`, see [navigation](./navigation.md).
 
-## Still outstanding: the grain is heavy
+## The grain was heavy, and has been cut
 
-Caching stops the texture being re-fetched, but a **first** visit still pays ~400KB for the desktop
-grain tier (`grain-*-1600w.webp`), and a cold cache will still show one flash. A noise texture does
-not intrinsically need to be a full-bleed 1600px image — a small seamless tile with
-`background-repeat`, or a lower-quality re-encode (noise hides compression artefacts extremely well),
-would cut it by an order of magnitude. That is a design decision rather than a bug fix, so it has
-been left alone; see [theming](./theming.md) for how the tiers are chosen.
+Caching stops the texture being re-fetched, but a **first** visit still pays for it in full, and the
+desktop tier was 394 KB. It has since been re-encoded and re-cropped to 1600x900, bringing it to
+252 KB with no visible quality loss — see [theming](./theming.md) for the canvas change and its
+effect on `cover`.
+
+Further reduction is possible but is a design decision rather than a bug fix: a small seamless tile
+with `background-repeat` would be an order of magnitude smaller again, at the cost of the
+directional toner-drag structure that `cover` on one large image exists to preserve. `theming.md`
+covers why that trade was made the way it was.
