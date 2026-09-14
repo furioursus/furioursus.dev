@@ -117,27 +117,20 @@
 			   above isn't needed here. See the nav-link comment in Header.astro for where this is
 			   actually used. */
 			--color-nav-hover: oklch(90% 0.18 95);
-			/* See the light-mode grain tokens below — swapped here rather than just tinted, since
-			   `multiply` on an already-near-black bg is a no-op. This inverted asset (light marks
-			   on dark) plus `screen` is what actually shows up in dark mode. Same three
-			   breakpoint-sized tiers as the light-mode image below, for the same reason — see that
-			   comment.
-			   --grain-opacity is halved here, and it has to be theme-swapped alongside the other
-			   two: a single shared alpha can't serve both. Tuned low enough for dark, the tooth was
-			   too faint to read in light; tuned up until light read properly, dark looked blown
-			   out. Light speckles on a near-black ground are simply more visually assertive than
-			   dark speckles on a near-white one. The ratio is empirical — set by eye, not derived. */
-			--grain-image: url("../assets/images/grain-dark-960w.webp");
+			/* Dark mode inverts the one grain asset rather than loading a second set of files. There
+			   used to be a parallel dark tier for every light one; measured pixel for pixel, each was
+			   its counterpart inverted (mean delta 2.8-5.3 of 255, complementary mean levels), so the
+			   second set was three files earning nothing. `multiply` on an already-near-black bg is a
+			   no-op, which is why the marks have to be light-on-dark here and the blend has to become
+			   `screen`.
+			   --grain-opacity is halved here, and has to be theme-swapped alongside the blend: a single
+			   shared alpha can't serve both. Tuned low enough for dark, the tooth was too faint to read
+			   in light; tuned up until light read properly, dark looked blown out. Light speckles on a
+			   near-black ground are simply more visually assertive than dark speckles on a near-white
+			   one. The ratio is empirical — set by eye, not derived. */
+			--grain-filter: invert(1);
 			--grain-blend: screen;
 			--grain-opacity: 0.125;
-
-			@media (max-width: 39.9375rem) and (orientation: portrait) {
-				--grain-image: url("../assets/images/grain-dark-portrait.webp");
-			}
-
-			@media (min-width: 40rem) {
-				--grain-image: url("../assets/images/grain-dark-1600w.webp");
-			}
 		}
 
 		/* Grain tiers: 960w under 40rem, 1600w at 40rem and up, plus a rotated portrait crop for
@@ -145,17 +138,20 @@
 		   deliberately one px below the `min-width: 40rem` tier so the two can never both match —
 		   change one bound and you must change the other. Media-query-scoped custom properties are
 		   the only mechanism available here: this is a background-image on a pseudo-element, so
-		   there is no `srcset` to use. Why these tiers and not others: docs/theming.md. */
-		--grain-image: url("../assets/images/grain-light-960w.webp");
+		   there is no `srcset` to use. The files are theme-neutral — dark mode inverts this
+		   same asset, see the [data-theme="dark"] block above. Why these tiers and not others, and
+		   why density switching was measured and rejected: docs/theming.md. */
+		--grain-image: url("../assets/images/grain-960w.webp");
+		--grain-filter: none;
 		--grain-blend: multiply;
 		--grain-opacity: 0.25;
 
 		@media (max-width: 39.9375rem) and (orientation: portrait) {
-			--grain-image: url("../assets/images/grain-light-portrait.webp");
+			--grain-image: url("../assets/images/grain-portrait.webp");
 		}
 
 		@media (min-width: 40rem) {
-			--grain-image: url("../assets/images/grain-light-1600w.webp");
+			--grain-image: url("../assets/images/grain-1600w.webp");
 		}
 
 		--color-mode-transition-duration: 300ms;
@@ -188,6 +184,10 @@
 		pointer-events: none;
 		background-image: var(--grain-image);
 		background-size: cover;
+		/* FOOTGUN: a CSS `filter` makes an element a containing block for absolutely positioned
+		   descendants — the same trap documented in Header.astro. Harmless while this layer stays
+		   empty; nest anything inside it and check that first. */
+		filter: var(--grain-filter);
 		mix-blend-mode: var(--grain-blend);
 		opacity: var(--grain-opacity);
 		/* Edge fade so the texture's tint dissolves toward the device chrome instead of meeting
