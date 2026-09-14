@@ -16,7 +16,7 @@
 @property --color-global-bg {
 	syntax: "<color>";
 	inherits: true;
-	initial-value: hsla(0, 15%, 94%, 1);
+	initial-value: hsla(10, 12%, 89.8%, 1);
 }
 @property --color-global-text {
 	syntax: "<color>";
@@ -63,7 +63,10 @@
    hot pink + acid green as the two accent colors in both themes instead of a naive per-theme
    invert — see docs/theming.md and the furioursus-dev-color-texture-redesign memory. */
 @theme {
-	--color-global-bg: hsla(0, 15%, 94%, 1);
+	/* Not a hand-picked paper white: this is paper-light.webp's own average color, so the flat
+	   fill and the texture over it are the same tone. Re-derive with `npm run paper:average`
+	   whenever the tile changes. */
+	--color-global-bg: hsla(10, 12%, 89.8%, 1);
 	--color-global-text: hsla(273, 16%, 11%, 1);
 	/* Purple-leaning grey (not the old warm brown) so the muted tone reads as chosen alongside
 	   the pink/green accents rather than a leftover neutral. 34% clears WCAG AA's 4.5:1 against
@@ -84,10 +87,20 @@
 		color-scheme: light dark;
 		accent-color: var(--color-accent);
 		scrollbar-gutter: stable;
-		/* FOOTGUN: keep this in sync with --color-global-bg. iOS Safari's rubber-band bounce
-		   scrolls past `body` entirely and reveals `html`'s own background; without this it flashes
-		   the browser's default white. docs/theming.md covers why the texture can't cover it. */
+		/* FOOTGUN: duplicated by hand in BaseHead.astro's theme-color meta and ThemeProvider.astro's
+		   themeColors map — change one, change all three. It has to be right because iOS Safari's
+		   rubber-band bounce scrolls past `body` entirely and reveals `html`'s own background. */
 		background-color: var(--color-global-bg);
+		/* Paper and dot grid live on the ROOT element, so they paint across the whole canvas —
+		   including the rubber-band overscroll region, which a viewport-pinned layer can never reach.
+		   That was the visible seam above the footer on iOS. This only works because both images tile:
+		   the root's background positioning area is still its own box, and `repeat` is what carries
+		   them past it. See docs/theming.md.
+		   FOOTGUN: `body` must stay background-transparent (Base.astro dropped its `bg-global-bg`) or
+		   it paints over all of this everywhere except the overscroll sliver — i.e. exactly inverted. */
+		background-image: var(--dots-image), var(--paper-image);
+		background-repeat: repeat, repeat;
+		background-size: var(--dots-size), auto;
 		/* FOOTGUN: `clip`, not `hidden`. iOS Safari scrolls <html>, so body's overflow-x alone
 		   can't stop the drag -- but `hidden` on both makes each its own scroll container and the
 		   momentum thread stalls, an intermittent mid-scroll freeze. See docs/lightbox.md. */
@@ -99,7 +112,7 @@
 
 		&[data-theme="dark"] {
 			color-scheme: dark;
-			--color-global-bg: hsla(0, 0%, 6%, 1);
+			--color-global-bg: hsla(0, 0%, 7.8%, 1);
 			--color-global-text: hsla(49, 31%, 93%, 1);
 			/* Lighter, not darker, since this sits on a near-black bg instead of a near-white
 			   one — same purple-grey hue family as the light-mode muted above, tuned to its own
@@ -117,42 +130,22 @@
 			   above isn't needed here. See the nav-link comment in Header.astro for where this is
 			   actually used. */
 			--color-nav-hover: oklch(90% 0.18 95);
-			/* Dark mode inverts the one grain asset rather than loading a second set of files. There
-			   used to be a parallel dark tier for every light one; measured pixel for pixel, each was
-			   its counterpart inverted (mean delta 2.8-5.3 of 255, complementary mean levels), so the
-			   second set was three files earning nothing. `multiply` on an already-near-black bg is a
-			   no-op, which is why the marks have to be light-on-dark here and the blend has to become
-			   `screen`.
-			   --grain-opacity is halved here, and has to be theme-swapped alongside the blend: a single
-			   shared alpha can't serve both. Tuned low enough for dark, the tooth was too faint to read
-			   in light; tuned up until light read properly, dark looked blown out. Light speckles on a
-			   near-black ground are simply more visually assertive than dark speckles on a near-white
-			   one. The ratio is empirical — set by eye, not derived. */
-			--grain-filter: invert(1);
-			--grain-blend: screen;
-			--grain-opacity: 0.172;
-			--dots-opacity: 0.35;
+			/* Dark's paper tile is the same grain inverted and composited over the dark page color, and
+			   its dot SVG carries the light fill. Nothing swaps at runtime beyond these two URLs. */
+			--paper-image: url("../assets/images/paper-dark.webp");
+			--dots-image: url("../assets/images/grid-dots-dark.svg");
 		}
 
-		/* One seamless tile at its native size, repeated — not three `cover`-fitted width tiers.
-		   30 KB against 252 KB for the 1600w tier it replaces, and the grain's scale no longer
-		   changes with the viewport the way a `cover` fit made it. Measured seams are 1.19x/1.24x a
-		   typical interior neighbour difference, i.e. no visible edge. The tile's range is 127-250
-		   where the cover asset ran 0-255, so its marks are shallower and the opacities below are
-		   raised to match the old mean darkening — tune by eye, these are a starting point.
-		   See docs/theming.md. */
-		--grain-image: url("../assets/images/grain-tiled.webp");
-		--grain-filter: none;
-		--grain-blend: multiply;
-		--grain-opacity: 0.345;
-
-		/* Dot-grid overlay. Drawn as a MASK over a solid color rather than as a black SVG that dark
-		   mode inverts: the color is then an ordinary token, so the dots can be retinted (accent pink,
-		   say) without touching the asset, and no filter is involved. The SVG's viewBox is 120x120
-		   with dots on a 24px pitch, so --dots-size is what sets that pitch on screen. */
-		--dots-color: var(--color-global-text);
+		/* Both textures are BAKED: the paper tiles already contain the page color with the grain
+		   composited in at the intensity that used to come from mix-blend-mode + opacity, and the dot
+		   SVGs carry their own fill color and alpha. Background layers have no per-layer opacity, no
+		   filter and no mask, so anything that used to be a live knob now lives in the asset.
+		   Regenerating them: docs/theming.md carries the exact compositing maths. */
+		--paper-image: url("../assets/images/paper-light.webp");
+		--dots-image: url("../assets/images/grid-dots-light.svg");
+		/* The SVG's viewBox is 120x120 with dots on a 24px pitch, so this is what sets that pitch
+		   on screen. Change it and the dots scale; the grain tile is unaffected (`auto`). */
 		--dots-size: 120px 120px;
-		--dots-opacity: 0.5;
 
 		--color-mode-transition-duration: 300ms;
 		--color-mode-transition-easing: ease-in-out;
@@ -166,68 +159,6 @@
 			--color-accent-2 var(--color-mode-transition-duration) var(--color-mode-transition-easing),
 			--color-quote var(--color-mode-transition-duration) var(--color-mode-transition-easing),
 			--color-nav-hover var(--color-mode-transition-duration) var(--color-mode-transition-easing);
-	}
-
-	/* Ambient photocopy-grain texture behind all page content (z-index: -1), so it only shows
-	   through gaps in the page background and never over anything readable. Sizing, the two
-	   earlier versions it replaced, and the pointer-events/<dialog> notes: docs/theming.md.
-	   FOOTGUN: requires `isolate` on body (Base.astro). Drop it and body is no longer a stacking
-	   context, so this negative z-index escapes and paints behind <html>'s background instead. */
-
-	/* Dot-grid overlay, sitting on the grain layer below. Same fixed, viewport-sized, behind-content
-	   geometry as body::after — and the same FOOTGUN applies: it needs `isolate` on body, or the
-	   negative z-index escapes body's stacking context and paints behind <html>'s background. */
-	body::before {
-		content: "";
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 100lvh;
-		z-index: -1;
-		pointer-events: none;
-		background-color: var(--dots-color);
-		mask-image: url("../assets/images/grid-dots.svg");
-		mask-size: var(--dots-size);
-		mask-repeat: repeat;
-		opacity: var(--dots-opacity);
-	}
-	body::after {
-		content: "";
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 100lvh;
-		z-index: -1;
-		pointer-events: none;
-		background-image: var(--grain-image);
-		background-repeat: repeat;
-		/* FOOTGUN: a CSS `filter` makes an element a containing block for absolutely positioned
-		   descendants — the same trap documented in Header.astro. Harmless while this layer stays
-		   empty; nest anything inside it and check that first. */
-		filter: var(--grain-filter);
-		mix-blend-mode: var(--grain-blend);
-		opacity: var(--grain-opacity);
-		/* Edge fade so the texture's tint dissolves toward the device chrome instead of meeting
-		   the flat bg on a line. 6rem ramp; masked only when the viewport's short axis is <= 30rem
-		   (phone-shaped), along whichever axis is longer. See docs/theming.md. */
-		--grain-edge-fade: 6rem;
-
-		@media (max-width: 30rem), (max-height: 30rem) {
-			--grain-fade-axis: to bottom;
-			mask-image: linear-gradient(
-				var(--grain-fade-axis),
-				transparent 0,
-				#000 var(--grain-edge-fade),
-				#000 calc(100% - var(--grain-edge-fade)),
-				transparent 100%
-			);
-
-			@media (orientation: landscape) {
-				--grain-fade-axis: to right;
-			}
-		}
 	}
 
 	:target {

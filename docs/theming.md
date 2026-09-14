@@ -30,8 +30,9 @@ Dark mode is implemented as a selector variant, not Tailwind's default media-que
 ### Current palette
 
 Queer-punk direction, SILENCE=DEATH-inspired: dark mode is near-black with warm off-white ink;
-light mode is a bleached xerox-paper ground (a cool pink-grey, not a flat white/cream) with
-near-black ink. Both themes share the same two accent hues rather than mirroring one theme's
+light mode is a bleached xerox-paper ground (a faintly warm pink-grey, not a flat white/cream) with
+near-black ink — and that ground is no longer picked by hand, it is the paper texture's own average
+color (see below). Both themes share the same two accent hues rather than mirroring one theme's
 values into the other — `--color-accent` is hot pink (headings-as-links, hover states, focus
 rings) and `--color-link` / `--color-quote` share an acid green (hyperlink text, blockquote
 text). Each hue is retuned per background, not reused verbatim: a pink/green saturated enough to
@@ -49,301 +50,252 @@ specific contrast ratio the way `--color-muted` is — at this lightness/chroma 
 dark-mode near-black bg, contrast clears WCAG AAA (~14:1) by such a wide margin that hue-specific
 tuning wasn't necessary.
 
-### Ambient grain texture
+### The flat background color is derived, not chosen
 
-`body::after` in `global.css` is a `pointer-events: none` layer that gives the whole site a quiet
-photocopy-grain tooth — one of the two texture "roles" from the queer-punk direction above (the
-other, riso color-misregistration on specific elements like a logo or pull-quote, is a
-deliberately separate, not-yet-built "moments" treatment — see the
-[[furioursus-dev-color-texture-redesign]] memory for that split and why it's two techniques, not
-one).
+`--color-global-bg` is **not a hand-picked paper white**. It is each paper tile's own average
+color, so the flat fill and the texture painted over it are the same tone:
 
-It sits at `z-index: -1`, behind all page content, blending only with `body`'s own flat
-background color rather than with whatever text/images happen to be on screen — it shows through the
-gaps (margins, padding, any exposed page background) instead of crawling visibly across content as
-the page scrolls. This requires `isolate` on `<body>` (`Base.astro`) so the negative z-index stays
-contained to body's own stacking context instead of escaping behind `<html>` entirely. An earlier
-version painted this _above_ content at `z-index: 100` to clear other components' own stacking
-z-indexes (Header's nav dropdown `z-50`, BlogPost's back-to-top button `z-90`) — that's no longer
-relevant now that the layer is behind everything, not competing to be on top of it.
+| theme | tile               | `--color-global-bg`                   |
+| ----- | ------------------ | ------------------------------------- |
+| light | `paper-light.webp` | `hsla(10, 12%, 89.8%, 1)` — `#e8e3e2` |
+| dark  | `paper-dark.webp`  | `hsla(0, 0%, 7.8%, 1)` — `#141414`    |
 
-#### Why `position: fixed` with an explicit `100lvh`
+That matters in the two places the flat color shows on its own: before the tile has decoded, and
+on any surface using `bg-global-bg` that sits _over_ the textured page (the mobile nav panel, the
+lightbox controls, the missing-artwork placeholders in the record/card grids). Pick the color by
+eye instead and those panels read as slightly brighter patches floating on the texture; derive it
+and they sit flush.
 
-Two earlier versions failed in opposite directions, and the sizing is what reconciles them.
+Regenerate it after changing a tile — don't retype it from memory:
 
-**Version 1 — `position: fixed` with a negative `inset` overscan.** On a real device (iPhone 17 sim,
-iOS 26.5) it failed to reach the true bottom edge on short pages, confirmed by swapping in a plain
-`body` background with no positioning tricks, which _did_ reach the edge reliably. A bare `inset`
-sizes the element against whatever Safari currently calls the viewport, and that _shrinks_ while the
-dynamic toolbar is expanded; fixed elements have a documented history of not keeping pace with that
-toolbar's show/hide animation in real time.
+```bash
+npm run paper:average
+```
 
-**Version 2 — `position: absolute; inset: 0`.** Anchoring to `body`'s own box fixed coverage by not
-depending on the viewport at all, but it makes the element **document-tall**, so `background-size:
-cover` has to cover the entire page height. On a long post that scales the image up enormously and
-crops it to a narrow slice — uniform upscale, not distortion, but the visible result is soft cloudy
-mush instead of sharp toner grain. `background-attachment: fixed` was meant to rescue that by sizing
-the image against the viewport instead, and it does on desktop, but **iOS Safari has never reliably
-supported it**. Verified on the simulator by swapping the image for a hard-striped repeating
-gradient: after a swipe that moved content ~958px the stripes had moved ~220px, so the layer was
-neither pinned (0) nor scrolling with the page.
+[`scripts/paper-average.mjs`](../scripts/paper-average.mjs) prints both a hex and an hsla literal
+for each tile. Paste the result into **all three** hand-synced locations:
 
-**Current — `position: fixed` sized `height: 100lvh`.** `lvh` is the _large_ viewport height: the
-viewport with the dynamic toolbar retracted, the largest it can ever be, and a value that **does not
-change** as the toolbar shows and hides (`dvh` is the live one that jitters; `svh` is the smallest).
-Sizing to the maximum means the element can never come up short the way version 1 did — while the
-toolbar is expanded it simply overflows behind it, harmlessly. And because the element is one screen
-tall rather than document-tall, `cover` only ever covers one screen, so version 2's upscaling is gone
-with no dependence on `background-attachment` at all. That property is removed entirely.
+- `--color-global-bg` in `global.css` (the `@property` initial-value, the `@theme` block, and the
+  `[data-theme="dark"]` override)
+- the `theme-color` meta in `BaseHead.astro` (light only — the pre-JS fallback)
+- the `themeColors` map in `ThemeProvider.astro` (both themes)
 
-Verified on device after the change: with stripes armed, they sat at screenshot-y ≈ 155 / 520 / 885 /
-1250 / 1615 before a swipe and at exactly the same positions after, while content moved ~1650px —
-zero drift. A short page's bottom edge with the toolbar collapsed is covered cleanly.
+Two gotchas worth knowing:
 
-Two gotchas worth keeping in mind:
+- **The average is taken in linear light, not over the raw bytes.** Optical mixing is linear, so
+  linear-light averaging is what the tile actually blurs to; a mean of the gamma-encoded sRGB bytes
+  is the classic gamma-incorrect-downscale mistake. On the current low-contrast tiles both methods
+  agree to the same byte, which makes this an easy thing to "simplify" into a bug — it stops being
+  true the moment a tile's range widens.
+- **The printed hsla is derived from the rounded bytes, not the float average.** Off the floats the
+  two forms disagree by a byte and the hsla no longer round-trips to the hex.
 
-- **`left`/`right` insets, not `width: 100lvw`.** Viewport _width_ units ignore the scrollbar, and
-  `scrollbar-gutter: stable` on `html` guarantees there is one, so `100lvw` overhangs by the
-  scrollbar's width on desktop. Insets resolve against the viewport's real content box.
-- **Nothing in the ancestor chain may create a containing block for `fixed`.** A `transform`,
-  `filter`, `backdrop-filter`, `perspective`, `contain`, or `will-change` on `html` or `body` would
-  silently re-anchor this layer to that element and put you straight back to the version 2 behaviour.
-  Both are currently clean; check before adding any of them.
+Moving the background also moves every contrast ratio that was tuned against it. Both `--color-muted`
+values still clear WCAG AA on the derived colors — 6.16:1 light, 6.45:1 dark, down from 6.76 and
+6.71 — and neither cleared AAA before the change either, so no grade was lost. Re-check these if you
+move the tiles much further.
 
-## Sizing: a seamless tile, repeated
+## The paper + dot texture
 
-The layer uses **one seamless tile (`grain-tiled.webp`, 775x310, 30 KB) at its native size with
-`background-repeat: repeat`**. The grain's scale is therefore fixed in CSS pixels and no longer
-changes with the viewport, and one file serves every screen.
+Two tiling background layers on the **root element**, giving the site a photocopy-grain tooth under
+a fine dot grid. This is one of the two texture "roles" from the queer-punk direction above; the
+other — riso color-misregistration on specific elements like a logo or pull-quote — is a
+deliberately separate, not-yet-built "moments" treatment. See the
+[[furioursus-dev-color-texture-redesign]] memory for that split and why it is two techniques rather
+than one.
 
-Seams were measured rather than eyeballed: the wrap from the last column back to the first differs
-from a typical interior neighbour by **1.19x** vertically and **1.24x** horizontally. A ratio near
-1.0 is seamless and anything past ~1.5 reads as an edge, so this tiles invisibly.
-
-The tile's luma range is **127-250**, where the `cover` assets ran 0-255. Its marks are shallower, so
-`--grain-opacity` is raised to compensate — 0.345 light, 0.172 dark, derived to match the previous
-mean darkening exactly, then left for the eye to confirm. It cannot reproduce the very deepest marks
-of the old asset at any opacity; that is the trade.
-
-### The history here is a loop, and worth knowing
-
-This layer has now been a tile, then a large `cover` image, then a tile again. The middle era is
-still instructive, because it is where the measurements live:
-
-- A `cover` image was chosen over a tile because **a small seamless crop has to crop away visible
-  directional structure** — this texture's source has real toner-drag banding — to avoid an obvious
-  repeat, where a full photo-scale image keeps it. The current tile is authored to be seamless rather
-  than cropped from the master, which is what makes it work where the earlier crop did not.
-- `cover` then reintroduced a bandwidth problem a tile never had: the same full-res image to a 380px
-  phone as to a 2560px desktop. That needed **three tiers** (`grain-960w`, `grain-1600w`, and a
-  rotated `grain-portrait` crop for tall phones) swapped by `min-width`/`orientation` media queries.
-  All of that is now gone — a tile does not need tiers.
-- A fourth, full-res tier (1920w, 1058 KB) was deleted before that. It was **88% of a desktop page
-  load on its own**, against 138 KB for every other asset combined.
-- Every other avenue for shrinking the `cover` asset was measured and failed: AVIF is larger than
-  WebP at every quality here, posterising is larger still (WebP is a DCT codec — quantising creates
-  hard edges), the source is already pure grayscale so there is no chroma to strip, and serving a
-  downscaled file to 1x displays averages the fine speckle away in a way upscaling cannot recover.
-  Range compression plus opacity compensation was the only one that worked at all, and only modestly.
-
-The upshot: **30 KB against 252 KB, with three tier files and their media queries removed.** The old
-`grain-960w`/`grain-1600w`/`grain-portrait`/`grain-master` files are still in `src/assets/` but
-nothing references them, so they no longer ship.
-
-## The dot-grid overlay
-
-`body::before` lays a fine dot grid over the grain, from `grid-dots.svg` — a 120x120 viewBox with
-dots on a 24px pitch. `--dots-size` sets that pitch on screen, so `120px 120px` gives the authored
-24px spacing.
-
-It is drawn as a **`mask-image` over a solid `background-color`**, not as a black SVG that dark mode
-inverts. That keeps the dot color an ordinary token (`--dots-color`, defaulting to
-`--color-global-text`), so the grid can be retinted — to the accent pink, say — without touching the
-asset and without a filter in the stack. Vite inlines the SVG as a `data:` URI at build time, so it
-costs no extra request.
-
-The dots are sub-pixel at the authored pitch (0.96px at `120px` sizing), which makes opacity the
-sensitive knob rather than size: at `0.22` they vanish entirely, at `0.85` they compete with body
-text. The shipped values are **0.5 light / 0.35 dark**, set by eye against both themes.
-
-FOOTGUN: `body::before` carries the same `z-index: -1` requirement as `body::after`, so it depends on
-`isolate` on `body` in exactly the same way — drop that and this layer escapes body's stacking
-context and paints behind `<html>`'s background.
-
-`<html>` also carries its own `background-color: var(--color-global-bg)` now, matching whichever
-theme is active — without the old `fixed` layer's generous overscan margin, iOS Safari's
-rubber-band bounce past the very top/bottom of the page would otherwise reveal a stark white flash
-(the browser's default canvas color) in that sliver rather than the correct flat theme color. The
-grain texture itself doesn't extend into that sliver either way — it's pinned to the viewport, and
-bounce scrolls past `body`'s actual edges entirely — so this is only ever a flat color there, never
-textured.
-
-#### The edge fade, pinned to the chrome
-
-Matching the color isn't quite enough on its own, because the texture tints whatever it covers
-slightly off that flat token: lighter under `screen` in dark mode, darker under `multiply` in light.
-So an abrupt edge reads as a tonal seam against the untinted flat color beyond it.
-
-The texture layer carries a `mask-image` that ramps its own alpha to zero over the first and last
-`--grain-edge-fade` of its box. Because the element is `position: fixed`, that box _is_ the viewport
-— so the texture dissolves toward the device's chrome (status bar at the top, dynamic toolbar and
-home indicator at the bottom) at **every** scroll position:
+The whole implementation is now four declarations:
 
 ```css
---grain-edge-fade: 6rem;
-
-/* phone-shaped viewports only: short axis <= 30rem */
-@media (max-width: 30rem), (max-height: 30rem) {
-	--grain-fade-axis: to bottom;
-	mask-image: linear-gradient(
-		var(--grain-fade-axis),
-		transparent 0,
-		#000 var(--grain-edge-fade),
-		#000 calc(100% - var(--grain-edge-fade)),
-		transparent 100%
-	);
-
-	@media (orientation: landscape) {
-		--grain-fade-axis: to right;
-	}
+html {
+	background-color: var(--color-global-bg);
+	background-image: var(--dots-image), var(--paper-image);
+	background-repeat: repeat, repeat;
+	background-size: var(--dots-size), auto;
 }
 ```
 
-Worth knowing:
+Four files back it, and nothing else: `paper-light.webp` / `paper-dark.webp` and
+`grid-dots-light.svg` / `grid-dots-dark.svg`. Swapping theme swaps those two URLs. There is no
+pseudo-element, no `mix-blend-mode`, no `filter`, no `mask`, no per-layer `opacity`, and no
+media-queried image tier anywhere in the stack.
 
-- **The fade axis follows the viewport's long side**, and that's a bug fix, not only a look. Top/
-  bottom in portrait, left/right in landscape. A flat `6rem` ramp at each end is ~22% of an
-  874pt-tall portrait viewport — but the same two ramps are **49%** of a 390pt-tall landscape one,
-  so rotating a phone used to leave half the screen faded out. Fading along whichever axis is longer
-  holds it at ~22% in both orientations, because the faded axis is by definition the larger
-  dimension. It also tracks where the chrome actually is: status bar and toolbar in portrait, notch
-  and home indicator rotated to the left/right edges in landscape.
-- **A custom property carries the direction**, rather than restating the whole gradient under the
-  media query. `linear-gradient()` takes its direction as a plain token, so one substituted property
-  is the entire orientation switch and the stop positions stay defined once. Physical directions
-  (`to bottom`/`to right`), not logical ones — this frames the device's own edges, which don't
-  reorder with writing mode.
-- **Only the mask axis swaps.** The `--grain-image` tiers already handle orientation separately and
-  correctly: a landscape phone is wider than 40rem, so it picks up the landscape 1600w source rather
-  than the portrait crop, which is what `cover` wants for a wide-and-short box.
-- **The fade is scoped to phone-shaped viewports.** `(max-width: 30rem), (max-height: 30rem)` — two
-  queries in an `or` — is exactly "the viewport's _short_ axis is at most 30rem", since the only way
-  neither matches is both dimensions exceeding it. 30rem (480px) clears the widest phones (the
-  simulator's iPhone 17 Pro measures 402pt across; the Pro Max / large-Android class runs to roughly
-  440–450pt) while sitting well under the narrowest tablet in portrait (iPad mini at 744pt).
-  Verified at 402×874, 874×402, 744×1133 and 1000×700: mask present and vertical, present and
-  horizontal, absent, absent.
-- **Only the fade is gated — the texture is not.** Desktop and tablets still get the `position:
-fixed` / `100lvh` layer and the float effect; they just get no mask. The seam the fade fixes is an
-  iOS rubber-band artifact, and a ramp wide enough to register on a phone is only a dimmed band on a
-  large display. One consequence worth knowing: macOS browsers do have their own mild rubber-band, so
-  the tonal seam can still appear there briefly. That's accepted rather than unnoticed.
-- **Viewport-anchored, not document-anchored — and that collapsed the design.** An intermediate
-  version put the fade on a separate absolutely-positioned `body::before`, because a mask on a
-  _document-tall_ texture layer is what puts the fade at the page's true ends. Once the texture
-  became `position: fixed`, that mismatch was the only thing justifying a second element. Both are
-  pinned to the viewport now, so the fade is just a mask on the same element again and
-  `body::before` is gone — along with the z-index ordering that two sibling pseudo-elements needed
-  between them.
-- **It handles iOS rubber-band without any overscan.** A fixed element isn't truly pinned during the
-  bounce — it drifts with the page — but the texture nearest the screen's edges is already faded
-  out, so whatever the bounce reveals has nothing sharply-edged to sit against. This is what
-  replaced the old negative-`inset` overscan.
-- **A flat `6rem`, not the old `min(6rem, 10%)`.** That guard existed so a short page (a `min-h-dvh`
-  view with little content) wouldn't spend most of its height fading. The element is now always
-  exactly one viewport tall, so page length can't shrink it and the guard protects nothing.
-- **The mask creates a stacking context, harmlessly.** `mix-blend-mode` still blends the masked
-  result against its backdrop, and `opacity` already made it a stacking context anyway. No
-  `-webkit-` twin is authored either; Safari has shipped unprefixed `mask-image` since 15.4 — the
-  same baseline `100lvh` already requires. Don't hand-add one: lightningcss emits a `-webkit-`
-  twin into the built CSS on its own, per browserslist.
-- It fades the **texture**, not `html`'s color. Fading `html` toward the grain's average instead
-  would mean tracking an average that changes per theme, per breakpoint image, and per blend mode.
+### Both textures are baked
 
-The trade-off to be aware of: the texture is permanently a little weaker near the top and bottom of
-the screen, which reads as a mild vignette. That's the intended look — the texture framing the
-chrome rather than butting against it — but it does mean the layer is no longer uniform edge to edge.
+The paper tiles **already contain the page color** with the grain composited into them, at the
+intensity that used to come from `mix-blend-mode` plus `opacity`. The dot SVGs carry their own fill
+color and `fill-opacity`. Background layers have no per-layer opacity and take no filter, so every
+knob that used to be live at runtime now lives in the asset.
 
-Any opaque surface sitting above that `-1` layer hides it completely, though — a solid-background
-element just paints over it. That used to matter for `Header.astro`: an earlier version made the
-whole header `position: sticky`, which needed real machinery to avoid reading as a flat slab dropped
-over a grainy page — a transparent-until-scrolled background cross-faded in via an
-`IntersectionObserver`, plus a `mask-image` fade at its bottom edge so scrolled content dissolved
-into it instead of hitting a hard line (`.header-surface`/`.is-stuck`, both since removed — see
-[Navigation](./navigation.md) for why the header went back to `position: static`). With nothing in
-the header sticky anymore, none of that applies: it scrolls away with the rest of the page like any
-other content, so it never needs to reason about the grain layer at all — whatever's behind it is
-just whatever's behind it.
+The practical consequence, and the thing to internalize before editing: **you cannot retune this
+from CSS.** Changing the grain's strength or the dot color means regenerating a file. In exchange,
+the runtime cost is two ordinary background layers instead of two composited pseudo-elements, and
+the theme switch is a URL swap rather than a blend-mode flip.
 
-Tokens drive the texture, same pattern as the color tokens: `--grain-image`, `--grain-filter`,
-`--grain-blend` and `--grain-opacity`, set on `html` and overridden under `&[data-theme="dark"]`.
-Light mode uses the asset as authored (dark ink marks on a mostly-light ground) with
-`mix-blend-mode: multiply`, which treats light pixels as a no-op and only darkens where there's ink.
-Dark mode applies `filter: invert(1)` to that same file and switches to `mix-blend-mode: screen`:
-multiplying an already-near-black background does nothing visible, so the blend has to flip along
-with the polarity.
+The dot fills are not arbitrary — each is exactly its theme's `--color-global-text`:
 
-**There used to be a second, parallel set of assets** — `grain-dark-960w.webp` and friends — rather
-than a filter. Compared pixel for pixel, each dark file was exactly its light counterpart inverted:
-mean absolute delta of 2.8-5.3 out of 255 (consistent with two independent lossy encodes of one
-master, not a different image), with mean levels landing as complements (210.5 and 44.9, summing to
-255.4). Three files, earning nothing. Note the saving is **repo size and maintenance, not bandwidth**
-— a visitor only ever downloaded one polarity anyway.
+| theme | dot fill  | `fill-opacity` | equals                                          |
+| ----- | --------- | -------------- | ----------------------------------------------- |
+| light | `#1C1821` | `0.75`         | `--color-global-text`, `hsla(273, 16%, 11%, 1)` |
+| dark  | `#F3F1E8` | `0.25`         | `--color-global-text`, `hsla(49, 31%, 93%, 1)`  |
 
-FOOTGUN: `filter` makes an element a containing block for absolutely positioned descendants, the
-same trap called out in `Header.astro`. The grain layer has no children, so it is fine today; nest
-anything inside it and check that before anything else.
-
-### Density switching was measured and rejected
-
-Collapsing to one asset makes the image source theme-independent, which in principle unlocks
-`image-set()` (or `srcset` on a real `<img>`) for resolution switching. Both were measured, and
-neither is worth shipping for **this** kind of image:
-
-- **Format switching is dead.** AVIF is larger than WebP here at every quality: 254 KB at `q=50`
-  against WebP's 252 KB, rising to 426 KB at `q=80`. AVIF's advantage is smooth gradients, and this
-  is maximum-entropy speckle. The same reason `q=60` on the old 1920w tier still cost 863 KB.
-- **Density switching destroys the texture.** Offering a half-size file to 1x displays saves ~150 KB
-  (800x450 at `q=70` is 100 KB against 252 KB), but downscaling _averages the noise away_, and
-  upscaling in the browser cannot recover it. Rendered at the size a 1x display would actually show,
-  most of the fine speckle is simply gone — and the fine speckle is the entire reason this is one
-  large `cover` image rather than a repeating tile. (That conclusion was later overtaken: see
-  the sizing section — a purpose-authored seamless tile does not have the failure mode a cropped one
-  did.)
-
-Note that downscaling also makes the grain _more_ expensive per pixel, not less: 0.286 bytes/px at
-800x450 against 0.179 at 1600x900. Averaging concentrates the entropy.
-
-The general rule this is a case of: responsive images assume detail is redundant at lower
-resolutions. For a texture whose entire value **is** its high-frequency detail, that assumption is
-inverted, and every resampling strategy is a loss. Resolution tiers work here only because each one
-is generated from the full-res master independently, not resampled from the tier above.
-
-The alpha has to flip too, and not symmetrically: light sits at `0.25`, dark at `0.125`. A single
-shared value doesn't serve both — tuned low enough for dark, the tooth was too faint to read in
-light; tuned up until light read properly, dark looked blown out. Light speckles on a near-black
-ground are simply more visually assertive than dark speckles on a near-white one. The ratio is
+The alpha is deliberately **not** symmetric, and that asymmetry long predates the bake: light
+speckles on a near-black ground are simply more visually assertive than dark speckles on a
+near-white one. A single shared value doesn't serve both — tuned low enough for dark, the tooth is
+too faint to read in light; tuned up until light reads properly, dark looks blown out. The ratio is
 empirical, set by eye rather than derived.
 
-`--grain-opacity` is deliberately a **token rather than a nested `body::after { opacity }` override**
-in the dark block. The override does work — nested under `html[data-theme="dark"]` it resolves to a
-descendant selector that outranks the standalone `body::after` on specificity — but it puts a
-higher-specificity rule ~120 lines above the lower-specificity one it beats, which biome flags as
-`noDescendingSpecificity`. A custom property has no specificity interaction at all, and it keeps all
-three theme knobs declared together instead of splitting one of them off into a distant rule.
+### Why the root element, not a pinned layer
 
-One gotcha if you tune any of these: **Vite's CSS hot-update in dev is not reliable for this file.**
-Observed with a nested rule, where an edit appeared to do nothing while the browser kept serving the
-old stylesheet — long enough to look like a broken selector rather than a stale cache. Hard-reload
-before concluding a change didn't take, and don't rewrite CSS on the strength of a hot-reloaded
-measurement.
+Painting on `html` is what finally fixed iOS Safari's rubber-band region. A viewport-pinned layer
+can never reach it — the bounce scrolls past `body`'s actual edges entirely — so the overscroll
+sliver always showed flat color against a textured page, which read as a seam above the footer.
 
-Regenerate any tier from a new source with the `sharp` package already in devDependencies (no CLI
-tool needed) — e.g. the 960w tier: `sharp(src).resize({ width: 960 }).webp({ quality: 45, effort: 6
-}).toFile(out)`, or the portrait tier: `sharp(src).rotate(90).resize(640, 960, { fit: "cover"
-}).webp(...)`. Quality 45 was chosen because the noise in this texture compresses poorly regardless
-of quality — file size barely moves between quality 30 and 65 in testing, so there's little to gain
-by going higher.
+The root's background positioning area is still its own box; what carries the texture out into the
+overscroll region is `background-repeat: repeat`. **This only works because both images tile.** Swap
+either for a non-repeating image and the seam comes straight back.
+
+FOOTGUN: **`body` must stay background-transparent.** `Base.astro`'s `<body>` dropped its
+`bg-global-bg` class for this. Put any opaque background back on `body` and it paints over both
+layers everywhere _except_ the overscroll sliver — the exact inverse of the bug this fixed, and a
+confusing one to read, because the only textured part left is the strip you can only see mid-bounce.
+
+`isolate` is still on `body` in `Base.astro`, but **the texture no longer depends on it.** It was
+required when these were `z-index: -1` pseudo-elements that would otherwise escape body's stacking
+context and paint behind `<html>`. Nothing in the texture stack uses a negative z-index now.
+
+### Tiling, and how to actually measure a seam
+
+Both paper tiles are 500x200 and repeat at native size, so the grain's scale is fixed in CSS pixels
+and does not change with the viewport. `paper-light.webp` is 4.7 KB, `paper-dark.webp` 2.6 KB.
+
+The dot SVGs use a 120x120 viewBox with dots on a 24px pitch, so `--dots-size: 120px 120px` renders
+the authored 24px spacing. The dots are sub-pixel at that pitch (0.96px), which is why their
+`fill-opacity` is the sensitive knob rather than their size.
+
+FOOTGUN: **all four assets sit within ~800 bytes of Vite's 4096-byte `assetsInlineLimit`, and which
+side they land on is not stable.** Verified against a real build:
+
+| asset                 | source size | build output                                               |
+| --------------------- | ----------- | ---------------------------------------------------------- |
+| `paper-dark.webp`     | 2688 B      | **inlined** into the CSS as a `data:image/webp;base64` URI |
+| `grid-dots-dark.svg`  | 4231 B      | emitted as `/_astro/grid-dots-dark.<hash>.svg`             |
+| `grid-dots-light.svg` | 4233 B      | emitted as `/_astro/grid-dots-light.<hash>.svg`            |
+| `paper-light.webp`    | 4858 B      | emitted as `/_astro/paper-light.<hash>.webp`               |
+
+An older version of this doc claimed the dot SVG is inlined "so it costs no extra request" — it is
+not, and has not been since the light/dark pair replaced the smaller single asset. Re-encoding a tile
+a little smaller silently converts it from a fingerprinted, `immutable`-cached file (see
+[Asset caching](./caching.md)) into base64 embedded in the stylesheet that **every** visitor
+downloads, including ones on the other theme. Check the built CSS after changing any of these rather
+than assuming; the threshold is close enough that a quality tweak can cross it.
+
+**The seam metric this doc used to quote does not survive the bake, and will lie to you.** The old
+test was a ratio: mean absolute delta across the wrap edge over the mean delta between typical
+interior neighbours, with "near 1.0 is seamless, past ~1.5 reads as an edge". Run it on the current
+tiles and it condemns them:
+
+| tile               | ratio H | ratio V | mean wrap delta | **local-average step across the join** |
+| ------------------ | ------- | ------- | --------------- | -------------------------------------- |
+| `paper-light.webp` | 1.93x   | 3.00x   | 1.06 / 1.63 lv  | **0.05 / 0.33 lv**                     |
+| `paper-dark.webp`  | 2.57x   | 3.93x   | 0.61 / 0.92 lv  | **0.03 / 0.09 lv**                     |
+
+The ratios are meaningless here. These tiles are far smoother than the old grain — interior
+neighbours differ by ~0.55 luma levels against the old asset's ~1.45 — so the denominator collapsed
+and inflated every ratio with it. What matters is the **absolute step in local average** across the
+join, because that is what a seam actually is: a visible step in the local mean, not a spike in
+per-pixel noise. At 0.05–0.33 luma levels out of 255, these joins are far below the visible
+threshold.
+
+Confirmed visually as well as numerically: tiling each 3x3, blurring away the grain to leave only the
+low-frequency field, and normalizing to full range — roughly 5.7x amplification on the light tile's
+45-level range — shows no hard line at any join. What that does show is the tile's own features
+recurring, which is **pattern repetition, a different property from a seam**. Judge repetition by
+eye at normal contrast; judge seams by the local-average step.
+
+### Regenerating a tile
+
+`sharp` is already in devDependencies, so no CLI tool is needed. After regenerating, you must also
+re-derive `--color-global-bg` — see [the flat background color](#the-flat-background-color-is-derived-not-chosen)
+above and run `npm run paper:average`, because the flat color is that tile's own average and will
+otherwise no longer match it.
+
+Quality 45 was the chosen operating point historically: noise in this texture compresses poorly
+regardless, and file size barely moves between quality 30 and 65.
+
+One gotcha that has cost real debugging time: **Vite's CSS hot-update in dev is not reliable for
+`global.css`.** An edit can appear to do nothing while the browser keeps serving the old stylesheet —
+long enough to look like a broken selector rather than a stale cache. Hard-reload before concluding a
+change didn't take, and never rewrite CSS on the strength of a hot-reloaded measurement.
+
+### Unreferenced assets still in the tree
+
+Nothing imports these any more, so they don't ship, but they're still on disk and will mislead a
+search:
+
+- `grain-tiled.webp` — the loose grain that got composited into the paper tiles. Keep it if you
+  intend to re-bake; it is the input, not an output.
+- `grain-960w.webp`, `grain-1600w.webp`, `grain-portrait.webp`, `grain-master.webp` — the entire
+  `cover`-era tier set.
+- `grid-dots.svg` — the single uncolored dot asset from the mask era, superseded by the light/dark
+  pair.
+
+### How this got here, and why the history is worth keeping
+
+This layer has been rebuilt enough times that the dead ends are the useful part — each one is a
+measurement, and several are traps that look attractive on the way back in.
+
+**It was a pinned viewport layer, twice over.** `position: fixed` with a negative `inset` overscan
+failed to reach the true bottom edge on short pages on device (iPhone 17 sim, iOS 26.5), because a
+bare `inset` sizes against whatever Safari currently calls the viewport and that shrinks while the
+dynamic toolbar is expanded. `position: absolute; inset: 0` fixed coverage by anchoring to `body`'s
+box, but made the element document-tall, so `background-size: cover` had to cover the whole page —
+on a long post that upscaled the image enormously into soft cloudy mush instead of sharp toner
+grain. `background-attachment: fixed` was meant to rescue that and **iOS Safari has never reliably
+supported it**: verified on the simulator with a hard-striped gradient, a swipe that moved content
+~958px moved the stripes ~220px, so the layer was neither pinned nor scrolling. The settled version
+was `position: fixed` with `height: 100lvh` — `lvh` being the _large_ viewport height, which does not
+change as the toolbar shows and hides. All of it is gone now that the texture paints on the root.
+
+**It was a `cover` image with three tiers.** A `cover` image was originally chosen over a tile
+because a small seamless crop has to crop away visible directional structure — this texture's source
+has real toner-drag banding — where a full photo-scale image keeps it. That reintroduced a bandwidth
+problem a tile never had, needing `grain-960w`, `grain-1600w` and a rotated `grain-portrait` crop
+swapped by media queries. A fourth full-res tier (1920w, 1058 KB) was **88% of a desktop page load on
+its own**, against 138 KB for every other asset combined. The current tiles work where that early
+crop did not because they are _authored_ to be seamless rather than cropped from the master.
+
+**Every avenue for shrinking the `cover` asset was measured and failed.** AVIF is larger than WebP
+here at every quality (254 KB at `q=50` against WebP's 252 KB, rising to 426 KB at `q=80`) — AVIF's
+advantage is smooth gradients and this is maximum-entropy speckle. The source is already pure
+greyscale, so there is no chroma to strip. Density switching actively destroys the texture:
+downscaling _averages the noise away_ and upscaling cannot recover it, and it makes the grain **more**
+expensive per pixel, not less — 0.286 bytes/px at 800x450 against 0.179 at 1600x900, because
+averaging concentrates the entropy. The general rule this is a case of: responsive images assume
+detail is redundant at lower resolutions, and for a texture whose entire value _is_ its
+high-frequency detail, that assumption is inverted.
+
+**There was a parallel set of dark assets, then a `filter: invert(1)`.** Compared pixel for pixel,
+each dark file was exactly its light counterpart inverted — mean absolute delta of 2.8–5.3 out of
+255, with mean levels landing as complements (210.5 and 44.9, summing to 255.4). Three files earning
+nothing, so they collapsed to one asset plus a filter, and the filter has now collapsed into the bake
+as well. Note the saving was **repo size and maintenance, not bandwidth** — a visitor only ever
+downloaded one polarity anyway.
+
+**There was an edge fade, and it is gone.** The texture used to carry a `mask-image` ramping its own
+alpha to zero over the first and last `6rem` of the viewport, gated to phone-shaped viewports
+(`(max-width: 30rem), (max-height: 30rem)` — an `or` pair that means "the short axis is at most
+30rem"), with the fade axis following the viewport's long side via a substituted custom property.
+That existed for exactly one reason: the texture tinted whatever it covered slightly off the flat
+token, so an abrupt edge read as a tonal seam against the untinted color beyond it. Both halves of
+that problem are now solved at the source — the texture reaches the overscroll region itself, and the
+flat color _is_ the texture's average — so there is no seam left to hide and the vignette it cost is
+gone with it.
+
+That last point is worth stating plainly, because the old doc argued against it: fading `html` toward
+the grain's average was rejected as "an average that changes per theme, per breakpoint image, and per
+blend mode." The breakpoint images and the blend modes no longer exist. Only the per-theme axis
+remains, and `npm run paper:average` tracks it in one command.
 
 ## Switching themes
 
