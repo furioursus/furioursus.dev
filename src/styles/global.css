@@ -146,9 +146,9 @@
 		   Regenerating them: docs/theming.md carries the exact compositing maths. */
 		--paper-image: url("../assets/images/paper-light.webp");
 		--dots-image: url("../assets/images/grid-dots-light.svg");
-		/* The SVG's viewBox is 120x120 with dots on a 24px pitch, so this is what sets that pitch
-		   on screen. Change it and the dots scale; the grain tile is unaffected (`auto`). */
-		--dots-size: 120px 120px;
+		/* The dot SVG is a single 24x24 cell holding one dot, so this value *is* the grid pitch —
+		   change it and the spacing changes, not just the scale. The grain tile is unaffected (`auto`). */
+		--dots-size: 24px 24px;
 
 		--color-mode-transition-duration: 300ms;
 		--color-mode-transition-easing: ease-in-out;
