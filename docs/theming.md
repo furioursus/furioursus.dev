@@ -110,46 +110,65 @@ Two gotchas worth keeping in mind:
   silently re-anchor this layer to that element and put you straight back to the version 2 behaviour.
   Both are currently clean; check before adding any of them.
 
-Keeping `cover` on one large photo-scale texture (rather than the small repeating tile this went
-through for a while) is worth the bandwidth cost below: a small seamless-tile crop has to crop _away_
-any visible directional structure — this texture's source has real toner-drag banding — to avoid an
-obvious repeat, where a full photo-scale image keeps it.
+## Sizing: a seamless tile, repeated
 
-Bringing `cover` back reintroduces the bandwidth problem a small tile didn't have: shipping the same
-full-res image to a 380px phone as to a 2560px desktop is real waste on mobile. Two width tiers
-(`grain-{960w,1600w}.webp`),
-swapped by plain `min-width` media queries (not a Tailwind variant — this file isn't a component
-Tailwind processes) at Tailwind's own `sm`/`lg` breakpoints, handle that: under 40rem gets 960w,
-40rem and up gets 1600w.
+The layer uses **one seamless tile (`grain-tiled.webp`, 775x310, 30 KB) at its native size with
+`background-repeat: repeat`**. The grain's scale is therefore fixed in CSS pixels and no longer
+changes with the viewport, and one file serves every screen.
 
-There used to be a third tier serving the full-res master `grain-master.webp` (1920w, 1058 KB) above
-64rem. Measured, it was **88% of a desktop page load on its own** — every other asset on the site
-combined came to 138 KB — and it cost 1.87x more per pixel than any other tier. Re-encoding confirmed
-quality can't recover that (grain is incompressible noise; even q=60 still cost 863 KB), so
-resolution was the only lever. Deleting the tier lets 40rem-and-up upscale the 1600w file instead:
-**252 KB instead of 1058 KB, an 806 KB saving per desktop page view**, and invisible on a noise
-texture rendered at `opacity: 0.25` behind all content. Note the breakpoint was `64rem` = 1024px, so
-this was hitting every laptop, not just large displays. The full-res files stay in `src/assets/` as
-the masters the tiers are generated from; nothing references them, so they no longer ship.
+Seams were measured rather than eyeballed: the wrap from the last column back to the first differs
+from a typical interior neighbour by **1.19x** vertically and **1.24x** horizontally. A ratio near
+1.0 is seamless and anything past ~1.5 reads as an edge, so this tiles invisibly.
 
-The 1600w tier was later re-encoded and re-cropped to **1600x900** (from 1600x1131), taking it from
-394 KB to 252 KB. The crop is vertical — same texture, less of it — so the toner-drag structure the
-`cover` approach exists to preserve is untouched; verified at 6x contrast against the previous
-encode, with no banding or blocking introduced.
+The tile's luma range is **127-250**, where the `cover` assets ran 0-255. Its marks are shallower, so
+`--grain-opacity` is raised to compensate — 0.345 light, 0.172 dark, derived to match the previous
+mean darkening exactly, then left for the eye to confirm. It cannot reproduce the very deepest marks
+of the old asset at any opacity; that is the trade.
 
-The side effect is that this tier is now 16:9 while the others stay ~1.41:1, and `cover` upscales
-against whichever axis is short. On ordinary landscape windows that is a wash (1.05x vs 0.94x at
-1512x945; identical at 1920x1080), but a tall desktop window upscales it further than before —
-1.33x at 1000x1200, 1.56x at 800x1400, against 1.06x and 1.24x for the old canvas. The grain reads
-slightly coarser there. Accepted: it is noise at `opacity: 0.125`-`0.25`, and tall-and-narrow desktop
-windows are rare. Worth knowing before re-cropping any tier further.
+### The history here is a loop, and worth knowing
 
-Under 40rem also gets an
-`orientation: portrait` variant (`grain-portrait.webp`), cropped and rotated from the
-source rather than downscaled — for `cover`-fit, a portrait viewport's dominant dimension is height,
-not width, so the landscape 960w crop doesn't have enough height to cover a tall phone screen
-without upscaling. Scoped to under 40rem only; portrait tablets/laptops above that still get the
-landscape tiers, an accepted gap since portrait is overwhelmingly a phone thing.
+This layer has now been a tile, then a large `cover` image, then a tile again. The middle era is
+still instructive, because it is where the measurements live:
+
+- A `cover` image was chosen over a tile because **a small seamless crop has to crop away visible
+  directional structure** — this texture's source has real toner-drag banding — to avoid an obvious
+  repeat, where a full photo-scale image keeps it. The current tile is authored to be seamless rather
+  than cropped from the master, which is what makes it work where the earlier crop did not.
+- `cover` then reintroduced a bandwidth problem a tile never had: the same full-res image to a 380px
+  phone as to a 2560px desktop. That needed **three tiers** (`grain-960w`, `grain-1600w`, and a
+  rotated `grain-portrait` crop for tall phones) swapped by `min-width`/`orientation` media queries.
+  All of that is now gone — a tile does not need tiers.
+- A fourth, full-res tier (1920w, 1058 KB) was deleted before that. It was **88% of a desktop page
+  load on its own**, against 138 KB for every other asset combined.
+- Every other avenue for shrinking the `cover` asset was measured and failed: AVIF is larger than
+  WebP at every quality here, posterising is larger still (WebP is a DCT codec — quantising creates
+  hard edges), the source is already pure grayscale so there is no chroma to strip, and serving a
+  downscaled file to 1x displays averages the fine speckle away in a way upscaling cannot recover.
+  Range compression plus opacity compensation was the only one that worked at all, and only modestly.
+
+The upshot: **30 KB against 252 KB, with three tier files and their media queries removed.** The old
+`grain-960w`/`grain-1600w`/`grain-portrait`/`grain-master` files are still in `src/assets/` but
+nothing references them, so they no longer ship.
+
+## The dot-grid overlay
+
+`body::before` lays a fine dot grid over the grain, from `grid-dots.svg` — a 120x120 viewBox with
+dots on a 24px pitch. `--dots-size` sets that pitch on screen, so `120px 120px` gives the authored
+24px spacing.
+
+It is drawn as a **`mask-image` over a solid `background-color`**, not as a black SVG that dark mode
+inverts. That keeps the dot color an ordinary token (`--dots-color`, defaulting to
+`--color-global-text`), so the grid can be retinted — to the accent pink, say — without touching the
+asset and without a filter in the stack. Vite inlines the SVG as a `data:` URI at build time, so it
+costs no extra request.
+
+The dots are sub-pixel at the authored pitch (0.96px at `120px` sizing), which makes opacity the
+sensitive knob rather than size: at `0.22` they vanish entirely, at `0.85` they compete with body
+text. The shipped values are **0.5 light / 0.35 dark**, set by eye against both themes.
+
+FOOTGUN: `body::before` carries the same `z-index: -1` requirement as `body::after`, so it depends on
+`isolate` on `body` in exactly the same way — drop that and this layer escapes body's stacking
+context and paints behind `<html>`'s background.
 
 `<html>` also carries its own `background-color: var(--color-global-bg)` now, matching whichever
 theme is active — without the old `fixed` layer's generous overscan margin, iOS Safari's
@@ -288,7 +307,9 @@ neither is worth shipping for **this** kind of image:
   (800x450 at `q=70` is 100 KB against 252 KB), but downscaling _averages the noise away_, and
   upscaling in the browser cannot recover it. Rendered at the size a 1x display would actually show,
   most of the fine speckle is simply gone — and the fine speckle is the entire reason this is one
-  large `cover` image rather than the small repeating tile it used to be.
+  large `cover` image rather than a repeating tile. (That conclusion was later overtaken: see
+  the sizing section — a purpose-authored seamless tile does not have the failure mode a cropped one
+  did.)
 
 Note that downscaling also makes the grain _more_ expensive per pixel, not less: 0.286 bytes/px at
 800x450 against 0.179 at 1600x900. Averaging concentrates the entropy.

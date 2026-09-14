@@ -130,29 +130,29 @@
 			   one. The ratio is empirical — set by eye, not derived. */
 			--grain-filter: invert(1);
 			--grain-blend: screen;
-			--grain-opacity: 0.125;
+			--grain-opacity: 0.172;
+			--dots-opacity: 0.35;
 		}
 
-		/* Grain tiers: 960w under 40rem, 1600w at 40rem and up, plus a rotated portrait crop for
-		   narrow portrait viewports. FOOTGUN: the portrait query's `max-width: 39.9375rem` is
-		   deliberately one px below the `min-width: 40rem` tier so the two can never both match —
-		   change one bound and you must change the other. Media-query-scoped custom properties are
-		   the only mechanism available here: this is a background-image on a pseudo-element, so
-		   there is no `srcset` to use. The files are theme-neutral — dark mode inverts this
-		   same asset, see the [data-theme="dark"] block above. Why these tiers and not others, and
-		   why density switching was measured and rejected: docs/theming.md. */
-		--grain-image: url("../assets/images/grain-960w.webp");
+		/* One seamless tile at its native size, repeated — not three `cover`-fitted width tiers.
+		   30 KB against 252 KB for the 1600w tier it replaces, and the grain's scale no longer
+		   changes with the viewport the way a `cover` fit made it. Measured seams are 1.19x/1.24x a
+		   typical interior neighbour difference, i.e. no visible edge. The tile's range is 127-250
+		   where the cover asset ran 0-255, so its marks are shallower and the opacities below are
+		   raised to match the old mean darkening — tune by eye, these are a starting point.
+		   See docs/theming.md. */
+		--grain-image: url("../assets/images/grain-tiled.webp");
 		--grain-filter: none;
 		--grain-blend: multiply;
-		--grain-opacity: 0.25;
+		--grain-opacity: 0.345;
 
-		@media (max-width: 39.9375rem) and (orientation: portrait) {
-			--grain-image: url("../assets/images/grain-portrait.webp");
-		}
-
-		@media (min-width: 40rem) {
-			--grain-image: url("../assets/images/grain-1600w.webp");
-		}
+		/* Dot-grid overlay. Drawn as a MASK over a solid color rather than as a black SVG that dark
+		   mode inverts: the color is then an ordinary token, so the dots can be retinted (accent pink,
+		   say) without touching the asset, and no filter is involved. The SVG's viewBox is 120x120
+		   with dots on a 24px pitch, so --dots-size is what sets that pitch on screen. */
+		--dots-color: var(--color-global-text);
+		--dots-size: 120px 120px;
+		--dots-opacity: 0.5;
 
 		--color-mode-transition-duration: 300ms;
 		--color-mode-transition-easing: ease-in-out;
@@ -173,6 +173,25 @@
 	   earlier versions it replaced, and the pointer-events/<dialog> notes: docs/theming.md.
 	   FOOTGUN: requires `isolate` on body (Base.astro). Drop it and body is no longer a stacking
 	   context, so this negative z-index escapes and paints behind <html>'s background instead. */
+
+	/* Dot-grid overlay, sitting on the grain layer below. Same fixed, viewport-sized, behind-content
+	   geometry as body::after — and the same FOOTGUN applies: it needs `isolate` on body, or the
+	   negative z-index escapes body's stacking context and paints behind <html>'s background. */
+	body::before {
+		content: "";
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 100lvh;
+		z-index: -1;
+		pointer-events: none;
+		background-color: var(--dots-color);
+		mask-image: url("../assets/images/grid-dots.svg");
+		mask-size: var(--dots-size);
+		mask-repeat: repeat;
+		opacity: var(--dots-opacity);
+	}
 	body::after {
 		content: "";
 		position: fixed;
@@ -183,7 +202,7 @@
 		z-index: -1;
 		pointer-events: none;
 		background-image: var(--grain-image);
-		background-size: cover;
+		background-repeat: repeat;
 		/* FOOTGUN: a CSS `filter` makes an element a containing block for absolutely positioned
 		   descendants — the same trap documented in Header.astro. Harmless while this layer stays
 		   empty; nest anything inside it and check that first. */
