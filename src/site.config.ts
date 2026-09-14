@@ -1,5 +1,5 @@
 import type { AstroExpressiveCodeOptions } from "astro-expressive-code";
-import type { SiteConfig } from "@/types";
+import type { MenuLink, SiteConfig } from "@/types";
 
 export const siteConfig: SiteConfig = {
 	// ! Please remember to replace the following site property with your own domain, used in astro.config.ts
@@ -38,13 +38,25 @@ export const siteConfig: SiteConfig = {
 	},
 };
 
-// Used to generate links in both the Header & Footer.
-export const menuLinks: { path: string; title: string }[] = [
+// Used to generate links in the Header, the Footer, and section subnavs — see docs/navigation.md.
+// `children` are deliberately absent from the header: they surface in SubNav.astro on their own
+// section's pages, and flattened into the footer.
+export const menuLinks: MenuLink[] = [
 	{
 		path: "/",
 		title: "Home",
 	},
 	{
+		children: [
+			{
+				path: "/about/music/",
+				title: "Music",
+			},
+			{
+				path: "/about/mtg/",
+				title: "MTG",
+			},
+		],
 		path: "/about/",
 		title: "About",
 	},
@@ -59,14 +71,6 @@ export const menuLinks: { path: string; title: string }[] = [
 	{
 		path: "/cv/",
 		title: "CV",
-	},
-	{
-		path: "/music/",
-		title: "Music",
-	},
-	{
-		path: "/mtg/",
-		title: "MTG",
 	},
 ];
 

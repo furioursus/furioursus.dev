@@ -1,12 +1,12 @@
 # MTG collection
 
-[`/mtg/`](../src/pages/mtg.astro) renders a searchable, filterable grid of my Magic: The Gathering
-collection, pulled from a [ManaBox](https://manabox.app/) CSV export and enriched with live
-[Scryfall](https://scryfall.com/docs/api) data at build time via the
+[`/about/mtg/`](../src/pages/about/mtg.astro) renders a searchable, filterable grid of my Magic: The
+Gathering collection, pulled from a [ManaBox](https://manabox.app/) CSV export and enriched with
+live [Scryfall](https://scryfall.com/docs/api) data at build time via the
 [`astro-mtg-collection`](https://github.com/furioursus/astro-mtg-collection) integration. It's a
-standalone sibling page to [`/music/`](./discogs.md), following the same fetch/render split, not a
-section of it — the two collections are unrelated hobbies, unlike Last.fm/vinyl which share one
-"Music" page.
+standalone sibling page to [`/about/music/`](./discogs.md) under the About section, following the
+same fetch/render split, not a section of it — the two collections are unrelated hobbies, unlike
+Last.fm/vinyl which share one "Music" page.
 
 ## How it's wired
 
@@ -57,7 +57,7 @@ just filtering" below) builds a plain `<img src="...">` pointing straight at Scr
 separate reasons landed on this, worth keeping apart:
 
 1. **A real build failure, since fixed elsewhere.** `astro build` once failed specifically
-   prerendering `/mtg/` (every other route, including `/music/`, built fine), deep inside an
+   prerendering `/about/mtg/` (every other route, including `/about/music/`, built fine), deep inside an
    Astro/Vite internal function that should never run during a static build. The image count
    looked like the obvious suspect at the time (~6,200 unique cards, an order of magnitude beyond
    any other page) and a batch pre-optimization step was built to sidestep it — but swapping every
@@ -183,7 +183,7 @@ performance win, not an oversight.
 ## Gotchas
 
 - **Collection scale.** This export is ~8,300 rows / ~6,200 unique cards — about 20x the size of
-  the vinyl collection, and specifically _why_ this page departs from `/music/`'s pattern of
+  the vinyl collection, and specifically _why_ this page departs from `/about/music/`'s pattern of
   rendering every entry into the DOM at build time — see "Rendering is client-side too, not just
   filtering" above. This scale is also _why_ card art skips local caching/`astro:assets` entirely —
   see "Card images load directly from Scryfall" above.
@@ -191,10 +191,10 @@ performance win, not an oversight.
   and regenerable from `src/data/collection.csv`, same treatment as `astro-discogs-collection`'s
   equivalent cache. With `cacheImages: false`, the package's _image_ cache directory
   (`imageCacheDir`, `src/assets/mtg-collection/` by default) is never created at all.
-- `/mtg/` is listed in `menuLinks` in `src/site.config.ts`. If `src/data/collection.csv` is ever
+- `/about/mtg/` is a `children` entry under About in `menuLinks` in `src/site.config.ts`. If `src/data/collection.csv` is ever
   removed (e.g. a fork without the real export), the page still builds and loads — `loadCollection()`
   reports `missingFile: true` and the page shows a setup notice instead of the grid, same fallback
-  pattern as `/music/`'s vinyl section without Discogs credentials.
+  pattern as `/about/music/`'s vinyl section without Discogs credentials.
 - **`astro-mtg-collection` is a `github:`-sourced git dependency with its own `prepare` build
   script** (`tsc` → `dist/`). Unlike pnpm — which blocks build scripts on git deps by default and
   needed an explicit `pnpm-workspace.yaml` `onlyBuiltDependencies` allowlist entry just to let this

@@ -1,6 +1,7 @@
 ---
 import aboutPhoto from "@/assets/images/about-photo.jpg";
 import LightboxImage from "@/components/LightboxImage.astro";
+import SubNav from "@/components/layout/SubNav.astro";
 import PageLayout from "@/layouts/Base.astro";
 
 const meta = {
@@ -10,7 +11,8 @@ const meta = {
 ---
 
 <PageLayout meta={meta}>
-	<h1 class="title mb-12">About Me</h1>
+	<h1 class="title mb-6">About Me</h1>
+	<SubNav />
 	<div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-8">
 		<LightboxImage
 			src={aboutPhoto}
@@ -58,12 +60,12 @@ const meta = {
 					doesn’t allow much room for either.
 				</li>
 				<li>
-					i <a href="/music">collect vinyl records</a> and really strive to preserve physical media
-					whenever i can.
+					i <a href="/about/music/">collect vinyl records</a> and really strive to preserve physical
+					media whenever i can.
 				</li>
 				<li>
-					i also collect <a href="/mtg">Magic: The Gathering cards</a>, if that wasn’t already
-					obvious from the amount of hoarding in this list
+					i also collect <a href="/about/mtg/">Magic: The Gathering cards</a>, if that wasn’t
+					already obvious from the amount of hoarding in this list
 				</li>
 				<li>
 					lately i’ve really gotten into 3d printing, thanks to a thoughtful{" "}

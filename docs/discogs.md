@@ -1,6 +1,6 @@
 # Record collection
 
-The "Vinyl collection" section of [`/music/`](../src/pages/music.astro) (formerly its own
+The "Vinyl collection" section of [`/about/music/`](../src/pages/about/music.astro) (formerly its own
 `/vinyl-collection/` page — see [`docs/lastfm.md`](./lastfm.md) for the rest of that page) renders
 a searchable, filterable grid of my vinyl collection, pulled from Discogs at build time via the
 [`astro-discogs-collection`](https://www.npmjs.com/package/astro-discogs-collection) integration.
@@ -142,8 +142,8 @@ storage) — the toggle still works for that pageview, it just won't stick for t
   `"Vinyl"`, `"LP"`, `"Album"`, `"Reissue"` are separate options) since the package doesn't
   distinguish "physical format" from format descriptors — see `DiscogsRelease.formats` in
   `astro-discogs-collection`'s `types.d.ts`.
-- `/music/` is listed in `menuLinks` in `src/site.config.ts`; if `DISCOGS_USERNAME`/`DISCOGS_TOKEN`
+- `/about/music/` is a `children` entry under About in `menuLinks` in `src/site.config.ts`; if `DISCOGS_USERNAME`/`DISCOGS_TOKEN`
   are never set in an environment, the page still loads (the Last.fm sections above render
   independently) but its vinyl section shows the setup notice instead of the grid.
-- `/vinyl-collection/` used to be this page's own URL; `public/_redirects` 301s it to `/music/`
+- `/vinyl-collection/` used to be this page's own URL; `public/_redirects` 301s it to `/about/music/`
   now that the vinyl grid is a section of that page instead.

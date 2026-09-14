@@ -17,6 +17,7 @@ import {
 	uniqueSorted,
 } from "astro-mtg-collection/collection";
 import CardCollection from "@/components/CardCollection.astro";
+import SubNav from "@/components/layout/SubNav.astro";
 import PageLayout from "@/layouts/Base.astro";
 
 const { cards, missingFile, error } = await loadCollection();
@@ -35,6 +36,7 @@ const meta = {
 
 <PageLayout meta={meta}>
 	<h1 class="title mb-6">MTG Collection</h1>
+	<SubNav />
 
 	{missingFile && (
 		<p class="prose prose-sm max-w-none">

@@ -1,6 +1,6 @@
 # Music listening (Last.fm)
 
-[`/music/`](../src/pages/music.astro) — the same page that hosts the [vinyl collection](./discogs.md) —
+[`/about/music/`](../src/pages/about/music.astro) — the same page that hosts the [vinyl collection](./discogs.md) —
 also shows what I'm currently/last listening to and my Last.fm stats. Unlike the vinyl section,
 which is entirely build-time, the now-playing widget is genuinely live: it polls Last.fm from the
 visitor's own browser.

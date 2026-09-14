@@ -1,0 +1,37 @@
+---
+// Section subnavigation for pages nested under a `menuLinks` entry with `children` — see
+// docs/navigation.md. Derives its own section from the current URL rather than taking props, so a
+// page only has to drop `<SubNav />` in and nothing can pass the wrong section.
+import { menuLinks } from "@/site.config";
+
+/** Trailing-slash-insensitive so `/about/mtg` and `/about/mtg/` both resolve, and so the
+	`startsWith` below can't match a sibling that merely shares a prefix (`/aboutish/`). */
+const withSlash = (path: string) => (path.endsWith("/") ? path : `${path}/`);
+
+const current = withSlash(Astro.url.pathname);
+const section = menuLinks.find(
+	(link) => link.children?.length && current.startsWith(withSlash(link.path)),
+);
+const links = section ? [section, ...(section.children ?? [])] : [];
+---
+
+{section && (
+	<nav aria-label={`${section.title} section`} class="mb-10 -ms-4">
+		{/* FOOTGUN: divide-muted is required — divide-* ships no color and border-color falls
+				back to currentColor, so each separator would take its preceding link's own state
+				color. Same trap as the main nav; see docs/navigation.md. */}
+		<ul class="divide-muted flex flex-wrap sm:divide-x" role="list">
+			{links.map((link) => (
+				<li>
+					<a
+						aria-current={current === withSlash(link.path) ? "page" : false}
+						class="text-accent hover:text-nav-hover active:text-nav-hover aria-[current=page]:text-accent-2 inline-block px-4 py-1 font-semibold underline-offset-2 hover:underline aria-[current=page]:underline"
+						href={link.path}
+					>
+						{link.title}
+					</a>
+				</li>
+			))}
+		</ul>
+	</nav>
+)}
