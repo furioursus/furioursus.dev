@@ -2,8 +2,8 @@
 # otherwise. That default is correct for HTML and wrong for everything under /_astro/, which Astro
 # content-hashes: a changed file gets a new filename, so the old URL can never go stale.
 #
-# Without this, the browser made a conditional request for the CSS, both woff2 faces and the ~400KB
-# grain texture on EVERY navigation, and waited on a 304 before it could use the copy it already
+# Without this, the browser made a conditional request for the CSS, both woff2 faces and the grain
+# texture on EVERY navigation, and waited on a 304 before it could use the copy it already
 # had. That is what made Safari flash its fonts and Firefox re-paint the background image page to
 # page — see docs/caching.md.
 /_astro/*

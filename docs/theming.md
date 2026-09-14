@@ -127,10 +127,22 @@ There used to be a third tier serving the full-res `grain-{light,dark}.webp` (19
 combined came to 138 KB — and it cost 1.87x more per pixel than any other tier. Re-encoding confirmed
 quality can't recover that (grain is incompressible noise; even q=60 still cost 863 KB), so
 resolution was the only lever. Deleting the tier lets 40rem-and-up upscale the 1600w file instead:
-**394 KB instead of 1058 KB, a 664 KB saving per desktop page view**, and invisible on a noise
+**252 KB instead of 1058 KB, an 806 KB saving per desktop page view**, and invisible on a noise
 texture rendered at `opacity: 0.25` behind all content. Note the breakpoint was `64rem` = 1024px, so
 this was hitting every laptop, not just large displays. The full-res files stay in `src/assets/` as
 the masters the tiers are generated from; nothing references them, so they no longer ship.
+
+The 1600w tier was later re-encoded and re-cropped to **1600x900** (from 1600x1131), taking it from
+394 KB to 252 KB. The crop is vertical — same texture, less of it — so the toner-drag structure the
+`cover` approach exists to preserve is untouched; verified at 6x contrast against the previous
+encode, with no banding or blocking introduced.
+
+The side effect is that this tier is now 16:9 while the others stay ~1.41:1, and `cover` upscales
+against whichever axis is short. On ordinary landscape windows that is a wash (1.05x vs 0.94x at
+1512x945; identical at 1920x1080), but a tall desktop window upscales it further than before —
+1.33x at 1000x1200, 1.56x at 800x1400, against 1.06x and 1.24x for the old canvas. The grain reads
+slightly coarser there. Accepted: it is noise at `opacity: 0.125`-`0.25`, and tall-and-narrow desktop
+windows are rare. Worth knowing before re-cropping any tier further.
 
 Under 40rem also gets an
 `orientation: portrait` variant (`grain-{light,dark}-portrait.webp`), cropped and rotated from the
