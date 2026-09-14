@@ -33,6 +33,8 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   via `astro-discogs-collection`, client-side search/filter/sort.
 - [MTG collection](./mtg.md) — the `/about/mtg/` page's searchable Magic: The Gathering collection: a
   ManaBox export enriched via `astro-mtg-collection`, client-side search/filter/sort, public prices.
+- [Asset caching](./caching.md) — `public/_headers`, why hashed `/_astro/` output is `immutable`,
+  and the Safari font flash / Firefox background reload that the default headers caused.
 - [Deploy notifications](./deploy-notifications.md) — a local Netlify Build Plugin that posts
   deploy success/failure to Telegram.
 - [Analytics](./analytics.md) — GoatCounter pageview tracking, on only when `GOATCOUNTER_CODE` is set.

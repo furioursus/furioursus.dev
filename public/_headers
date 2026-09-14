@@ -1,0 +1,25 @@
+# Netlify serves every file with `cache-control: public, max-age=0, must-revalidate` unless told
+# otherwise. That default is correct for HTML and wrong for everything under /_astro/, which Astro
+# content-hashes: a changed file gets a new filename, so the old URL can never go stale.
+#
+# Without this, the browser made a conditional request for the CSS, both woff2 faces and the ~400KB
+# grain texture on EVERY navigation, and waited on a 304 before it could use the copy it already
+# had. That is what made Safari flash its fonts and Firefox re-paint the background image page to
+# page — see docs/caching.md.
+/_astro/*
+  cache-control: public, max-age=31536000, immutable
+
+# Belt and braces. Netlify's splat is documented to match across path segments, so /_astro/* should
+# already cover this directory — but the fonts are half of the bug this file exists to fix, and an
+# explicit rule costs nothing. Verify against production after deploying rather than assuming.
+/_astro/fonts/*
+  cache-control: public, max-age=31536000, immutable
+
+# Pagefind's index/fragment/filter chunks are content-addressed the same way. Its entry scripts are
+# not, so they stay on the default and can pick up a new index without a stale-cache standoff.
+/pagefind/fragment/*
+  cache-control: public, max-age=31536000, immutable
+/pagefind/index/*
+  cache-control: public, max-age=31536000, immutable
+/pagefind/filter/*
+  cache-control: public, max-age=31536000, immutable
