@@ -117,12 +117,12 @@ obvious repeat, where a full photo-scale image keeps it.
 
 Bringing `cover` back reintroduces the bandwidth problem a small tile didn't have: shipping the same
 full-res image to a 380px phone as to a 2560px desktop is real waste on mobile. Two width tiers
-(`grain-{light,dark}-{960w,1600w}.webp`),
+(`grain-{960w,1600w}.webp`),
 swapped by plain `min-width` media queries (not a Tailwind variant — this file isn't a component
 Tailwind processes) at Tailwind's own `sm`/`lg` breakpoints, handle that: under 40rem gets 960w,
 40rem and up gets 1600w.
 
-There used to be a third tier serving the full-res `grain-{light,dark}.webp` (1920w, 1058 KB) above
+There used to be a third tier serving the full-res master `grain-master.webp` (1920w, 1058 KB) above
 64rem. Measured, it was **88% of a desktop page load on its own** — every other asset on the site
 combined came to 138 KB — and it cost 1.87x more per pixel than any other tier. Re-encoding confirmed
 quality can't recover that (grain is incompressible noise; even q=60 still cost 863 KB), so
@@ -145,7 +145,7 @@ slightly coarser there. Accepted: it is noise at `opacity: 0.125`-`0.25`, and ta
 windows are rare. Worth knowing before re-cropping any tier further.
 
 Under 40rem also gets an
-`orientation: portrait` variant (`grain-{light,dark}-portrait.webp`), cropped and rotated from the
+`orientation: portrait` variant (`grain-portrait.webp`), cropped and rotated from the
 source rather than downscaled — for `cover`-fit, a portrait viewport's dominant dimension is height,
 not width, so the landscape 960w crop doesn't have enough height to cover a tall phone screen
 without upscaling. Scoped to under 40rem only; portrait tablets/laptops above that still get the
@@ -256,13 +256,47 @@ the header sticky anymore, none of that applies: it scrolls away with the rest o
 other content, so it never needs to reason about the grain layer at all — whatever's behind it is
 just whatever's behind it.
 
-Three theme-swapped tokens drive the texture, same pattern as the color tokens: `--grain-image`,
+Tokens drive the texture, same pattern as the color tokens: `--grain-image`, `--grain-filter`,
 `--grain-blend` and `--grain-opacity`, set on `html` and overridden under `&[data-theme="dark"]`.
-Light mode uses `grain-light.webp` (dark ink marks on a mostly-light ground) with
+Light mode uses the asset as authored (dark ink marks on a mostly-light ground) with
 `mix-blend-mode: multiply`, which treats light pixels as a no-op and only darkens where there's ink.
-Dark mode swaps to `grain-dark.webp` — the same texture with colors inverted — and
-`mix-blend-mode: screen` instead: multiplying an already-near-black background does nothing visible,
-so the blend mode has to flip along with the asset, not just the color.
+Dark mode applies `filter: invert(1)` to that same file and switches to `mix-blend-mode: screen`:
+multiplying an already-near-black background does nothing visible, so the blend has to flip along
+with the polarity.
+
+**There used to be a second, parallel set of assets** — `grain-dark-960w.webp` and friends — rather
+than a filter. Compared pixel for pixel, each dark file was exactly its light counterpart inverted:
+mean absolute delta of 2.8-5.3 out of 255 (consistent with two independent lossy encodes of one
+master, not a different image), with mean levels landing as complements (210.5 and 44.9, summing to
+255.4). Three files, earning nothing. Note the saving is **repo size and maintenance, not bandwidth**
+— a visitor only ever downloaded one polarity anyway.
+
+FOOTGUN: `filter` makes an element a containing block for absolutely positioned descendants, the
+same trap called out in `Header.astro`. The grain layer has no children, so it is fine today; nest
+anything inside it and check that before anything else.
+
+### Density switching was measured and rejected
+
+Collapsing to one asset makes the image source theme-independent, which in principle unlocks
+`image-set()` (or `srcset` on a real `<img>`) for resolution switching. Both were measured, and
+neither is worth shipping for **this** kind of image:
+
+- **Format switching is dead.** AVIF is larger than WebP here at every quality: 254 KB at `q=50`
+  against WebP's 252 KB, rising to 426 KB at `q=80`. AVIF's advantage is smooth gradients, and this
+  is maximum-entropy speckle. The same reason `q=60` on the old 1920w tier still cost 863 KB.
+- **Density switching destroys the texture.** Offering a half-size file to 1x displays saves ~150 KB
+  (800x450 at `q=70` is 100 KB against 252 KB), but downscaling _averages the noise away_, and
+  upscaling in the browser cannot recover it. Rendered at the size a 1x display would actually show,
+  most of the fine speckle is simply gone — and the fine speckle is the entire reason this is one
+  large `cover` image rather than the small repeating tile it used to be.
+
+Note that downscaling also makes the grain _more_ expensive per pixel, not less: 0.286 bytes/px at
+800x450 against 0.179 at 1600x900. Averaging concentrates the entropy.
+
+The general rule this is a case of: responsive images assume detail is redundant at lower
+resolutions. For a texture whose entire value **is** its high-frequency detail, that assumption is
+inverted, and every resampling strategy is a loss. Resolution tiers work here only because each one
+is generated from the full-res master independently, not resampled from the tier above.
 
 The alpha has to flip too, and not symmetrically: light sits at `0.25`, dark at `0.125`. A single
 shared value doesn't serve both — tuned low enough for dark, the tooth was too faint to read in
