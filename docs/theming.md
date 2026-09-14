@@ -169,26 +169,43 @@ context and paint behind `<html>`. Nothing in the texture stack uses a negative 
 Both paper tiles are 500x200 and repeat at native size, so the grain's scale is fixed in CSS pixels
 and does not change with the viewport. `paper-light.webp` is 4.7 KB, `paper-dark.webp` 2.6 KB.
 
-The dot SVGs use a 120x120 viewBox with dots on a 24px pitch, so `--dots-size: 120px 120px` renders
-the authored 24px spacing. The dots are sub-pixel at that pitch (0.96px), which is why their
-`fill-opacity` is the sensitive knob rather than their size.
+The dot SVGs are a **single 24x24 cell holding one circle** at `cx="1.2" cy="1.2" r="0.48"`, tiled by
+`--dots-size: 24px 24px`. Because the file is one cell rather than a grid, `--dots-size` _is_ the
+pitch: change it and the spacing changes, not just the scale. The dot is sub-pixel at that pitch
+(0.96px), which is why `fill-opacity` is the sensitive knob rather than its size.
 
-FOOTGUN: **all four assets sit within ~800 bytes of Vite's 4096-byte `assetsInlineLimit`, and which
-side they land on is not stable.** Verified against a real build:
+They were not always one circle. Sketch exported a 120x120 tile containing all 25 dots of a 5x5
+grid, as one `<path>` of 25 hand-placed circles — four of which carried sub-pixel export drift
+(three at `1.5` instead of `1.2`, one at `r=0.5` instead of `0.48`). Once every dot was the same
+size, the grid was pure repetition the browser already does for free, so the tile collapsed to its
+unit cell: 4231 B down to 258 B, and the four stray dots snapped onto the regular grid.
 
-| asset                 | source size | build output                                               |
-| --------------------- | ----------- | ---------------------------------------------------------- |
-| `paper-dark.webp`     | 2688 B      | **inlined** into the CSS as a `data:image/webp;base64` URI |
-| `grid-dots-dark.svg`  | 4231 B      | emitted as `/_astro/grid-dots-dark.<hash>.svg`             |
-| `grid-dots-light.svg` | 4233 B      | emitted as `/_astro/grid-dots-light.<hash>.svg`            |
-| `paper-light.webp`    | 4858 B      | emitted as `/_astro/paper-light.<hash>.webp`               |
+The dot sits fully inside its cell (spanning 0.72 to 1.68), which is what makes the one-cell form
+work at all. Move it to an edge — `cx="0"`, say — and it would need drawing four times, once per
+corner, or it will clip instead of wrapping.
 
-An older version of this doc claimed the dot SVG is inlined "so it costs no extra request" — it is
-not, and has not been since the light/dark pair replaced the smaller single asset. Re-encoding a tile
-a little smaller silently converts it from a fingerprinted, `immutable`-cached file (see
-[Asset caching](./caching.md)) into base64 embedded in the stylesheet that **every** visitor
-downloads, including ones on the other theme. Check the built CSS after changing any of these rather
-than assuming; the threshold is close enough that a quality tweak can cross it.
+FOOTGUN: **the two paper tiles sit within ~800 bytes of Vite's 4096-byte `assetsInlineLimit`, and
+which side they land on is not stable.** Verified against a real build:
+
+| asset                 | source size | build output                                                     |
+| --------------------- | ----------- | ---------------------------------------------------------------- |
+| `grid-dots-dark.svg`  | 258 B       | **inlined** as a percent-encoded `data:image/svg+xml` URI, 320 B |
+| `grid-dots-light.svg` | 259 B       | **inlined** as a percent-encoded `data:image/svg+xml` URI, 321 B |
+| `paper-dark.webp`     | 2688 B      | **inlined** into the CSS as a `data:image/webp;base64` URI       |
+| `paper-light.webp`    | 4858 B      | emitted as `/_astro/paper-light.<hash>.webp`                     |
+
+Re-encoding a paper tile a little smaller silently converts it from a fingerprinted,
+`immutable`-cached file (see [Asset caching](./caching.md)) into base64 embedded in the stylesheet
+that **every** visitor downloads, including ones on the other theme. Check the built CSS after
+changing either rather than assuming; the threshold is close enough that a quality tweak can cross
+it.
+
+The dot SVGs are no longer near that threshold in either direction — at ~260 B they inline with
+enormous margin, and both themes' dots together add 641 B to the CSS. That is smaller than the
+single 4231 B file one theme used to fetch, and it removes a request from the critical path. It also
+fixes a small papercut: the first theme toggle used to fetch the other theme's SVG, so the dot grid
+briefly disappeared mid-transition. Both are in the stylesheet now, so the swap is instant. Note
+that SVG inlines percent-encoded rather than base64 — Vite picks the shorter encoding.
 
 **The seam metric this doc used to quote does not survive the bake, and will lie to you.** The old
 test was a ratio: mean absolute delta across the wrap edge over the mean delta between typical
