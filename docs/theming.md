@@ -321,6 +321,53 @@ theme-driven overrides live in `tailwind.config.ts`. Only `DEFAULT` and `sm` siz
 configured — a `prose-cactus` class from the pre-de-branded starter theme was removed as dead
 weight (no matching config, so it generated no CSS).
 
+### Two type families: MonoLisa (body) and Bricolage Grotesque (headline)
+
+The site ran on MonoLisa alone for everything — body copy and `.title` headings both — until
+Bricolage Grotesque was added as a dedicated headline face. Both are registered in
+`astro.config.ts`'s `fonts` array and injected via `<Font cssVariable="..." />` in `Base.astro`'s
+`<head>` (once per family); `--font-mono` and `--font-display` in `global.css` expose them as
+Tailwind's `font-mono` / `font-display` utilities.
+
+**MonoLisa is a local file, Bricolage Grotesque comes from Fontsource.** MonoLisa is a licensed
+font with no public host, so its `provider` is `fontProviders.local()` pointing at
+`src/assets/fonts/*.woff2` directly. Bricolage Grotesque is free and listed on
+[Fontsource](https://fontsource.org/fonts/bricolage-grotesque), so its `provider` is
+`fontProviders.fontsource()` instead — Astro downloads the woff2 from Fontsource's CDN at build
+time and serves it from the site's own `_astro/fonts/` path, same self-hosting outcome as MonoLisa
+without hand-vendoring a file. Both approaches avoid a runtime `fonts.googleapis.com` hit.
+
+**Requesting a weight range, not a single number, is what pulls in the `opsz` axis.** Bricolage
+Grotesque is a variable font with both `wght` and `opsz` axes registered on Fontsource. Passing
+`weights: ["200 800"]` (a range) rather than a single weight tells Fontsource this is a
+variable-font request, and Fontsource always ships its "standard" axis slug — bundling every
+registered axis, not just `wght` — for any variable request on a family that has more than one.
+There's no separate config for "also give me opsz"; requesting the range is enough, and the axis
+then has to be driven explicitly in CSS with `font-variation-settings: "opsz" 60` (see `.title`
+below) since nothing sets it automatically.
+
+**`.title` marks a headline, full stop — except inside `.prose`.** Every `.title` usage
+(`RecordCard`, `CardCollection`, `Note` previews, the TOC summary, every page-level `h1`/`h2`) gets
+Bricolage Grotesque, bold, `opsz 60`, and tight tracking directly — there's no separate opt-in
+class. The one carve-out is `.prose .title`, which reverts to MonoLisa at its old `font-semibold`:
+a `.title`-classed element that ends up embedded inside markdown-rendered content (an MDX-embedded
+component, say) should defer to the prose block's own heading treatment rather than compete with
+it.
+
+**Markdown-rendered headings (`.prose`'s own `h1`-`h6`) get Bricolage separately, via
+`tailwind.config.ts`.** These aren't `.title`-classed at all — they're plain headings the
+`@tailwindcss/typography` plugin generates from post/note bodies, the About page, and tag
+descriptions — so the font-family is set once in the typography plugin's `DEFAULT` css block
+(`"h1, h2, h3, h4, h5, h6": { fontFamily: "var(--font-display)" }`), which reaches every `.prose`
+usage in the site, not just `BlogPost.astro`'s own `prose-headings:*` utilities (those still carry
+that one page's weight/color/anchor-link chrome on top — the two mechanisms coexist rather than
+compete, same as the plugin's other `DEFAULT` overrides already do for `a`/`blockquote`/`code`).
+
+**`display: "fallback"` again, for the same reason as MonoLisa.** Astro's auto-generated fallback
+metrics are close but not pixel-identical to the real font, and a headline's larger type size makes
+that mismatch more visible per character, not less — see MonoLisa's own comment in
+`astro.config.ts` for the fuller CLS history that motivated this choice originally.
+
 Custom elements that need block-level spacing to match a paragraph's rhythm, but aren't a tag the
 plugin knows about by default (`<lightbox-image>`, `.admonition`, `.github-card`, Expressive Code's
 output), are opted in explicitly via a selector list in that same config file rather than by

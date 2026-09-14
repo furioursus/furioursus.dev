@@ -80,6 +80,9 @@
 	/* No-op in light mode by design — same value as --color-accent, see that @property's comment. */
 	--color-nav-hover: oklch(53.11% 0.2159 356.46);
 	--font-mono: var(--font-monolisa);
+	/* Headline face — see astro.config.ts's fonts entry for why Bricolage Grotesque specifically,
+	   and docs/theming.md for how it splits with MonoLisa. */
+	--font-display: var(--font-bricolage);
 }
 
 @layer base {
@@ -201,7 +204,21 @@
 	}
 
 	.title {
-		@apply text-accent-2 text-2xl font-semibold;
+		@apply text-accent-2 text-2xl font-bold;
+		font-family: var(--font-display);
+		letter-spacing: -0.01em;
+		font-variation-settings: "opsz" 60;
+	}
+
+	/* `.title` marks a headline everywhere — except inside a `.prose` block, where markdown-
+	   rendered headings already get Bricolage of their own (tailwind.config.ts's typography
+	   `DEFAULT` css) and a `.title`-classed element embedded there (an MDX-embedded component,
+	   say) should defer to that treatment rather than compete with it. See docs/theming.md. */
+	.prose .title {
+		font-family: var(--font-mono);
+		font-weight: 600;
+		letter-spacing: normal;
+		font-variation-settings: normal;
 	}
 }
 

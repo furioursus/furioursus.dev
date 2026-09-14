@@ -55,6 +55,12 @@ export default {
 			typography: () => ({
 				DEFAULT: {
 					css: {
+						// Headline face, everywhere `.prose` shows up (post/note bodies, About, tag
+						// descriptions) — not just BlogPost.astro's own `prose-headings:*` utilities,
+						// which only cover weight/color/anchor-link chrome for that one usage.
+						"h1, h2, h3, h4, h5, h6": {
+							fontFamily: "var(--font-display)",
+						},
 						a: {
 							textUnderlineOffset: "2px",
 							"&:hover": {

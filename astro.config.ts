@@ -68,6 +68,25 @@ export default defineConfig({
 				],
 			},
 		},
+		{
+			// Headline face — Bricolage Grotesque via Fontsource, not Google's own CDN: Astro's
+			// `fontsource()` provider downloads the woff2 at build time and serves it from our own
+			// domain, same self-hosting story as MonoLisa above, without hand-vendoring the file.
+			// Requesting a weight *range* (rather than a single number) is what tells Fontsource
+			// this is a variable-font request; Fontsource then ships the "standard" axis slug for
+			// this family, which bundles the `opsz` axis in alongside `wght` — needed for the
+			// wonky-at-display-size character that's the whole reason this face was picked over a
+			// cleaner geometric grotesk.
+			provider: fontProviders.fontsource(),
+			name: "Bricolage Grotesque",
+			cssVariable: "--font-bricolage",
+			weights: ["200 800"],
+			styles: ["normal"], // no italic use yet — see MonoLisa's italic-preload note above
+			// Same "fallback" tradeoff as MonoLisa, and the same reason: Astro's auto-generated
+			// fallback metrics are close but not pixel-identical, and a headline's larger type
+			// size makes that few-px mismatch more visible, not less.
+			display: "fallback",
+		},
 	],
 	integrations: [
 		expressiveCode(expressiveCodeOptions),
