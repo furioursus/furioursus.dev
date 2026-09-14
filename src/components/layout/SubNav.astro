@@ -16,7 +16,7 @@ const links = section ? [section, ...(section.children ?? [])] : [];
 ---
 
 {section && (
-	<nav aria-label={`${section.title} section`} class="mb-10 -ms-4">
+	<nav aria-label={`${section.title} section`} class="subnav mb-10 -ms-4">
 		{/* FOOTGUN: divide-muted is required — divide-* ships no color and border-color falls
 				back to currentColor, so each separator would take its preceding link's own state
 				color. Same trap as the main nav; see docs/navigation.md. */}
@@ -25,7 +25,7 @@ const links = section ? [section, ...(section.children ?? [])] : [];
 				<li>
 					<a
 						aria-current={current === withSlash(link.path) ? "page" : false}
-						class="text-accent hover:text-nav-hover active:text-nav-hover aria-[current=page]:text-accent-2 inline-block px-4 py-1 font-semibold underline-offset-2 hover:underline aria-[current=page]:underline"
+						class="text-accent hover:text-nav-hover active:text-nav-hover aria-[current=page]:text-accent-2 relative inline-block px-4 py-1 font-semibold underline-offset-2 hover:underline"
 						href={link.path}
 					>
 						{link.title}
@@ -35,3 +35,28 @@ const links = section ? [section, ...(section.children ?? [])] : [];
 		</ul>
 	</nav>
 )}
+
+<style>
+	/* FOOTGUN: `view-transition-name` values are global even from an Astro-scoped <style> — scoping
+		rewrites the selector, not the name. Both names here must stay unique across the document.
+		See docs/view-transitions.md. */
+	.subnav {
+		view-transition-name: section-subnav;
+	}
+
+	/* The active marker is a real box rather than `text-decoration`, because only a box can carry a
+		`view-transition-name` and slide between tabs. Exactly one link per page is `aria-current`,
+		so the name stays unique and the browser morphs the bar from the old position to the new.
+		Its ::view-transition-* rules live in styles/components/view-transitions.css — Astro rewrites
+		selectors in this scoped block, and those pseudos are children of the document root, not of
+		anything this component owns. */
+	.subnav a[aria-current="page"]::after {
+		background: var(--color-accent);
+		block-size: 2px;
+		content: "";
+		inset-block-end: 0;
+		inset-inline: 1rem;
+		position: absolute;
+		view-transition-name: subnav-indicator;
+	}
+</style>
