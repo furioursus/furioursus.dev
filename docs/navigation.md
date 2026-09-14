@@ -80,6 +80,34 @@ height.
   range query this file used to hand-write. The desktop nav is unconditionally `sm:flex`, so none
   of the display-toggling or animation applies there.
 
+## Section subnavs (`SubNav.astro`)
+
+`menuLinks` entries take an optional `children` array (`MenuLink` in `src/types.ts`). Music and MTG
+are `children` of About, so they live at `/about/music/` and `/about/mtg/` and are **absent from the
+header** — the header maps `menuLinks` itself, so nesting removes them from it for free. They
+surface two other ways:
+
+- `SubNav.astro`, dropped in under the `<h1>` of each of the three About-section pages. It takes no
+  props: it reads `Astro.url.pathname`, finds the `menuLinks` entry with `children` whose path is a
+  prefix of it, and renders that parent plus its children as a row. Nothing can pass it the wrong
+  section, and a fourth About-section page only needs the `children` entry plus the one `<SubNav />`
+  line.
+- The **footer**, which flattens `children` back into one list (`menuLinks.flatMap(...)`), so these
+  pages stay one click from anywhere despite being two levels deep in the URL. This is the second
+  place the header and footer copies of `menuLinks` deliberately diverge — see the `/` note below.
+
+Path comparisons go through a `withSlash()` helper rather than raw string equality. Astro's build
+emits `/about/mtg/`, but an internal link may omit the trailing slash, and a bare `startsWith`
+against an unslashed `/about` would also match a hypothetical `/aboutish/`.
+
+There is deliberately **no dropdown under About in the header**. A disclosure menu there means hover
+intent, `aria-expanded`, Escape handling, a focus decision for About itself, and a nested list
+inside the mobile dropdown — and this file already records two reverted attempts at elaborate header
+machinery. The subnav does the same job with a plain list of links and no JavaScript.
+
+Old URLs are 301'd in `public/_redirects`. `/vinyl-collection/` points straight at
+`/about/music/` rather than chaining through `/music/`, since Netlify only follows one hop.
+
 ## Why `menuLinks` drops `/` here
 
 The nav filters `link.path !== "/"`: the logo link immediately before the `<nav>` already goes home,

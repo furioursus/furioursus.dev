@@ -15,6 +15,13 @@ export interface SiteConfig {
 	url: string;
 }
 
+export interface MenuLink {
+	/** Section pages nested under this one — rendered by `SubNav.astro`, flattened into the footer. */
+	children?: MenuLink[];
+	path: string;
+	title: string;
+}
+
 export interface SiteMeta {
 	articleDate?: string | undefined;
 	description?: string;

@@ -1,2 +1,6 @@
-# /vinyl-collection/ became a section of /music/ — see docs/lastfm.md.
-/vinyl-collection/  /music/  301
+# /music/ and /mtg/ moved under /about/ — see docs/navigation.md.
+/music/             /about/music/  301
+/mtg/               /about/mtg/    301
+# /vinyl-collection/ became a section of /music/, which then moved — see docs/lastfm.md. Points at
+# the final URL rather than chaining through /music/, which Netlify would not follow a second hop for.
+/vinyl-collection/  /about/music/  301
