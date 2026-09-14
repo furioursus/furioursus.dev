@@ -22,7 +22,9 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   cursor tracking, and its static edge-distortion filter.
 - [Navigation](./navigation.md) — the static (non-sticky) header and its plain mobile dropdown,
   the nested `menuLinks` / About-section subnav, how the footer mirrors the header, and why the sticky/dialog-based versions that came before the current header were reverted.
-- [Theming](./theming.md) — the dark/light mode system and design tokens.
+- [Theming](./theming.md) — the dark/light mode system, design tokens, and the baked paper +
+  dot-grid texture on the root element (including why `--color-global-bg` is derived from the
+  texture rather than chosen).
 - [Search](./search.md) — Pagefind static search integration.
 - [Webmentions](./webmentions.md) — likes/reposts/replies pulled from webmention.io.
 - [OG images](./og-images.md) — per-post social card images generated at build time.
