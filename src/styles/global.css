@@ -228,22 +228,6 @@
 	}
 }
 
-/* FOOTGUN: top level on purpose — do NOT move this inside `@layer base` (where it used to live) or
-   any other layer. Chromium honours it from inside a layer; that is not something to rely on, and
-   every spec example and browser doc puts it at the top level of the stylesheet. See
-   docs/view-transitions.md. */
-@view-transition {
-	navigation: auto;
-}
-
-/* The platform-recommended reduced-motion form: switch the transition off wholesale rather than
-   trying to neuter its animations one at a time. */
-@media (prefers-reduced-motion: reduce) {
-	@view-transition {
-		navigation: none;
-	}
-}
-
 .breakout-container {
 	/* `100vw` is the *largest possible* viewport width — on iOS Safari that's the width with
 	   the address-bar chrome collapsed, wider than what's usually rendered, so this box is
@@ -261,7 +245,6 @@
 	@import "./components/github-card.css";
 	@import "./components/lightbox.css";
 	@import "./components/logo.css";
-	@import "./components/view-transitions.css";
 
 	.site-link {
 		@apply hover:decoration-link underline underline-offset-2 hover:decoration-2;

@@ -1,8 +1,5 @@
 {/* Inlined to avoid FOUC. This is a parser blocking script. */}
-{/* FOOTGUN: `blocking="render"` is load-bearing for view transitions, not decoration. This script
-	sets `data-theme` on <html>, so if it has not run when the incoming page is first captured the
-	transition animates to an unthemed snapshot and then snaps. See docs/view-transitions.md. */}
-<script blocking="render" is:inline>
+<script is:inline>
 	const lightModePref = window.matchMedia("(prefers-color-scheme: light)");
 
 	// Kept in sync by hand with --color-global-bg in global.css, see the comment on the

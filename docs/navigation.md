@@ -99,9 +99,8 @@ Path comparisons go through a `withSlash()` helper rather than raw string equali
 emits `/about/mtg/`, but an internal link may omit the trailing slash, and a bare `startsWith`
 against an unslashed `/about` would also match a hypothetical `/aboutish/`.
 
-The subnav's active marker is an `::after` bar rather than an underline, and it slides between
-tabs on navigation — that half lives in [view transitions](./view-transitions.md), which also
-explains why the page `<h1>` and the footer are deliberately left out of it.
+The subnav's active marker is an `::after` bar rather than an underline, so it sits flush under the
+text regardless of descenders and takes its colour independently of the link's own state.
 
 There is deliberately **no dropdown under About in the header**. A disclosure menu there means hover
 intent, `aria-expanded`, Escape handling, a focus decision for About itself, and a nested list
@@ -129,11 +128,6 @@ them back in (`menuLinks.flatMap((link) => [link, ...(link.children ?? [])])`) s
 stayed one click from anywhere on the site. That was dropped in favour of the footer matching the
 header exactly. The consequence is real and intended: those two pages are reachable only through
 About.
-
-The footer is **not** given a `view-transition-name`. It sits at `mt-auto` in `Base.astro`'s
-`min-h-dvh` flex column, so its position depends on how tall the page's content is — naming it would
-animate it streaking down the viewport when navigating into a long page. See
-[view transitions](./view-transitions.md#footgun-the-footer-must-stay-unnamed).
 
 ## Why `menuLinks` drops `/` here
 
