@@ -92,7 +92,8 @@ surface two other ways:
   prefix of it, and renders that parent plus its children as a row. Nothing can pass it the wrong
   section, and a fourth About-section page only needs the `children` entry plus the one `<SubNav />`
   line.
-- The **footer**, which flattens `children` back into one list — see [The footer](#the-footer) below.
+  The footer does **not** carry them — it mirrors the header's row (see [The footer](#the-footer)),
+  so Music and MTG are reachable only through About. That is the deliberate cost of nesting them.
 
 Path comparisons go through a `withSlash()` helper rather than raw string equality. Astro's build
 emits `/about/mtg/`, but an internal link may omit the trailing slash, and a bare `startsWith`
@@ -113,21 +114,21 @@ Old URLs are 301'd in `public/_redirects`. `/vinyl-collection/` points straight 
 ## The footer
 
 `Footer.astro` renders its own `<nav aria-label="Footer">` from the same `menuLinks` export the
-header uses, and the two copies **deliberately diverge in two places**. Both divergences are easy to
-"fix" into a bug, so they are worth stating plainly:
+header uses, and the two rows are meant to stay **the same set of links**. Both map `menuLinks`
+directly, so a new top-level entry shows up in both without either component being touched.
+
+There is exactly one deliberate difference:
 
 - **The footer keeps `/`; the header drops it.** The header's logo link immediately precedes its
   `<nav>`, so a "Home" item there is an adjacent link to the same destination, which WAVE flags as a
-  failure. The footer has no adjacent logo link, so "Home" is correct there. See
-  [Why `menuLinks` drops `/` here](#why-menulinks-drops--here).
-- **The footer flattens `children`; the header does not.** `menuLinks.flatMap((link) => [link,
-...(link.children ?? [])])` splices nested section pages back into one flat row, so Music and MTG
-  stay one click from anywhere on the site even though their URLs are two levels deep. The header
-  maps `menuLinks` directly, which is what keeps them out of it.
+  failure. The footer has no adjacent logo link, so "Home" appears there as an ordinary text link.
+  See [Why `menuLinks` drops `/` here](#why-menulinks-drops--here).
 
-The flatten is one level deep, matching the data: `MenuLink.children` is typed recursively, but
-nothing nests further than one level and the footer would silently drop a grandchild if it did. If a
-third level ever appears, this is the line that needs to become recursive.
+**Nested `children` are deliberately not flattened into the footer.** An earlier version did splice
+them back in (`menuLinks.flatMap((link) => [link, ...(link.children ?? [])])`) so that Music and MTG
+stayed one click from anywhere on the site. That was dropped in favour of the footer matching the
+header exactly. The consequence is real and intended: those two pages are reachable only through
+About.
 
 The footer is **not** given a `view-transition-name`. It sits at `mt-auto` in `Base.astro`'s
 `min-h-dvh` flex column, so its position depends on how tall the page's content is — naming it would

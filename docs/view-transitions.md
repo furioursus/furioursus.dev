@@ -4,11 +4,17 @@ Navigating between the three About-section pages (`/about/`, `/about/music/`, `/
 read as one page changing panels, not three documents replacing each other. That is done with
 **native cross-document view transitions** — no JavaScript, no router, no `<ClientRouter />`.
 
-The opt-in switch is a single at-rule in [`global.css`](../src/styles/global.css)'s base layer:
+The opt-in switch is a single at-rule at the **top level** of [`global.css`](../src/styles/global.css):
 
 ```css
 @view-transition {
 	navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	@view-transition {
+		navigation: none;
+	}
 }
 ```
 
@@ -90,10 +96,21 @@ Astro's scoping would rewrite them into selectors that match nothing. Element-le
 
 ## Reduced motion
 
-Opacity is not a vestibular trigger; movement is. So `prefers-reduced-motion: reduce` keeps the
-cross-fade and drops only the travel — the content's 6px rise is inside a
-`prefers-reduced-motion: no-preference` block, and the indicator's group duration drops to `0s` so
-the bar snaps rather than slides.
+The platform-recommended form is to switch the whole transition off rather than neutering its
+animations one at a time:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+	@view-transition {
+		navigation: none;
+	}
+}
+```
+
+That is what `global.css` does, so per-animation `prefers-reduced-motion: reduce` overrides inside
+`view-transitions.css` would be dead code — there is no transition left to slow down. The
+`prefers-reduced-motion: no-preference` guard around `vt-rise` stays, because it documents which part
+is movement rather than opacity.
 
 The `vt-rise` travel is deliberately small for a second reason: the `root` snapshot contains the
 footer, so anything larger reads as the footer sliding rather than the content settling.
@@ -106,19 +123,89 @@ tab (`document.visibilityState === "hidden"`). Headless and embedded browser pan
 `document.visibilityState` before concluding anything from an automated check, and confirm the actual
 animation in a real, focused window.
 
-What _can_ be checked reliably from a hidden document is the thing most likely to be wrong:
+What _can_ be checked reliably from a hidden document is everything that silently kills a transition
+before it starts. Paste this into the console on any page, in any browser:
 
 ```js
-[...document.querySelectorAll("*")]
-	.map((el) => getComputedStyle(el).viewTransitionName)
-	.filter((n) => n && n !== "none");
+(() => {
+	const names = [...document.querySelectorAll("*")]
+		.map((el) => getComputedStyle(el).viewTransitionName)
+		.filter((n) => n && n !== "none");
+	const rules = [];
+	const walk = (list) =>
+		[...list].forEach((r) => {
+			if (r.constructor.name === "CSSViewTransitionRule")
+				rules.push(r.navigation);
+			if (r.cssRules) walk(r.cssRules);
+		});
+	for (const sheet of document.styleSheets) {
+		try {
+			walk(sheet.cssRules);
+		} catch {
+			/* cross-origin sheet */
+		}
+	}
+	return {
+		visible: document.visibilityState === "visible",
+		crossDocumentSupported: "onpagereveal" in window,
+		viewTransitionRules: rules,
+		names,
+		duplicates: names.filter((n, i) => names.indexOf(n) !== i),
+	};
+})();
 ```
 
-Any value appearing twice means the whole transition is dead.
+How to read it:
 
-## Browser support
+- `visible: false` — transitions are skipped outright. The result says nothing about your CSS.
+- `crossDocumentSupported: false` — this engine does not ship the Level 2 API. Firefox reports this.
+- `viewTransitionRules: []` — the browser never parsed the at-rule. Check it has not been moved back
+  inside a `@layer`.
+- `duplicates` non-empty — the **entire** transition is aborted, not just that element.
 
-Cross-document view transitions are Chromium 126+ and Safari 18.2+. Firefox does not support them
-yet and simply navigates normally — nothing is broken there, and nothing needs a fallback, because
-every rule in `view-transitions.css` lives inside a `::view-transition-*` pseudo or an at-rule an
-unsupporting browser ignores. The `::after` indicator bar is plain CSS and renders everywhere.
+## Browser support, and why Firefox does nothing
+
+This is the Level 2 (**cross-document**) API, which is not the same feature as the Level 1
+(`document.startViewTransition`, same-document) API. Conflating them is the usual reason people
+expect a transition that never arrives:
+
+| Browser | Same-document (L1) | Cross-document (L2)                                                  |
+| ------- | ------------------ | -------------------------------------------------------------------- |
+| Chrome  | 111+               | **126+**                                                             |
+| Safari  | 18.0+              | **18.2+**                                                            |
+| Firefox | 144+               | **Not shipped** — Nightly only, behind `dom.viewTransitions.enabled` |
+
+So **Firefox navigating without any transition is correct, expected behaviour, not a bug in this
+repo** — it ships same-document view transitions but not cross-document ones, so `@view-transition`
+is ignored and the navigation is a plain one. Nothing here needs a fallback: every rule in
+`view-transitions.css` is either a `::view-transition-*` pseudo or inside an at-rule an unsupporting
+browser skips. The `::after` indicator bar is plain CSS and renders everywhere.
+
+## FOOTGUN: keep `@view-transition` out of `@layer`
+
+The rule used to live inside this stylesheet's `@layer base { … }` block, and Chromium honoured it
+there — which is exactly what makes it a trap, because the site looked fine in the browser most
+people test in. Every spec example and browser doc puts the rule at the **top level** of the
+stylesheet, so that is where it lives now. Confirm it after any refactor of `global.css`:
+
+```sh
+npm run build
+# should print the rule with no enclosing @layer
+grep -o '@layer[^{]*{\|@view-transition{[^}]*}' dist/_astro/Base*.css | head
+```
+
+## Render-blocking: why the theme script carries `blocking="render"`
+
+The browser snapshots the **incoming** page as soon as it considers it renderable. Anything that
+changes layout or colour after that point animates from a wrong-looking snapshot and then snaps,
+which reads as a flash-then-reload rather than a transition.
+
+[`ThemeProvider.astro`](../src/components/ThemeProvider.astro) sets `data-theme` on `<html>`, so it is
+exactly that kind of script — it now carries `blocking="render"` to guarantee it has run before the
+capture. If a future change moves theme or layout work into a script that is `async`, `defer`, or in
+the body, it needs the same attribute or the transition will look broken.
+
+Related, and not yet needed here: `<link rel="expect" href="#some-id" blocking="render">` holds the
+first render until a given element has parsed. That is the fix if a transition ever animates to a
+half-built page — most plausibly on [`/about/mtg/`](./mtg.md), whose HTML is ~4MB because of its
+inline card JSON.

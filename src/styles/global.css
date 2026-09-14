@@ -215,10 +215,6 @@
 		scroll-margin-block: 5ex;
 	}
 
-	@view-transition {
-		navigation: auto;
-	}
-
 	/* Astro image responsive styles, modified from -> https://docs.astro.build/en/guides/images/#responsive-image-styles */
 	:where([data-astro-image]) {
 		object-fit: var(--fit);
@@ -229,6 +225,22 @@
 	}
 	[data-astro-image="constrained"] {
 		max-width: 100%;
+	}
+}
+
+/* FOOTGUN: top level on purpose — do NOT move this inside `@layer base` (where it used to live) or
+   any other layer. Chromium honours it from inside a layer; that is not something to rely on, and
+   every spec example and browser doc puts it at the top level of the stylesheet. See
+   docs/view-transitions.md. */
+@view-transition {
+	navigation: auto;
+}
+
+/* The platform-recommended reduced-motion form: switch the transition off wholesale rather than
+   trying to neuter its animations one at a time. */
+@media (prefers-reduced-motion: reduce) {
+	@view-transition {
+		navigation: none;
 	}
 }
 

@@ -2,8 +2,6 @@
 import { menuLinks, siteConfig } from "@/site.config";
 
 const year = new Date().getFullYear();
-// Flattened, unlike the header's copy: nested section pages stay one click away from anywhere.
-const links = menuLinks.flatMap((link) => [link, ...(link.children ?? [])]);
 ---
 
 <footer class="text-muted mt-auto flex w-full flex-col items-center justify-center gap-y-2 pt-20 pb-4 text-center align-top font-semibold sm:flex-row sm:justify-between sm:text-xs">
@@ -15,10 +13,15 @@ const links = menuLinks.flatMap((link) => [link, ...(link.children ?? [])]);
 		aria-label="Footer"
 		class="sm:divide-muted flex flex-wrap justify-center gap-x-2 sm:gap-x-0 sm:divide-x"
 	>
-		{links.map((link) => (
-			<a class="hover:text-global-text px-4 py-2 hover:underline sm:py-0" href={link.path}>
-				{link.title}
-			</a>
-		))}
+		{
+			// Mirrors the header's row exactly, with one difference: "Home" is kept as a text link
+			// here, where the header drops it because its logo already links home. Nested `children`
+			// are deliberately not flattened in — see docs/navigation.md.
+			menuLinks.map((link) => (
+				<a class="hover:text-global-text px-4 py-2 hover:underline sm:py-0" href={link.path}>
+					{link.title}
+				</a>
+			))
+		}
 	</nav>
 </footer>
