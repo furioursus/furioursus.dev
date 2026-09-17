@@ -4,7 +4,14 @@ import ThemeToggle from "@/components/ThemeToggle.astro";
 import { menuLinks, siteConfig } from "@/site.config";
 ---
 
-<header class="group breakout-container mb-6" id="main-header">
+{/* FOOTGUN: `relative z-40` is what keeps the open dropdown above the page. `.breakout-container`'s
+	`transform: translateX(-50%)` makes <header> a stacking context, which seals the nav's own `z-50`
+	inside it — without a z-index here, any positioned element in <main> paints over the open menu.
+	See docs/navigation.md. */}
+<header
+	class="group breakout-container relative z-40 mb-6 motion-reduce:transition-none max-sm:[transition:background-color_0.15s_ease-in] max-sm:[&.menu-open]:bg-global-bg max-sm:[&.menu-open]:[transition:background-color_0.3s_ease-out]"
+	id="main-header"
+>
 	<div class="relative mx-auto max-w-3xl px-4 py-8 sm:px-8">
 		{/* FOOTGUN: ps-18 belongs on this row, not the px-4/sm:px-8 wrapper — Tailwind's ps-* replaces
 			px-*'s start value rather than adding to it. See docs/navigation.md. */}
@@ -99,7 +106,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 				}
 				<nav
 					aria-label="Main"
-					class="bg-global-bg divide-muted absolute -inset-x-4 top-18 flex-col divide-y px-2 py-4 group-[.menu-open]:z-50 motion-reduce:transition-none max-sm:hidden max-sm:transform-[scale(0.92)_translateY(-0.5rem)] max-sm:opacity-0 max-sm:[transition:opacity_0.15s_ease-in,transform_0.15s_ease-in,display_0.15s_allow-discrete] group-[.menu-open]:max-sm:flex group-[.menu-open]:max-sm:transform-[scale(1)_translateY(0)] group-[.menu-open]:max-sm:opacity-100 group-[.menu-open]:max-sm:[transition:opacity_0.3s_cubic-bezier(0.34,1.56,0.64,1),transform_0.3s_cubic-bezier(0.34,1.56,0.64,1),display_0.3s_allow-discrete] sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0 group-[.menu-open]:max-sm:starting:transform-[scale(0.92)_translateY(-0.5rem)] group-[.menu-open]:max-sm:starting:opacity-0"
+					class="bg-global-bg divide-muted absolute -inset-x-4 top-full flex-col divide-y px-4 py-4 max-sm:-mt-4 group-[.menu-open]:z-50 motion-reduce:transition-none max-sm:hidden max-sm:transform-[scale(0.92)_translateY(-0.5rem)] max-sm:opacity-0 max-sm:[transition:opacity_0.15s_ease-in,transform_0.15s_ease-in,display_0.15s_allow-discrete] group-[.menu-open]:max-sm:flex group-[.menu-open]:max-sm:transform-[scale(1)_translateY(0)] group-[.menu-open]:max-sm:opacity-100 group-[.menu-open]:max-sm:[transition:opacity_0.3s_cubic-bezier(0.34,1.56,0.64,1),transform_0.3s_cubic-bezier(0.34,1.56,0.64,1),display_0.3s_allow-discrete] sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0 group-[.menu-open]:max-sm:starting:transform-[scale(0.92)_translateY(-0.5rem)] group-[.menu-open]:max-sm:starting:opacity-0"
 					id="navigation-menu"
 				>
 					{
@@ -110,7 +117,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 							.map((link) => (
 								<a
 									aria-current={Astro.url.pathname === link.path ? "page" : false}
-									class="text-accent hover:text-nav-hover active:text-nav-hover px-4 py-4 font-semibold sm:py-0 sm:underline-offset-2 sm:hover:underline"
+									class="text-accent hover:text-nav-hover active:text-nav-hover px-4 py-4 font-semibold max-sm:font-display max-sm:py-5 max-sm:text-4xl max-sm:font-bold max-sm:tracking-tight max-sm:[font-variation-settings:'opsz'_60] sm:py-0 sm:underline-offset-2 sm:hover:underline"
 									href={link.path}
 								>
 									{link.title}
