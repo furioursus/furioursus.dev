@@ -15,7 +15,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 	<div class="relative mx-auto max-w-3xl px-4 py-8 sm:px-8">
 		{/* FOOTGUN: ps-18 belongs on this row, not the px-4/sm:px-8 wrapper — Tailwind's ps-* replaces
 			px-*'s start value rather than adding to it. See docs/navigation.md. */}
-		<div class:list={["flex items-center", siteConfig.showLogo && "sm:relative sm:ps-18"]}>
+		<div class:list={["flex items-center", siteConfig.showLogo && "sm:relative sm:ps-22"]}>
 			<div class="flex sm:flex-col sm:items-start">
 				<a
 					aria-current={Astro.url.pathname === "/" ? "page" : false}
@@ -29,7 +29,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 						<svg
 							data-name="Bear Face"
 							aria-hidden="true"
-							class="logo-mark me-4 h-10 w-6 sm:absolute sm:inset-y-0 sm:inset-s-18 sm:my-auto sm:me-0 sm:h-18 sm:w-auto sm:-translate-x-[calc(100%+0.5rem)] sm:grayscale sm:group-hover:filter-none"
+							class="logo-mark me-6 h-10 w-6 sm:absolute sm:inset-y-0 sm:inset-s-22 sm:my-auto sm:me-0 sm:h-18 sm:w-auto sm:-translate-x-[calc(100%+1.25rem)]"
 							fill="currentColor"
 							focusable="false"
 							viewBox="0 0 68.31 64.71"

@@ -138,7 +138,7 @@ says otherwise.
 The mark bleeds left out of the title column into a gutter reserved for it, and it is deliberately
 sized **bigger than that gutter** so it reads as a prominent mark rather than a small icon.
 
-`sm:ps-18` reserves the gutter, and it lives on the innermost flex row specifically — not on the
+`sm:ps-22` reserves the gutter, and it lives on the innermost flex row specifically — not on the
 `px-4 sm:px-8` wrapper above it. **Tailwind's `ps-*` replaces `px-*`'s start-side value rather than
 adding to it**, so stacking both on one element would make the logo's `-inset-s-18` pull-back cancel
 against the raw breakout edge instead of the content column's edge, landing the mark about 32px too
@@ -148,10 +148,19 @@ relationship, with both levels now inside the breakout shell.
 
 The mark is sized by height with an auto width, to keep the artwork's own aspect ratio rather than
 the odd one a fixed `w-*` would force — which means its rendered width is not a static number
-anything can subtract by hand. `sm:inset-s-18` + `sm:-translate-x-[calc(100%+0.5rem)]` sidesteps
+anything can subtract by hand. `sm:inset-s-22` + `sm:-translate-x-[calc(100%+1.25rem)]` sidesteps
 that: position it at the gutter's _far_ edge (flush with the title text's own start), then shift it
-left by its own width plus a fixed `0.5rem`. Its right edge lands a consistent half-rem before the
+left by its own width plus a fixed `1.25rem`. Its right edge lands a consistent 20px before the
 title no matter what the width resolves to, and stays correct if the height ever changes again.
+The mobile equivalent is the plain `me-6` on the same element, since the mark is an ordinary inline
+sibling of the wordmark below `sm`.
+
+**FOOTGUN: the gutter (`ps-22`) and the mark's anchor (`inset-s-22`) must move together.** Raising
+only the translate to widen the gap walks the mark leftward instead, and between 640px and 768px —
+where the row is already at full width with no page margin left to bleed into — that put its
+fringed edge 5px from the viewport. Raising both keeps the mark at the gutter's far edge and pushes
+the _text_ right instead, which holds edge clearance at 21px across that whole range while still
+giving 20px of separation. Measure both numbers, not just the gap, if these ever change again.
 `h-18` in particular leaves clear space above and below within the row's own 136px height at `sm:`
 (a 72px logo plus 2×32px from the `py-8` on the row above).
 

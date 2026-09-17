@@ -1,0 +1,50 @@
+/* Riso color-misregistration — the "moments" half of the queer-punk texture direction, applied to
+   a handful of marks rather than to the page. The ambient half (paper grain + dot grid on the root
+   element) is a separate technique entirely; see docs/theming.md for the split. */
+
+/* Two hard-edged silhouette copies of the source, offset in opposite directions, in the palette's
+   two accent inks. `drop-shadow` rather than duplicated elements because it follows the alpha
+   channel of whatever it is applied to, so an SVG glyph fringes on its actual outline instead of
+   its bounding box — and it costs one declaration instead of a second copy of the markup. */
+@property --riso-offset {
+	syntax: "<length>";
+	inherits: true;
+	initial-value: 1px;
+}
+
+:root {
+	--riso-ink-1: var(--color-accent);
+	--riso-ink-2: var(--color-link);
+}
+
+/* FOOTGUN: `--riso-fringe` is declared on the consumers, NOT on `:root`, and it has to stay that
+   way. A custom property holding `var()` is substituted at computed-value time on the element it is
+   *declared* on — so a `:root`-level `--riso-fringe` bakes in `:root`'s `--riso-offset` and every
+   per-element override of that offset silently does nothing (the chain still resolves, just always
+   at 1px, which is why this is easy to miss). Declaring it here means `var(--riso-offset)` resolves
+   against each consumer. Add a new consumer to this selector list rather than to `:root`. */
+.riso,
+.logo-mark {
+	--riso-fringe: drop-shadow(calc(var(--riso-offset) * -1) 0 0 var(--riso-ink-1))
+		drop-shadow(var(--riso-offset) 0 0 var(--riso-ink-2));
+}
+
+/* Standalone use, for marks with no filter of their own — the SocialList glyphs. `.logo-mark`
+   deliberately does not use this class; it composes `--riso-fringe` into its own chain in logo.css
+   so it can keep a `grayscale()` in front. */
+.riso {
+	filter: var(--riso-fringe);
+}
+
+/* The offset is a plain length rather than an em so it stays a *press* misregistration — a real
+   riso misses by a fixed fraction of a millimetre regardless of how big the artwork is, so scaling
+   the offset with the glyph would read as a blur effect instead of a printing error. */
+.riso-1 {
+	--riso-offset: 1px;
+}
+
+.riso-2 {
+	--riso-offset: 2px;
+}
+
+/* Reduced motion does not disable this — it is a static treatment, not an animation. */

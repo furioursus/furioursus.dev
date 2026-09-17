@@ -77,6 +77,19 @@ so it is unrelated to
 [the Chrome repaint bug documented below](#the-chrome-bug-behind-the-track-wrappers), which is about
 the `transform`/`translate`/`rotate`/`scale` properties specifically.
 
+## The filter chain (riso + grayscale)
+
+`.logo-mark` carries `filter: grayscale(1) var(--riso-fringe)` at `sm` and up, declared in
+`logo.css`. The grayscale used to be `sm:grayscale sm:group-hover:filter-none` on the `<svg>` in
+`Header.astro` and moved here when the riso misregistration was added, because the two are a single
+`filter` chain whose **order is the mechanism** and Tailwind has no way to say "drop only the first
+function on hover." Full write-up, including why hover clears the grayscale but keeps the fringe:
+`docs/theming.md`.
+
+Relevant to this file: a CSS `drop-shadow()` filter does not displace geometry the way the removed
+`#logo-melt` did, so it does not swamp `logo-breathe`. All five idle animations keep running
+underneath it.
+
 ## Cursor tracking
 
 Once the reader's cursor moves, `#Eyes` and `#Muzzle` stop running `logo-look-around` and instead

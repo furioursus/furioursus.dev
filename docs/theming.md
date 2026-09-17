@@ -99,10 +99,10 @@ move the tiles much further.
 
 Two tiling background layers on the **root element**, giving the site a photocopy-grain tooth under
 a fine dot grid. This is one of the two texture "roles" from the queer-punk direction above; the
-other — riso color-misregistration on specific elements like a logo or pull-quote — is a
-deliberately separate, not-yet-built "moments" treatment. See the
-[[furioursus-dev-color-texture-redesign]] memory for that split and why it is two techniques rather
-than one.
+other is [riso misregistration](#riso-misregistration-the-moments-half) on individual marks. They
+are deliberately two techniques rather than one: this half is **ambient** — global, colorless, and
+underneath everything — while that half is **local and chromatic**, applied to a handful of marks
+on purpose.
 
 The whole implementation is now four declarations:
 
@@ -313,6 +313,66 @@ That last point is worth stating plainly, because the old doc argued against it:
 the grain's average was rejected as "an average that changes per theme, per breakpoint image, and per
 blend mode." The breakpoint images and the blend modes no longer exist. Only the per-theme axis
 remains, and `npm run paper:average` tracks it in one command.
+
+## Riso misregistration (the "moments" half)
+
+**TL;DR — `src/styles/components/riso.css`. Two hard-edged `drop-shadow()` copies of a mark, offset
+left and right in the palette's pink and acid green, imitating a risograph's color passes missing
+their register. Currently on the header bear alone — 2px on mobile, 3px at `sm` and up.**
+
+A risograph lays each color down in its own pass and the paper shifts between them, so a two-color
+print has its layers slightly out of alignment. The digital equivalent is one declaration:
+
+```css
+filter: drop-shadow(calc(var(--riso-offset) * -1) 0 0 var(--riso-ink-1))
+	drop-shadow(var(--riso-offset) 0 0 var(--riso-ink-2));
+```
+
+`drop-shadow` rather than duplicated markup because it follows the **alpha channel** of what it is
+applied to, so an SVG glyph fringes along its actual outline rather than its bounding box. The inks
+are `--color-accent` and `--color-link`, so it re-themes for free.
+
+### Two footguns
+
+**`--riso-fringe` is declared on its consumers, never on `:root`.** A custom property holding
+`var()` is substituted at computed-value time **on the element it is declared on**. A `:root`-level
+`--riso-fringe` therefore bakes in `:root`'s `--riso-offset`, and every per-element override of that
+offset silently does nothing — the chain still resolves and still renders, just always at the root
+value, which is exactly why it is easy to ship without noticing. Add a new consumer to the
+`.riso, .logo-mark` selector list in `riso.css`; do not hoist the declaration.
+
+**Filter order decides whether the effect survives.** `.logo-mark` composes
+`grayscale(1) var(--riso-fringe)` — grayscale **first**, desaturating the bear itself, then the
+fringes laid on at full ink. Put the `grayscale()` after the drop-shadows and it eats them, leaving
+two grey smudges. That ordering is the only reason the mark can keep the muted-until-hover
+treatment it has always had and still carry color misregistration.
+
+That grayscale used to be `sm:grayscale sm:group-hover:filter-none` in `Header.astro`; it moved into
+`logo.css` because the two are one chain and Tailwind cannot express "drop only the first function."
+Hover now clears the grayscale and keeps the fringe, since the misregistration is the mark's resting
+character rather than a hover flourish. **FOOTGUN: the `filter` stays on `.logo-mark` and never on
+the wrapping `<a>`** — a filter makes an element a containing block for absolutely positioned
+descendants, and the mark's `sm:absolute` vertical centering resolves against that `<a>`.
+
+Unlike the removed `#logo-melt` SVG filter (see `docs/logo.md`), this one does not displace
+geometry, so it does not swamp `logo-breathe` — all five idle animations were confirmed still
+`running` under it.
+
+### Why the bear only
+
+The `SocialList` glyphs carried this at 1px briefly and it came back off: five fringed icons in a
+row reads as chromatic noise rather than a printing artifact, and those glyphs are wayfinding, not
+marks. The treatment earns its place on something that is _already_ a logo. `.riso` / `.riso-1` /
+`.riso-2` stay in `riso.css` as the ready-made hook for the next one — a pull-quote is the obvious
+candidate from the original direction — so **they currently have no consumers**; `.logo-mark`
+composes `--riso-fringe` itself rather than using them.
+
+### Scale is deliberately not relative
+
+The offset is a plain `px` length, not an `em`. A real press misses register by a fixed fraction of
+a millimetre no matter how large the artwork is, so an offset that scaled with the glyph would read
+as a blur effect instead of a printing error. The bear's own two steps are declared directly in
+`logo.css`; `.riso-1` and `.riso-2` mirror them for future consumers.
 
 ## Switching themes
 
