@@ -40,13 +40,13 @@ const meta = {
 	<SubNav />
 
 	{missingFile && (
-		<p class="prose prose-sm max-w-none">
+		<p class="prose prose-sm sm:prose-lg max-w-none">
 			Export a collection from ManaBox and save it to <code>src/data/collection.csv</code> to
 			populate this page.
 		</p>
 	)}
 
-	{error && <p class="prose prose-sm max-w-none">Couldn't load the collection: {error}</p>}
+	{error && <p class="prose prose-sm sm:prose-lg max-w-none">Couldn't load the collection: {error}</p>}
 
 	{!missingFile && !error && (
 		<CardCollection entries={sortedCards} foils={foils} rarities={rarities} stats={stats} />

@@ -17,6 +17,11 @@ export default {
 			// and sm (0.875rem); named 2xs to match the common community convention for this size.
 			fontSize: {
 				"2xs": "0.8rem",
+				// Page-title scale, used by `.title` in global.css and nothing else. Two steps
+				// rather than one because the 48px desktop size wraps a short headline onto three
+				// lines on a 375px screen; see docs/theming.md for the full scale and its ratios.
+				title: ["2.25rem", { lineHeight: "2.5rem" }],
+				"title-lg": ["3rem", { lineHeight: "3.25rem" }],
 			},
 			// A separate micro-spacing scale for the handful of compact UI elements that need
 			// finer steps than Tailwind's own 0.25rem-based spacing scale offers — "tight-N" keys
@@ -133,11 +138,52 @@ export default {
 						},
 					},
 				},
+				// Heading sizes are set per size-modifier rather than in DEFAULT because they are
+				// `em`-relative: the same em value resolves differently against prose-sm's 14px
+				// body and prose-lg's 18px. `sm` is the MOBILE step and `lg` is the desktop one
+				// (the call sites read `prose-sm sm:prose-lg`). Targets are 36/30/20px on mobile
+				// and 48/36/24px on desktop — see docs/theming.md.
 				sm: {
 					css: {
 						code: {
 							fontSize: "var(--text-sm)",
 							fontWeight: "400",
+						},
+						// Matches `.title`'s 36px so a markdown-level h1 (the CV's name heading is the
+						// only one in the content today) reads as the same rank as every other page
+						// title, rather than landing on the typography plugin's own smaller default.
+						h1: {
+							fontSize: "2.5714em",
+							lineHeight: "1.1111",
+						},
+						h2: {
+							fontSize: "2.1429em",
+							lineHeight: "1.2",
+						},
+						h3: {
+							fontSize: "1.4286em",
+							lineHeight: "1.3",
+						},
+					},
+				},
+				lg: {
+					css: {
+						code: {
+							fontSize: "var(--text-sm)",
+							fontWeight: "400",
+						},
+						// Matches `.title`'s 48px — see the base block above.
+						h1: {
+							fontSize: "2.6667em",
+							lineHeight: "1.0833",
+						},
+						h2: {
+							fontSize: "2em",
+							lineHeight: "1.2222",
+						},
+						h3: {
+							fontSize: "1.3333em",
+							lineHeight: "1.25",
 						},
 					},
 				},

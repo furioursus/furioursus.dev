@@ -12,7 +12,7 @@ const { posts, class: className } = Astro.props;
 
 {posts.length > 0 && (
 	<section class:list={[className]}>
-		<h2 class="title mb-6 text-xl">Pinned Posts</h2>
+		<h2 class="title mb-6 text-2xl">Pinned Posts</h2>
 		<ul class="space-y-4" role="list">
 			{posts.map((p) => (
 				<li class="sm:grid-cols-auto-1fr grid gap-1">
