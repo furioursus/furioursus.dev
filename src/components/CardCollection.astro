@@ -90,7 +90,7 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 	</p>
 
 	<noscript>
-		<p class="prose prose-sm max-w-none">
+		<p class="prose prose-sm sm:prose-lg max-w-none">
 			This collection is rendered by JavaScript (search/filter/sort need it either way) — enable it
 			to browse the cards.
 		</p>
@@ -398,7 +398,7 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 
 					const textClass = `block min-w-0 sm:mt-2${entry.img ? " sm:hidden" : ""}`;
 					const textInner = `<p class="text-2xs m-0 opacity-70">${meta}</p>
-							<h3 class="title my-tight-1 overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">${name}</h3>
+							<h3 class="title my-tight-1 text-3xl overflow-hidden text-ellipsis whitespace-nowrap sm:whitespace-normal">${name}</h3>
 							<p class="text-2xs m-0 opacity-60">${priceLine}</p>`;
 					const textBlock = entry.href
 						? `<a class="${textClass} text-inherit no-underline" href="${escapeHtml(entry.href)}" target="_blank" rel="noopener">${textInner}</a>`

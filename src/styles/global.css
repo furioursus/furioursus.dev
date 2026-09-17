@@ -204,7 +204,7 @@
 	}
 
 	.title {
-		@apply text-accent-2 text-2xl font-bold;
+		@apply text-accent-2 text-title font-bold sm:text-title-lg;
 		font-family: var(--font-display);
 		letter-spacing: -0.01em;
 		font-variation-settings: "opsz" 60;

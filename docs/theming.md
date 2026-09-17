@@ -334,9 +334,75 @@ correctly, including the toggle's own `aria-checked` bookkeeping.
 
 Prose content (post/note bodies, the About page, tag descriptions) is styled by Tailwind's
 [`@tailwindcss/typography`](https://github.com/tailwindlabs/tailwindcss-typography) plugin, whose
-theme-driven overrides live in `tailwind.config.ts`. Only `DEFAULT` and `sm` size variants are
+theme-driven overrides live in `tailwind.config.ts`. `DEFAULT`, `sm` and `base` size variants are
 configured — a `prose-cactus` class from the pre-de-branded starter theme was removed as dead
 weight (no matching config, so it generated no CSS).
+
+### The type scale
+
+**TL;DR — two steps, breaking at `sm` (640px). Body is 14px on mobile and 18px on desktop; page
+titles are 36px and 48px. The gap between the two body sizes is wide on purpose: headings run at
+the larger scale at both breakpoints, but mobile body copy stays at 14px because the measure cannot
+afford more.**
+
+| role               | mobile | desktop | ×body       | set by                                       |
+| ------------------ | ------ | ------- | ----------- | -------------------------------------------- |
+| page title (`h1`)  | 36px   | 48px    | 2.25 / 2.67 | `.title`, and prose `h1`                     |
+| section (`h2`)     | 30px   | 36px    | 1.88 / 2.00 | prose `h2`                                   |
+| sub-section (`h3`) | 20px   | 24px    | 1.25 / 1.33 | prose `h3`                                   |
+| body               | 14px   | 18px    | 1.00        | `text-sm sm:text-lg`, `prose-sm sm:prose-lg` |
+| small UI text      | 12.8px | 12.8px  | 0.91 / 0.71 | `text-2xs`                                   |
+
+Body size is set in two places that must agree: `text-sm sm:text-lg` on `Base.astro`'s page
+wrapper (everything outside a prose block) and `prose prose-sm sm:prose-lg` at each of the 12
+`.prose` call sites. Changing one without the other splits the scale in half.
+
+**The measure, and what it costs.** Characters per line, not font size, is the readability metric,
+and MonoLisa is a monospace — roughly 0.6em per character where a proportional face averages nearer
+0.5em. Measured on a post body:
+
+|                 | column | CPL    |
+| --------------- | ------ | ------ |
+| mobile (375px)  | 343px  | **38** |
+| desktop (900px) | 704px  | **61** |
+
+Desktop sits comfortably inside the 45–75 ideal band. **FOOTGUN: that band is not reachable on a
+phone with this face at all.** At 375px the column is 343px, so 14px yields 38 CPL, 13px yields 41,
+and hitting 44 would need a ~12px body — too small to read. 38 is the practical ceiling, which is
+why mobile body does not follow the rest of the scale upward; raising it to 16px drops the measure
+to 33, which was tried and walked back. `text-2xs` is likewise held at 0.8rem rather than following
+the bump: at 0.9rem it rendered 14.4px, fractionally _larger_ than the 14px mobile body, which
+inverts what that token is for. Note also that at 18px the desktop prose column is no longer capped by `prose`'s own `65ch`;
+it now fills `max-w-3xl` (704px) instead, which is why CPL reads 61 rather than 65.
+
+Verify a change to any of this by measuring the rendered text, not by eye:
+
+```js
+const p = document.querySelector(".prose p");
+const cs = getComputedStyle(p);
+const ctx = document.createElement("canvas").getContext("2d");
+ctx.font = `${cs.fontSize} ${cs.fontFamily}`;
+Math.round(
+	p.getBoundingClientRect().width / (ctx.measureText("0123456789").width / 10),
+);
+```
+
+**`.title` is two scales, and two of its call sites opt out.** `.title` means _page title_ — it
+resolves to `text-title sm:text-title-lg` (36/48px, both registered in `tailwind.config.ts`'s
+`fontSize`). Call sites that want something smaller override it with an ordinary `text-*` utility,
+which wins because `.title` lives in `@layer components`. **FOOTGUN: `RecordCard.astro` and
+`CardCollection.astro` carry an explicit `text-3xl`** — they use `.title` for _card_ titles, not
+page titles, and without that pin a change to the page-title scale silently drags every vinyl
+sleeve and Magic card heading up with it.
+
+Prose `h1` deliberately matches `.title` rather than taking the plugin's own default, so a
+markdown-level `h1` — the CV's name heading is the only one in the content today — reads as the
+same rank as every other page title.
+
+Heading sizes live in the `sm` and `base` typography blocks rather than `DEFAULT` because they are
+`em`-relative: the same `em` resolves against prose-sm's 14px body and prose-lg's 18px, so one
+shared value cannot hit both targets. Note the size-modifier names no longer match the breakpoints
+they serve — `sm` is the **mobile** step here and `lg` is the desktop one.
 
 ### Two type families: MonoLisa (body) and Bricolage Grotesque (headline)
 

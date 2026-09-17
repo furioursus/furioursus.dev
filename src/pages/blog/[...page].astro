@@ -57,7 +57,7 @@ const descYearKeys = Object.keys(groupedByYear).sort((a, b) => +b - +a);
 			<PinnedPosts posts={pinnedPosts} class="mb-16" />
 			{descYearKeys.map((yearKey) => (
 				<section class="mb-16">
-					<h2 id={`year-${yearKey}`} class="title text-lg">
+					<h2 id={`year-${yearKey}`} class="title text-xl">
 						<span class="sr-only">Posts in</span>
 						{yearKey}
 					</h2>
@@ -74,7 +74,7 @@ const descYearKeys = Object.keys(groupedByYear).sort((a, b) => +b - +a);
 		</div>
 		{!!uniqueTags.length && (
 			<aside>
-				<h2 class="title mb-4 flex items-center gap-1 text-lg">
+				<h2 class="title mb-4 flex items-center gap-1 text-xl">
 					<Icon aria-hidden="true" class="text-muted h-6 w-6" focusable="false" name="tags" />
 					Tags
 				</h2>
