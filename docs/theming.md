@@ -314,6 +314,107 @@ the grain's average was rejected as "an average that changes per theme, per brea
 blend mode." The breakpoint images and the blend modes no longer exist. Only the per-theme axis
 remains, and `npm run paper:average` tracks it in one command.
 
+## Photocopy jitter on page titles
+
+**TL;DR — `src/components/TextureFilters.astro` emits an `feTurbulence`/`feDisplacementMap` ladder
+at five displacement steps (0.5, 1, 2, 3, 5px); `src/styles/components/jitter.css` decides what
+wears which. Headings are on step 3. Body text is on step 2 at `sm` and up, 0.5 below it.**
+
+|                      | step | displacement          |
+| -------------------- | ---- | --------------------- |
+| headings (`h1`–`h6`) | 3    | 3px, both breakpoints |
+| body text, desktop   | 2    | 2px                   |
+| body text, mobile    | 0.5  | 0.5px                 |
+
+The body step is far apart across the breakpoint because displacement is an absolute px value while
+type is not: 2px against 18px desktop copy is a tooth, but 2px against 14px mobile copy eats the
+letterforms.
+
+`feTurbulence` generates a noise field and `feDisplacementMap` pushes each pixel of the source by
+the value it finds there, so glyph edges crumble the way toner does on a bad photocopy. Applied to
+HTML via `filter: url(#press-jitter-2)`, the text stays real DOM text — selectable, screen-reader
+accessible and Pagefind-indexable — which is the whole reason to do this rather than ship an image.
+
+All five steps are emitted whether or not anything references them, so trying a different one means
+swapping a single id in `jitter.css`. A filter nothing references is never evaluated, so the unused
+ones cost a few hundred bytes of markup and no runtime. `.jitter-05` … `.jitter-5` utility classes
+exist for trying a step straight from markup; **none of them currently have a consumer.**
+
+Every step shares one noise field (same `baseFrequency`, `numOctaves`, `seed`), so the steps differ
+only in how hard that field pushes — switching steps changes the _amount_ of the artifact, not its
+character.
+
+### Three things that will break it
+
+**`color-interpolation-filters="sRGB"` is not optional.** The SVG default is linearRGB, which shifts
+every color passing through the filter. On the hot-pink headings this applies to, the shift is
+glaring rather than subtle.
+
+**The filter region is widened to `x="-20%" width="140%"`.** The default region is -10%/+120% of the
+bounding box, and the heading anchor `::before` sits at `margin-left: -16px` — outside the element's
+own box. The default region clips it.
+
+**A child cannot opt out of its parent's filter**, which is why `jitter.css` has three selectors
+instead of one. The homepage greeting `h1` contains a 👋 `<button>`: filtering the `h1` would
+displace a color emoji into mud, and that button's `group-hover:animate-[wobble]` transform would
+force the entire filter to re-rasterize on every frame of the hover. The greeting therefore wears
+the filter on its inner `.title-text` span. Anything else mixing text with emoji or icons needs the
+same split.
+
+### Filters compound, so only the innermost text block is matched
+
+**FOOTGUN: a filtered element inside another filtered element is displaced twice, at double the
+intended scale.** This is not hypothetical in real content — a loose markdown list emits `li > p`, a
+table cell can hold a paragraph, a `dd` can hold a list. Hand-curating a list of "leaf-ish" elements
+does not survive that, because the nesting is a property of the content, not of the selector.
+
+The rule therefore repeats its own element list inside `:not(:has(...))`, which structurally
+guarantees that only the innermost match ever takes the filter:
+
+```css
+.jitter-text
+	:is(p, li, dt, dd, figcaption, caption, th, td, summary, label):not(
+		:has(:is(p, li, dt, dd, figcaption, caption, th, td, summary, label)),
+		:has(:is(img, picture, svg, video, lightbox-image, .expressive-code))
+	)
+```
+
+**Keep the two lists identical.** Verified against injected `li > p`, `li > ul > li`, `td > p` and
+`dd > p`: in every case the inner element takes the filter and the outer one does not.
+
+### Media is exempt, and the combinator is the bug that gets you
+
+A child cannot opt out of its parent's filter, so a paragraph containing an image has to lose the
+filter **entirely** — the image cannot be spared on its own. The `:has()` match is a _descendant_
+one, with no `>`: the webmention avatars are `img` inside `a` inside `p`, and a child-combinator
+version matched none of the ten of them and warped every avatar. Code blocks are exempt for the
+inverse reason — Expressive Code's output is already a dense grid of small glyphs, and displacement
+turns it to noise.
+
+### `.jitter-text` is a scope hook, never a filter target
+
+The class on `Base.astro`'s page wrapper exists only to scope the descendant selectors. **It must
+never carry a `filter` itself.** A filter makes an element a containing block for absolutely
+positioned descendants, and the mobile nav dropdown, the masthead logo and the heading anchors all
+resolve against ancestors inside that wrapper — filtering it relocates every one of them. This is
+the same footgun that governs `.logo-mark` and the nav; it is the third time it shows up in these
+docs, which is a good reason to assume it will show up again.
+
+### What it costs
+
+- **It rasterizes.** A filtered element is painted to a bitmap, so subpixel antialiasing becomes
+  grayscale antialiasing. Filtered text reads very slightly softer and lighter than unfiltered text
+  beside it.
+- **It is a raster pass per matched element.** A post body is ~30 filtered elements rather than one
+  large surface, which is the better shape for this, but it is not free.
+
+### Static on purpose
+
+There is no animation and therefore no `prefers-reduced-motion` wiring. If the `scale` is ever
+animated it must be driven by CSS, not SMIL: SMIL ignores that media query entirely, which is the
+exact problem the removed `#logo-melt` filter had (`docs/logo.md`). It would also be the only moving
+thing in an otherwise static texture stack.
+
 ## Riso misregistration (the "moments" half)
 
 **TL;DR — `src/styles/components/riso.css`. Two hard-edged `drop-shadow()` copies of a mark, offset

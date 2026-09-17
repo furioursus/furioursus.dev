@@ -1,0 +1,64 @@
+---
+/**
+ * SVG filter definitions for the press-artifact texture treatments, registered once site-wide from
+ * `Base.astro`. Markup-free on its own — it renders a zero-size, `aria-hidden` `<svg>` that exists
+ * only to hold `<defs>`.
+ *
+ * FOOTGUN: this has to be in the DOM of every page that uses a filter. A `filter: url()` pointing
+ * at an external file (`url(/sprite.svg#press-jitter-2)`) is unreliable in Safari, which is why the
+ * defs ship inline on every page rather than as one cached asset. See docs/theming.md.
+ */
+
+/**
+ * The displacement ladder, in px. Every step is emitted whether or not anything currently uses it,
+ * so a step can be tried by swapping one id in `jitter.css` with no round trip through this file.
+ * Five defs of two primitives each is a few hundred bytes of markup and no runtime cost — a filter
+ * nothing references is never evaluated.
+ *
+ * `id` is the scale with the decimal point dropped, so `0.5` is `press-jitter-05`.
+ */
+const JITTER_SCALES = [0.5, 1, 2, 3, 5] as const;
+
+const filterId = (scale: number) => `press-jitter-${String(scale).replace("0.", "0")}`;
+---
+
+<svg aria-hidden="true" class="absolute h-0 w-0 overflow-hidden" focusable="false">
+	<defs>
+		{JITTER_SCALES.map((scale) => (
+			/* FOOTGUN: `color-interpolation-filters="sRGB"` is not optional. The SVG default is
+					linearRGB, which shifts every color through the filter — on the hot-pink headings
+					this applies to, the difference is glaring rather than subtle.
+
+					The region is widened from the default (-10%/120%) because the heading anchor
+					`::before` sits at `margin-left: -16px`, outside the element's own box, and the
+					default region clips it. */
+			<filter
+				color-interpolation-filters="sRGB"
+				height="140%"
+				id={filterId(scale)}
+				width="140%"
+				x="-20%"
+				y="-20%"
+			>
+				{/* Every step shares one noise field — same `baseFrequency`, `numOctaves` and
+						`seed` — so they differ only in how hard that field pushes. That is what makes
+						the ladder comparable: switching steps changes the amount of the artifact, not
+						its character. */}
+				<feTurbulence
+					baseFrequency="0.85"
+					numOctaves="3"
+					result="noise"
+					seed="4"
+					type="fractalNoise"
+				/>
+				<feDisplacementMap
+					in="SourceGraphic"
+					in2="noise"
+					scale={scale}
+					xChannelSelector="R"
+					yChannelSelector="G"
+				/>
+			</filter>
+		))}
+	</defs>
+</svg>

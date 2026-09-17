@@ -1,0 +1,84 @@
+/* Photocopy jitter — the displacement half of the press-artifact treatments. The filters themselves
+   live in `TextureFilters.astro`, which emits a five-step ladder (0.5, 1, 2, 3, 5). This file only
+   decides what wears which step. See docs/theming.md. */
+
+/* FOOTGUN: `.jitter-text` on `Base.astro`'s page wrapper is a SCOPE HOOK ONLY — it must never carry
+   a `filter` itself. A filter makes an element a containing block for absolutely positioned
+   descendants, and the mobile nav dropdown, the masthead logo and the heading anchors all resolve
+   their position against ancestors inside this wrapper. Filtering the wrapper relocates every one
+   of them. The filters below therefore sit on leaf text elements, never on a container. */
+
+/* Headings — step 3.
+   `:not(:has(button))` is what keeps the homepage greeting out: a child cannot opt out of its
+   parent's filter, so filtering that `h1` would take its 👋 `<button>` with it. Displacing a color
+   emoji turns it to mud, and the button's `group-hover:animate-[wobble]` transform would force the
+   whole filter to re-rasterize on every frame of the hover. The greeting wears it on its inner
+   text span instead, on the next rule. Anything else mixing text with emoji or icons behaves the
+   same way and needs the same split. */
+.jitter-text :is(h1, h2, h3, h4, h5, h6):not(:has(button)),
+.jitter-text #greeting .title-text {
+	filter: url(#press-jitter-3);
+}
+
+/* Body text — step 2 on desktop, 0.5 on mobile.
+
+   FOOTGUN: the `:not(:has(...))` is load-bearing, not defensive. Filters COMPOUND — a filtered
+   element inside another filtered element is displaced twice, at double the intended scale — and
+   these selectors genuinely nest in real content: a loose markdown list emits `li > p`, a table cell
+   can hold a paragraph, a `dd` can hold a list. Repeating the same list inside `:not(:has())` means
+   only the INNERMOST text block ever matches, so the text is filtered exactly once no matter how the
+   markup nests. Curating a list of "leaf-ish" elements by hand does not hold, because the nesting is
+   a property of the content, not of the selector. Keep the two lists identical.
+
+   FOOTGUN: media is exempt, and the combinator matters. A child cannot opt out of its parent's
+   filter, so a paragraph containing an image has to lose the filter entirely — the image cannot be
+   spared on its own. The match is a DESCENDANT one (no `>`): the webmention avatars are `img` inside
+   an `a` inside the `p`, and a child-combinator version missed all ten of them and warped every
+   avatar. Code blocks are exempt for the same reason in reverse — Expressive Code's output is
+   already a dense grid of small glyphs and displacement turns it to noise. */
+@media (width >= 40rem) {
+	.jitter-text
+		:is(p, li, dt, dd, figcaption, caption, th, td, summary, label):not(
+			:has(:is(p, li, dt, dd, figcaption, caption, th, td, summary, label)),
+			:has(:is(img, picture, svg, video, lightbox-image, .expressive-code))
+		) {
+		filter: url(#press-jitter-2);
+	}
+}
+
+@media (width < 40rem) {
+	.jitter-text
+		:is(p, li, dt, dd, figcaption, caption, th, td, summary, label):not(
+			:has(:is(p, li, dt, dd, figcaption, caption, th, td, summary, label)),
+			:has(:is(img, picture, svg, video, lightbox-image, .expressive-code))
+		) {
+		filter: url(#press-jitter-05);
+	}
+}
+
+/* Ad-hoc utilities, so a step can be tried on something new from the markup without editing this
+   file. */
+.jitter-05 {
+	filter: url(#press-jitter-05);
+}
+
+.jitter-1 {
+	filter: url(#press-jitter-1);
+}
+
+.jitter-2 {
+	filter: url(#press-jitter-2);
+}
+
+.jitter-3 {
+	filter: url(#press-jitter-3);
+}
+
+.jitter-5 {
+	filter: url(#press-jitter-5);
+}
+
+/* Reduced motion is deliberately NOT wired up here: this is a static displacement, nothing moves.
+   If the `scale` on `feDisplacementMap` is ever animated, that changes — and it must be animated
+   with CSS rather than SMIL, because SMIL ignores `prefers-reduced-motion` entirely. That was the
+   exact problem the removed `#logo-melt` filter had; see docs/logo.md. */
