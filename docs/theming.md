@@ -318,13 +318,15 @@ remains, and `npm run paper:average` tracks it in one command.
 
 **TL;DR — `src/components/TextureFilters.astro` emits an `feTurbulence`/`feDisplacementMap` ladder
 at five displacement steps (0.5, 1, 2, 3, 5px); `src/styles/components/jitter.css` decides what
-wears which. Headings are on step 3. Body text is on step 2 at `sm` and up, 0.5 below it.**
+wears which. Body text is on step 2 at `sm` and up, 0.5 below it. Display headings wear the ink
+bleed instead (next section), which contains step 3 rather than stacking with it.**
 
-|                      | step | displacement          |
-| -------------------- | ---- | --------------------- |
-| headings (`h1`–`h6`) | 3    | 3px, both breakpoints |
-| body text, desktop   | 2    | 2px                   |
-| body text, mobile    | 0.5  | 0.5px                 |
+|                              | filter     | displacement          |
+| ---------------------------- | ---------- | --------------------- |
+| display headings (`h1`–`h3`) | bleed 2    | 3px, plus a halo      |
+| sub-headings (`h4`–`h6`)     | jitter 3   | 3px, both breakpoints |
+| body text, desktop           | jitter 2   | 2px                   |
+| body text, mobile            | jitter 0.5 | 0.5px                 |
 
 The body step is far apart across the breakpoint because displacement is an absolute px value while
 type is not: 2px against 18px desktop copy is a tooth, but 2px against 14px mobile copy eats the
@@ -347,8 +349,8 @@ character.
 ### Three things that will break it
 
 **`color-interpolation-filters="sRGB"` is not optional.** The SVG default is linearRGB, which shifts
-every color passing through the filter. On the hot-pink headings this applies to, the shift is
-glaring rather than subtle.
+every color passing through the filter — and it applies to every primitive in the chain, so the bleed
+filters need it just as much as the jitter ones.
 
 **The filter region is widened to `x="-20%" width="140%"`.** The default region is -10%/+120% of the
 bounding box, and the heading anchor `::before` sits at `margin-left: -16px` — outside the element's
@@ -414,6 +416,117 @@ There is no animation and therefore no `prefers-reduced-motion` wiring. If the `
 animated it must be driven by CSS, not SMIL: SMIL ignores that media query entirely, which is the
 exact problem the removed `#logo-melt` filter had (`docs/logo.md`). It would also be the only moving
 thing in an otherwise static texture stack.
+
+## Ink bleed on display headings
+
+**TL;DR — `src/components/TextureFilters.astro` also emits a three-step `feMorphology` ladder,
+`#press-bleed-1` … `#press-bleed-3`. Each step dilates a _copy_ of the glyph into a soft, wandering
+halo behind it and merges the crisp letterform back on top. `h1`–`h3` wear step 2 in light mode and
+step 1 in dark. Each bleed step contains jitter step 3 — it replaces the jitter filter, it does not
+stack with it.**
+
+`feMorphology operator="dilate"` is a max filter over a square neighbourhood: every pixel takes the
+brightest value within `radius` of itself, so shapes grow outward. That is exactly what ink does when
+it sits on uncoated paper and wicks into the fibre, which is why it is the primitive for this.
+
+### Why it dilates a copy and not the glyph
+
+The obvious version — dilate the text itself — does not work at any of this site's heading sizes.
+
+**`radius` quantizes to whole pixels.** Both Firefox's software morphology and Skia's (Chromium's)
+work on integer radii in _filter space_, so a fractional `radius="0.5"` is rounded. Which way it
+rounds depends on device pixel ratio, so the same declaration is a no-op on a 1x display and a full
+pixel on a 2x one. There is no reliable sub-pixel dilation.
+
+**A whole-pixel dilate is a large weight change.** Radius 1 adds 1px on each side of every stem, so a
+stem gains 2px. Against Bricolage Grotesque bold at the 48px `h1` that is roughly 30% heavier; by the
+24px `h3` it is closing the counters in `e`, `a` and `o`. The result reads as fat text, not as bled
+text.
+
+Dilating a copy sidesteps both. The letterform keeps its exact weight and the ink spread happens
+entirely _outside_ it, so the quantization only moves the halo's edge by a pixel — invisible — rather
+than restyling the type.
+
+### The pipeline, in order
+
+```svg
+<feTurbulence baseFrequency="0.85" numOctaves="3" seed="4"  type="fractalNoise" result="tooth" />
+<feTurbulence baseFrequency="0.09" numOctaves="2" seed="11" type="fractalNoise" result="wick" />
+
+<feDisplacementMap in="SourceGraphic" in2="tooth" scale="3" result="ink" />
+
+<feMorphology     in="ink"      operator="dilate" radius="1"       result="fattened" />
+<feGaussianBlur   in="fattened" stdDeviation="0.9"                 result="softened" />
+<feDisplacementMap in="softened" in2="wick" scale="3"              result="wicked" />
+<feComponentTransfer in="wicked" result="halo"><feFuncA type="linear" slope="0.46" /></feComponentTransfer>
+
+<feMerge><feMergeNode in="halo" /><feMergeNode in="ink" /></feMerge>
+```
+
+`ink` is `#press-jitter-3` inlined, and it is referenced twice — once as the halo's source and once
+as the top layer of the merge. That is what guarantees the halo is concentric with the jittered
+glyph: derive it from `SourceGraphic` instead and the two layers jitter independently, so the crisp
+edge pokes outside its own halo and the whole thing reads as a misregistered outline.
+
+**Three things about this order are load-bearing.**
+
+**Dilate last among the shape steps, wick after it.** Dilate is a max over a _square_ box, so it
+rounds off any feature smaller than `radius` — running it after the wick displacement would re-square
+the edge it just chewed and mute the effect. Jitter → dilate → blur → wick is the order that
+survives.
+
+**The blur is not decoration.** Text is antialiased before the filter sees it, and a max filter
+promotes every partially-covered fringe pixel to full opacity. Without the `feGaussianBlur` the halo
+has a hard, aliased edge and reads as a stroke.
+
+**Two noise fields, not one.** Reusing the 0.85 tooth field for the wick produces a halo displaced
+identically to the glyph — a clean offset outline. Ink wicking is a low-frequency phenomenon: it
+pools and creeps in blobs, not per-pixel grain, which is what the 0.09 / 2-octave field is for. The
+seeds differ for the same reason.
+
+`feComponentTransfer`, not `feColorMatrix`, for the fade: both operate on unpremultiplied RGBA, but
+an `feFuncA` slope is one line that obviously only touches alpha.
+
+### The ladder
+
+| step            | `radius` | `blur` | `wick` | `alpha` |
+| --------------- | -------- | ------ | ------ | ------- |
+| `press-bleed-1` | 1        | 0.5    | 2      | 0.32    |
+| `press-bleed-2` | 1        | 0.9    | 3      | 0.46    |
+| `press-bleed-3` | 2        | 1.4    | 4      | 0.58    |
+
+Each step is one coherent tuple rather than four independent knobs, following the same principle as
+the jitter ladder: switching steps changes _how much_ ink escapes, not what the escape looks like.
+`.bleed-1` … `.bleed-3` utility classes exist for trying a step from markup; **none currently have a
+consumer.**
+
+### What does not get it
+
+**`h4`–`h6` stay on plain jitter.** The halo is an absolute px spread and those levels fall through
+to the typography plugin's defaults, which land at or near body size — a 1px halo on 16px text is a
+smudge, not ink. Nothing in `src/content/` currently goes below `h3` anyway, so this is a guard
+rather than a live case.
+
+**Body text stays on plain jitter**, and should. This is five extra primitives and a second
+`feTurbulence` per element, and turbulence is evaluated per pixel of the filter region. A page has
+a handful of headings and ~30 filtered body blocks.
+
+**`prefers-contrast: more` falls back to `#press-jitter-3`.** A halo is contrast the glyph edge no
+longer has; a reader who has asked for more of it should not be given less.
+
+### Dark mode steps down
+
+Headings are `--color-accent-2`, which is near-black on paper in light mode and near-white on
+near-black in dark. Spreading a light glyph into a dark field does not read as ink soaking into
+fibre — it reads as bloom or halation, and bloom needs much less of itself to land. Dark mode
+therefore drops to `#press-bleed-1`.
+
+### The filter region is wider than the jitter steps'
+
+`x="-30%" width="160%"` against the jitter ladder's `-20%`/`140%`, because the halo reaches further
+than the displacement that made it: at step 3 the worst case is dilate 2 + blur ~4 + wick 2 + tooth
+1.5, near 10px outward. The region is a percentage of the bounding box, so **step 3 can clip on a
+short `h3`** — 30% of a 30px line box is 9px. Step 2 has the headroom; step 3 is for the 48px `h1`.
 
 ## Riso misregistration (the "moments" half)
 
