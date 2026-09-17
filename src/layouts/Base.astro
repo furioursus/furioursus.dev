@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer.astro";
 import Header from "@/components/layout/Header.astro";
 import PropsForAuto from "@/components/PropsForAuto.astro";
 import SkipLink from "@/components/SkipLink.astro";
+import TextureFilters from "@/components/TextureFilters.astro";
 import ThemeProvider from "@/components/ThemeProvider.astro";
 import { siteConfig } from "@/site.config";
 import type { SiteMeta } from "@/types";
@@ -37,6 +38,7 @@ const {
 	</head>
 	<body class="text-global-text relative isolate overflow-x-clip">
 		<PropsForAuto />
+		<TextureFilters />
 		{/* min-h-dvh, not min-h-screen (100vh) — on iOS Safari, `vh` resolves against the
 			*large* viewport (toolbar fully collapsed), even while the toolbar is actually
 			showing and eating into what's really visible. On a short page (few enough content
@@ -50,7 +52,7 @@ const {
 			unit, purpose-built for exactly this ambiguity: it tracks whatever's actually visible
 			right now as the toolbar animates, so there's no longer a metric mismatch for a gap
 			to open up in. */}
-		<div class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 font-mono text-sm font-normal antialiased sm:px-8 sm:text-lg md:pt-8">
+		<div class="jitter-text mx-auto flex min-h-dvh max-w-3xl flex-col px-4 font-mono text-sm font-normal antialiased sm:px-8 sm:text-lg md:pt-8">
 			<SkipLink />
 			<Header />
 			<main id="main">
