@@ -20,14 +20,35 @@
 const JITTER_SCALES = [0.5, 1, 2, 3, 5] as const;
 
 const filterId = (scale: number) => `press-jitter-${String(scale).replace("0.", "0")}`;
+
+/** The noise field every jitter step shares, and that the bleed ladder reuses for its ink layer. */
+const TOOTH = { baseFrequency: 0.85, numOctaves: 3, seed: 4 } as const;
+
+/** The displacement the bleed ladder's ink layer takes — the step headings wore on their own. */
+const BLEED_INK_SCALE = 3;
+
+/**
+ * The bleed ladder. Each step is one coherent tuple rather than an independent knob, so switching
+ * steps changes how much ink escapes the letterform, not what the escape looks like.
+ *
+ * `radius` is `feMorphology` dilation in px, `blur` the stdDeviation that softens its square
+ * kernel, `wick` how far the low-frequency field drags the halo, `alpha` what the halo is faded to.
+ */
+const BLEED_STEPS = [
+	{ alpha: 0.32, blur: 0.5, radius: 1, step: 1, wick: 2 },
+	{ alpha: 0.46, blur: 0.9, radius: 1, step: 2, wick: 3 },
+	{ alpha: 0.58, blur: 1.4, radius: 2, step: 3, wick: 4 },
+] as const;
+
+/** Low-frequency field — ink wicks into fibre in blobs, at a different seed than the tooth. */
+const WICK = { baseFrequency: 0.09, numOctaves: 2, seed: 11 } as const;
 ---
 
 <svg aria-hidden="true" class="absolute h-0 w-0 overflow-hidden" focusable="false">
 	<defs>
 		{JITTER_SCALES.map((scale) => (
 			/* FOOTGUN: `color-interpolation-filters="sRGB"` is not optional. The SVG default is
-					linearRGB, which shifts every color through the filter — on the hot-pink headings
-					this applies to, the difference is glaring rather than subtle.
+					linearRGB, which shifts every color through the filter.
 
 					The region is widened from the default (-10%/120%) because the heading anchor
 					`::before` sits at `margin-left: -16px`, outside the element's own box, and the
@@ -40,15 +61,13 @@ const filterId = (scale: number) => `press-jitter-${String(scale).replace("0.", 
 				x="-20%"
 				y="-20%"
 			>
-				{/* Every step shares one noise field — same `baseFrequency`, `numOctaves` and
-						`seed` — so they differ only in how hard that field pushes. That is what makes
-						the ladder comparable: switching steps changes the amount of the artifact, not
-						its character. */}
+				{/* Every step shares one noise field, so they differ only in how hard that field
+						pushes — switching steps changes the amount of the artifact, not its character. */}
 				<feTurbulence
-					baseFrequency="0.85"
-					numOctaves="3"
+					baseFrequency={TOOTH.baseFrequency}
+					numOctaves={TOOTH.numOctaves}
 					result="noise"
-					seed="4"
+					seed={TOOTH.seed}
 					type="fractalNoise"
 				/>
 				<feDisplacementMap
@@ -58,6 +77,69 @@ const filterId = (scale: number) => `press-jitter-${String(scale).replace("0.", 
 					xChannelSelector="R"
 					yChannelSelector="G"
 				/>
+			</filter>
+		))}
+
+		{BLEED_STEPS.map(({ alpha, blur, radius, step, wick }) => (
+			/* FOOTGUN: this SUPERSEDES the jitter ladder — the `ink` layer below is
+					`press-jitter-3` inlined. Stacking `url(#press-jitter-3) url(#press-bleed-2)` in
+					one `filter` list displaces twice. See docs/theming.md.
+
+					Wider region than the jitter steps: the halo reaches further than the
+					displacement that made it. */
+			<filter
+				color-interpolation-filters="sRGB"
+				height="160%"
+				id={`press-bleed-${step}`}
+				width="160%"
+				x="-30%"
+				y="-30%"
+			>
+				<feTurbulence
+					baseFrequency={TOOTH.baseFrequency}
+					numOctaves={TOOTH.numOctaves}
+					result="tooth"
+					seed={TOOTH.seed}
+					type="fractalNoise"
+				/>
+				<feTurbulence
+					baseFrequency={WICK.baseFrequency}
+					numOctaves={WICK.numOctaves}
+					result="wick"
+					seed={WICK.seed}
+					type="fractalNoise"
+				/>
+
+				<feDisplacementMap
+					in="SourceGraphic"
+					in2="tooth"
+					result="ink"
+					scale={BLEED_INK_SCALE}
+					xChannelSelector="R"
+					yChannelSelector="G"
+				/>
+
+				{/* FOOTGUN: the order of these four is the effect. Dilate is a max over a square
+						box, so wicking before it re-squares the edge, and the blur is what keeps
+						dilate's promoted antialiasing fringe from reading as a hard outline. */}
+				<feMorphology in="ink" operator="dilate" radius={radius} result="fattened" />
+				<feGaussianBlur in="fattened" result="softened" stdDeviation={blur} />
+				<feDisplacementMap
+					in="softened"
+					in2="wick"
+					result="wicked"
+					scale={wick}
+					xChannelSelector="R"
+					yChannelSelector="G"
+				/>
+				<feComponentTransfer in="wicked" result="halo">
+					<feFuncA slope={alpha} type="linear" />
+				</feComponentTransfer>
+
+				<feMerge>
+					<feMergeNode in="halo" />
+					<feMergeNode in="ink" />
+				</feMerge>
 			</filter>
 		))}
 	</defs>
