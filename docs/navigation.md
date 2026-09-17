@@ -26,11 +26,112 @@ earlier, more elaborate attempts at this file both got reverted:
   `display: contents` on desktop so the same element could serve both breakpoints) worked, but was
   more machinery than the problem needed once the sticky bar it was replacing was gone too.
 
-The nav's `top-18` (4.5rem) is a plain, hardcoded offset — not measured, not a CSS custom property.
-`<header>` is static now and never resizes on scroll, so the row's rendered height is a fixed, known
-quantity, the same way upstream Cactus hardcodes its own equivalent (`top-12`) rather than measuring
-it. `-inset-x-4` on the nav cancels the padded row's own `px-4`, so the open dropdown spans
-edge-to-edge within that padding rather than sitting inset — also lifted directly from upstream.
+The nav opens at `top-full`, so it is flush with the bottom edge of `<header>` by construction. The
+`relative` ancestor it resolves against is the `px-4 py-8` row, whose padding box _is_ the header's
+full box — `top: 100%` therefore lands exactly on the header's bottom, and keeps landing there when
+the row's padding, the logo's height, or the title's font size change. This replaced a hardcoded
+`top-18` (upstream Cactus hardcodes its own `top-12` the same way). That number only ever worked
+because 4.5rem happened to equal `pt-8` plus the 40px mobile logo — it ignored the row's _bottom_
+padding, so the dropdown actually opened 32px above the header's real edge, and any height change
+silently drifted it. `top-full` needs no observer and no custom property: `<header>` is static and
+never resizes on scroll, so layout alone gets it right.
+
+`max-sm:-mt-4` then pulls the panel 1rem back up over the header's own bottom padding. Flush with
+the header edge is the correct _anchor_ but too generous as a _gap_: the row's `pb-8` plus the nav's
+`py-4` plus the link's `py-5` stacked up to roughly a full nav segment of dead space between the
+wordmark and the first link. Keeping `top-full` and offsetting from it — rather than hardcoding a
+smaller `top-*` — means the panel still tracks the header's real height, and the 16px is visible as
+the deliberate design decision it is instead of being buried inside a magic offset. The overlap is
+seamless because `<header>` is filled with the same colour while the menu is open (see below); on a
+transparent header this same nudge would show the panel edge cutting into the texture.
+
+`-inset-x-4` on the nav cancels the padded row's own `px-4`, so the open dropdown spans edge-to-edge
+within that padding rather than sitting inset — lifted directly from upstream. (Because abspos
+insets resolve against the _padding_ box, this overshoots by 16px a side; `overflow-x-clip` on
+`<body>` absorbs it and the rendered result is the intended edge-to-edge.)
+
+### Why `<header>` needs its own `relative z-40`
+
+`.breakout-container` sets `transform: translateX(-50%)`, and **a transform makes the element a
+stacking context**. That seals the nav's `group-[.menu-open]:z-50` _inside_ `<header>`, where it can
+only order the header's own children — it cannot lift the open dropdown above anything outside.
+`<header>` itself then paints at `z-index: auto` in DOM order, before `<main>`, so every positioned
+element in the page body drew straight through the open menu.
+
+It was visible on any page with positioned content high up: `/about/music/` rendered its
+`nav.subnav` (About · Music · MTG) and the Last.fm now-playing widget on top of the open dropdown,
+even though the nav has an opaque `bg-global-bg`. `document.elementFromPoint()` at the dropdown's
+own midpoint returned a subnav `<a>`, not a nav link — the menu was unclickable there, not just
+ugly. `relative z-40` on `<header>` gives that stacking context a real z-index and the whole subtree
+lifts above `<main>` in one move.
+
+40 sits deliberately under the lightbox, which is the only thing that must still cover the header.
+That happens to be safe by a different mechanism anyway — `lightbox-dialog` is a native `<dialog>`
+opened with `showModal()`, so it lives in the **top layer** and outranks every z-index on the page
+regardless (`:modal` matches; its own computed `z-index` is `auto`). See `docs/lightbox.md`.
+
+### Mobile type scale
+
+Every size/face override on the nav links is `max-sm:`-scoped, because the same `<a>` elements are
+also the desktop nav: at `sm` the parent `<nav>` flips to `sm:static sm:flex-row` and those links
+become a 14px MonoLisa row. An unscoped `text-4xl` there would blow the masthead apart.
+
+- `max-sm:font-display` — Bricolage Grotesque, the headline face, matching `.title`.
+- `max-sm:[font-variation-settings:'opsz'_60]` — the same optical-size axis `.title` sets in
+  `global.css`. Without it the face renders at its text-size optical default and loses the wonky
+  display character it was picked for.
+- `max-sm:text-4xl max-sm:font-bold max-sm:tracking-tight max-sm:py-5` — ~75px rows.
+
+The nav's own padding is `px-4`, not the `px-2` it used to be: at 14px nobody could see that the
+link text sat ~8px to the left of the page's content edge, but at 36px the misalignment against the
+masthead and the post list below is obvious. `px-4` + the link's own `px-4`, against the `-inset-x-4`
+overshoot, lands the text on the same 16px gutter as `<main>`.
+
+### The solid mobile masthead
+
+`max-sm:bg-global-bg` on `<header>` paints the same flat paper colour the open dropdown uses, so the
+two read as one continuous slab the moment the menu opens rather than a textured bar with a flat
+panel hanging off it. `.breakout-container` already stretches `<header>` to `100dvw`, so the fill
+goes genuinely edge-to-edge without any extra negative-margin work.
+
+It is `max-sm:`-scoped on purpose — on desktop `<header>` stays transparent and the root texture
+runs straight through the masthead, which is the look that section was designed for.
+
+Two consequences worth knowing:
+
+- **The texture does not show in that strip on mobile.** `--color-global-bg` is the solid colour
+  _derived from_ the paper texture (see `docs/theming.md`), not the texture itself, so the band is
+  flat while everything under it stays grainy. With the menu closed this reads as a deliberate
+  masthead plate; it is the intended trade, not a rendering bug.
+- **It lines up with the browser chrome for free.** The `theme-color` meta is the same token, so on
+  iOS Safari the address bar and the header slab are now literally the same colour with no seam.
+  That also means the `theme-color` footgun in `global.css` now has visible consequences in one more
+  place — change the token, check the masthead too.
+
+### The solid masthead while the menu is open
+
+`<header>` is transparent by default, so the root paper/dot texture runs straight through the
+masthead. `max-sm:[&.menu-open]:bg-global-bg` fills it with the same flat colour the dropdown uses,
+but **only while the menu is open**, so the header and the open panel read as one continuous slab
+instead of a textured bar with a flat panel hanging off it. `.breakout-container` already stretches
+`<header>` to `100dvw`, so the fill goes edge-to-edge with no extra negative-margin work.
+
+Note the variant is `[&.menu-open]:`, not the `group-[.menu-open]:` used everywhere else in this
+file. `.menu-open` is toggled on `<header>` itself, and `<header>` is also the `.group` — a
+`group-*` variant compiles to a _descendant_ selector (`.group.menu-open &`), so it can never style
+the group element itself. `[&.menu-open]:` compiles to `&.menu-open`, which is what's needed here.
+
+The paired transitions keep it in step with the dropdown: `0.3s ease-out` opening (on the
+`.menu-open` variant) and `0.15s ease-in` closing (on the base class, which is what's in effect once
+`.menu-open` is gone), matching the nav's own two durations. Without them the header snapped to
+solid instantly while the panel was still springing in, and — worse — dropped back to transparent
+150ms before the closing panel had finished leaving.
+
+**Gotcha when verifying this in a headless/hidden browser tab:** hidden tabs do not tick CSS
+transitions, so `getComputedStyle()` reports the transition's _start_ value indefinitely and the
+header looks like it never fills at all. Call `el.getAnimations().forEach(a => a.finish())` before
+reading, or check a screenshot — the declared end state is correct even when the computed value
+says otherwise.
 
 ## The masthead logo
 
