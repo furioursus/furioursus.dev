@@ -46,7 +46,9 @@ const meta = {
 		</p>
 	)}
 
-	{error && <p class="prose prose-sm sm:prose-lg max-w-none">Couldn't load the collection: {error}</p>}
+	{error && (
+		<p class="prose prose-sm sm:prose-lg max-w-none">Couldn't load the collection: {error}</p>
+	)}
 
 	{!missingFile && !error && (
 		<CardCollection entries={sortedCards} foils={foils} rarities={rarities} stats={stats} />

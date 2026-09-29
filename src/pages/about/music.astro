@@ -39,7 +39,9 @@ const meta = {
 	)}
 
 	{musicStats.error && (
-		<p class="prose prose-sm sm:prose-lg max-w-none">Couldn't load from Last.fm: {musicStats.error}</p>
+		<p class="prose prose-sm sm:prose-lg max-w-none">
+			Couldn't load from Last.fm: {musicStats.error}
+		</p>
 	)}
 
 	{!musicStats.missingConfig && <LastfmNowPlaying />}
@@ -53,7 +55,9 @@ const meta = {
 		</p>
 	)}
 
-	{vinylError && <p class="prose prose-sm sm:prose-lg max-w-none">Couldn't load from Discogs: {vinylError}</p>}
+	{vinylError && (
+		<p class="prose prose-sm sm:prose-lg max-w-none">Couldn't load from Discogs: {vinylError}</p>
+	)}
 
 	{!vinylMissingConfig && !vinylError && (
 		<VinylCollection formats={formats} releases={sortedReleases} stats={vinylStats} />
