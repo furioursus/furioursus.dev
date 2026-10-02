@@ -1,6 +1,6 @@
-/* Photocopy jitter — the displacement half of the press-artifact treatments. The filters themselves
-   live in `TextureFilters.astro`, which emits a five-step ladder (0.5, 1, 2, 3, 5). This file only
-   decides what wears which step. See docs/theming.md. */
+/* Photocopy jitter and ink bleed — the press-artifact text treatments. The filters themselves live
+   in `TextureFilters.astro`, which emits a five-step displacement ladder (0.5, 1, 2, 3, 5) and a
+   three-step bleed ladder. This file only decides what wears which step. See docs/theming.md. */
 
 /* FOOTGUN: `.jitter-text` on `Base.astro`'s page wrapper is a SCOPE HOOK ONLY — it must never carry
    a `filter` itself. A filter makes an element a containing block for absolutely positioned
@@ -8,16 +8,39 @@
    their position against ancestors inside this wrapper. Filtering the wrapper relocates every one
    of them. The filters below therefore sit on leaf text elements, never on a container. */
 
-/* Headings — step 3.
+/* Display headings (h1–h3, 20–48px) — bleed step 2, which already contains jitter step 3.
    `:not(:has(button))` is what keeps the homepage greeting out: a child cannot opt out of its
    parent's filter, so filtering that `h1` would take its 👋 `<button>` with it. Displacing a color
    emoji turns it to mud, and the button's `group-hover:animate-[wobble]` transform would force the
    whole filter to re-rasterize on every frame of the hover. The greeting wears it on its inner
-   text span instead, on the next rule. Anything else mixing text with emoji or icons behaves the
-   same way and needs the same split. */
-.jitter-text :is(h1, h2, h3, h4, h5, h6):not(:has(button)),
+   text span instead. Anything else mixing text with emoji or icons needs the same split. */
+.jitter-text :is(h1, h2, h3):not(:has(button)),
 .jitter-text #greeting .title-text {
+	filter: url(#press-bleed-2);
+}
+
+/* Sub-headings — jitter only. The halo is an absolute px spread against type that is already down
+   at body size here, so it reads as a smudge rather than as ink. See docs/theming.md. */
+.jitter-text :is(h4, h5, h6):not(:has(button)) {
 	filter: url(#press-jitter-3);
+}
+
+/* Dark mode steps the bleed down: light-on-dark spread reads as bloom, and bloom needs much less of
+   itself than bleed does to land. */
+[data-theme="dark"] .jitter-text :is(h1, h2, h3):not(:has(button)),
+[data-theme="dark"] .jitter-text #greeting .title-text {
+	filter: url(#press-bleed-1);
+}
+
+/* A halo is contrast the glyph edge no longer has. Drop back to plain displacement when the reader
+   has asked for more of it. */
+@media (prefers-contrast: more) {
+	.jitter-text :is(h1, h2, h3):not(:has(button)),
+	[data-theme="dark"] .jitter-text :is(h1, h2, h3):not(:has(button)),
+	.jitter-text #greeting .title-text,
+	[data-theme="dark"] .jitter-text #greeting .title-text {
+		filter: url(#press-jitter-3);
+	}
 }
 
 /* Body text — step 2 on desktop, 0.5 on mobile.
@@ -76,6 +99,20 @@
 
 .jitter-5 {
 	filter: url(#press-jitter-5);
+}
+
+/* FOOTGUN: never combine one of these with a `.jitter-*` on the same element — a bleed step already
+   carries jitter step 3, and a `filter` list of both displaces the text twice. */
+.bleed-1 {
+	filter: url(#press-bleed-1);
+}
+
+.bleed-2 {
+	filter: url(#press-bleed-2);
+}
+
+.bleed-3 {
+	filter: url(#press-bleed-3);
 }
 
 /* Reduced motion is deliberately NOT wired up here: this is a static displacement, nothing moves.
