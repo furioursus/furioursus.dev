@@ -19,7 +19,8 @@
 		"generate:cover-alt": "node scripts/generate-cover-alt.mjs",
 		"paper:average": "node scripts/paper-average.mjs",
 		"sanitize:dates": "node scripts/sanitize-dates.mjs",
-		"sanitize:watch": "node scripts/sanitize-dates.mjs --watch"
+		"sanitize:watch": "node scripts/sanitize-dates.mjs --watch",
+		"syndicate:preview": "node scripts/syndicate-preview.mjs"
 	},
 	"dependencies": {
 		"@astrojs/markdown-satteri": "^0.4.1",

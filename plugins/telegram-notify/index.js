@@ -6,6 +6,9 @@
 // netlify.toml, both of which are committed to this public repo.
 
 import { execSync } from "node:child_process";
+import { escapeHtml, sendTelegramMessage as send } from "../shared/telegram.js";
+
+const sendTelegramMessage = (text) => send(text, "telegram-notify");
 
 // Netlify's standard build env vars expose COMMIT_REF (the SHA) but not the message itself — the
 // plugin runs inside the checked-out repo, so `git log` reads it straight from there. Subject
@@ -16,42 +19,6 @@ function getCommitMessage() {
 		return execSync("git log -1 --pretty=%s", { encoding: "utf8" }).trim() || null;
 	} catch {
 		return null;
-	}
-}
-
-// Telegram's `parse_mode: "HTML"` treats <, >, and & as markup — a commit subject is freeform
-// text and can contain any of them (e.g. a stray "<" in a description), which would otherwise
-// break the message's formatting or silently swallow part of it.
-function escapeHtml(text) {
-	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-async function sendTelegramMessage(text) {
-	const token = process.env.TELEGRAM_BOT_TOKEN;
-	const chatId = process.env.TELEGRAM_CHAT_ID;
-
-	if (!token || !chatId) {
-		// Missing credentials shouldn't ever fail a deploy over a notification — just skip, loudly,
-		// in the build log.
-		console.warn("[telegram-notify] Skipping: TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID not set.");
-		return;
-	}
-
-	const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			chat_id: chatId,
-			text,
-			parse_mode: "HTML",
-			disable_web_page_preview: true,
-		}),
-	});
-
-	if (!res.ok) {
-		// Same reasoning as above — a Telegram API hiccup (rate limit, bad chat id) shouldn't take
-		// the site down with it.
-		console.warn(`[telegram-notify] Telegram API responded ${res.status}: ${await res.text()}`);
 	}
 }
 

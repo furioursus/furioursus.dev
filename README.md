@@ -62,14 +62,15 @@ npm create astro@latest -- --template furioursus/furioursus.dev-cactus
 
 ## Commands
 
-| Command             | Action                                                         |
-| :------------------ | :------------------------------------------------------------- |
-| `npm install`       | Installs dependencies                                          |
-| `npm run dev`       | Starts local dev server at `localhost:3000`                    |
-| `npm run build`     | Build your production site to `./dist/`                        |
-| `npm run postbuild` | Pagefind script to build the static search of your blog posts  |
-| `npm run preview`   | Preview your build locally, before deploying                   |
-| `npm run sync`      | Generate types based on your config in `src/content/config.ts` |
+| Command                     | Action                                                                  |
+| :-------------------------- | :---------------------------------------------------------------------- |
+| `npm install`               | Installs dependencies                                                   |
+| `npm run dev`               | Starts local dev server at `localhost:3000`                             |
+| `npm run build`             | Build your production site to `./dist/`                                 |
+| `npm run postbuild`         | Pagefind script to build the static search of your blog posts           |
+| `npm run preview`           | Preview your build locally, before deploying                            |
+| `npm run syndicate:preview` | After a build, show what the next deploy would post to Bluesky/Mastodon |
+| `npm run sync`              | Generate types based on your config in `src/content/config.ts`          |
 
 ## Configure
 
@@ -123,6 +124,8 @@ The [Astro docs](https://docs.astro.build/en/guides/markdown-content/) have a de
 | coverImage             | This is an optional object that will add a cover image to the top of a post. Include both a `src`: "_path-to-image_" and `alt`: "_image alt_".                                                                                                                              |
 | ogImage                | This is an optional property. An OG Image will be generated automatically for every post where this property **isn't** provided. If you would like to create your own for a specific post, include this property and a link to your image, generation will then be skipped. |
 | draft                  | This is an optional property as it is set to false by default in the schema. By adding true, the post will be filtered out of the production build in a number of places, inc. getAllPosts() calls, og-images, rss feeds, and generated page[s].                            |
+| syndicate              | Optional, default false. When true, the post is shared to Bluesky and Mastodon once, on the first production deploy that contains it. See `docs/syndication.md`.                                                                                                            |
+| syndicateText          | Optional, max 300 chars. Custom copy for the syndicated post, instead of the title and description.                                                                                                                                                                         |
 
 ### Note Frontmatter
 
@@ -131,6 +134,8 @@ The [Astro docs](https://docs.astro.build/en/guides/markdown-content/) have a de
 | title \*               | Used as the link text to the note, the pages title property, and the h1 of said note page. Has a max length 60 chars. |
 | description            | Optional. Used for the head meta description property.                                                                |
 | publishDate \*         | ISO 8601 format with offsets allowed.                                                                                 |
+| syndicate              | Optional, default false. Shares the note to Bluesky and Mastodon once on deploy. See `docs/syndication.md`.           |
+| syndicateText          | Optional, max 300 chars. Custom copy for the syndicated post, instead of the title and description.                   |
 
 ### Tag Frontmatter
 

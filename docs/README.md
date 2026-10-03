@@ -39,6 +39,8 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   and the Safari font flash / Firefox background reload that the default headers caused.
 - [Deploy notifications](./deploy-notifications.md) — a local Netlify Build Plugin that posts
   deploy success/failure to Telegram.
+- [Syndication](./syndication.md) — posts and notes flagged `syndicate: true` go out to Bluesky
+  and Mastodon once, on the first production deploy that contains them.
 - [Analytics](./analytics.md) — GoatCounter pageview tracking, on only when `GOATCOUNTER_CODE` is set.
 - [Dev server over Tailscale](./dev-server.md) — `npm run dev:remote`: MagicDNS host detection, a
   QR code for the phone, and the vite `allowedHosts` entry that makes it actually load.

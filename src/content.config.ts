@@ -12,6 +12,16 @@ const baseSchema = z.object({
 	title: titleSchema,
 });
 
+// see docs/syndication.md
+const syndicationFields = {
+	syndicate: z.boolean().default(false),
+	syndicateText: z
+		.string()
+		.max(300)
+		.optional()
+		.transform((val) => val?.trim() || undefined),
+};
+
 const blog = defineCollection({
 	loader: glob({ base: "./src/content/blog", pattern: "**/*.{md,mdx}" }),
 	schema: ({ image }) =>
@@ -38,6 +48,7 @@ const blog = defineCollection({
 				.optional()
 				.transform((val) => (val ? new Date(val) : undefined)),
 			pinned: z.boolean().default(false),
+			...syndicationFields,
 		}),
 });
 
@@ -46,6 +57,7 @@ const note = defineCollection({
 	schema: baseSchema.extend({
 		description: z.string().optional(),
 		publishDate: z.iso.datetime({ offset: true }).transform((val) => new Date(val)),
+		...syndicationFields,
 	}),
 });
 

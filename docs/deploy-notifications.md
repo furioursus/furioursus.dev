@@ -11,7 +11,10 @@ Telegram's Bot API directly.
   to npm — just a directory Netlify loads by relative path). `index.js` exports `onSuccess` and
   `onError`, two of the plugin lifecycle hooks Netlify calls during every build/deploy; each POSTs
   a short HTML-formatted message to `https://api.telegram.org/bot<token>/sendMessage`.
-- **`netlify.toml`** — registers the plugin via `[[plugins]] package = "./plugins/telegram-notify"`.
+- **`plugins/shared/telegram.js`** — the actual `sendTelegramMessage` / `escapeHtml` helpers,
+  shared with the [syndication](./syndication.md) plugin, which reports its results to the same
+  chat.
+- **`netlify.toml`** — registers the plugin (alongside `./plugins/syndicate`) via `[[plugins]] package = "./plugins/telegram-notify"`.
   Deliberately has no `[build]` section: build command and publish directory stay configured in the
   Netlify dashboard rather than being duplicated here, so this file can't drift out of sync with
   (or silently override) whatever's set there.
@@ -30,7 +33,7 @@ Nothing else to wire up — the plugin picks up both vars from `process.env` at 
 
 ## Gotchas
 
-- **Missing env vars don't fail the build.** `sendTelegramMessage` in `index.js` checks for both
+- **Missing env vars don't fail the build.** `sendTelegramMessage` in `plugins/shared/telegram.js` checks for both
   vars up front and just logs a warning + returns if either is missing, rather than throwing. A
   notification hiccup (forgotten env var, Telegram API error, rate limit) should never be able to
   take the actual site deploy down with it — same reasoning for why a non-`ok` Telegram API
