@@ -53,6 +53,16 @@ collections:
       - { label: "Publish Date", name: "publishDate", widget: "datetime" }
       - { label: "Updated Date", name: "updatedDate", widget: "datetime", required: false }
       - { label: "Pinned", name: "pinned", widget: "boolean", default: false }
+      - label: "Syndicate"
+        name: "syndicate"
+        widget: "boolean"
+        default: false
+        hint: "Post this to Bluesky and Mastodon on the next production deploy. Only fires once per entry."
+      - label: "Syndicate text"
+        name: "syndicateText"
+        widget: "text"
+        required: false
+        hint: "Optional, max 300 characters. Leave blank to post the title and description."
       - { label: "Body", name: "body", widget: "markdown" }
 
   - name: "notes"
@@ -65,6 +75,16 @@ collections:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Description", name: "description", widget: "text", required: false }
       - { label: "Publish Date", name: "publishDate", widget: "datetime" }
+      - label: "Syndicate"
+        name: "syndicate"
+        widget: "boolean"
+        default: false
+        hint: "Post this to Bluesky and Mastodon on the next production deploy. Only fires once per entry."
+      - label: "Syndicate text"
+        name: "syndicateText"
+        widget: "text"
+        required: false
+        hint: "Optional, max 300 characters. Leave blank to post the title and description."
       - { label: "Body", name: "body", widget: "markdown" }
 
   - name: "tags"

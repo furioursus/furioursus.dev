@@ -37,6 +37,8 @@ draft: boolean # default false — filtered out of production build, feeds, og-i
 ogImage: string # optional — skip auto-generation, use this image instead (see og-images.md)
 tags: string[] # default [] — deduped + lowercased automatically
 pinned: boolean # default false
+syndicate: boolean # default false — post to Bluesky/Mastodon on the next production deploy, see syndication.md
+syndicateText: string # optional, max 300 chars — custom post copy instead of title + description
 bskyPostUri: string # optional — set by the astro-standard-site-sync integration, not by hand
 ```
 
@@ -114,8 +116,9 @@ Safe to remove when touching a post, not urgent.
 
 ## Note frontmatter
 
-Just `title`, optional `description`, and `publishDate`. No tags, no cover image, no draft flag —
-notes are meant to be short/disposable enough not to need the full post apparatus.
+Just `title`, optional `description`, and `publishDate`, plus the same optional `syndicate` /
+`syndicateText` pair as posts (see [syndication.md](./syndication.md)). No tags, no cover image, no
+draft flag — notes are meant to be short/disposable enough not to need the full post apparatus.
 
 ## Tag pages
 
