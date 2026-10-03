@@ -2,7 +2,6 @@
 title: "Owning Our Interests"
 description: "Cassidy Williams recently brought up the topic of human curation on her blog and it got me thinking about a lot of things, myself."
 publishDate: "2024-01-14T00:00:00Z"
-ogImage: "/social-images/media-collection.jpg"
 coverImage:
   src: "../../assets/blog/media-collection.jpg"
   alt: "A bookshelf containing media of various different types, books, art, comics, and vinyl records, all arranged in square cubes."
