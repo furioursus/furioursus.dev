@@ -7,8 +7,7 @@ this folder covers _how the pieces work_ once it's running.
 Stack, for orientation: [Astro](https://astro.build) 7 (static output) · content collections for
 posts/notes/tags · [`@astrojs/markdown-satteri`](https://github.com/withastro/astro/tree/main/packages/markdown-satteri)
 as the markdown renderer, with a handful of custom hast/mdast plugins in `src/plugins/` · Tailwind
-v4 for styling · [Decap CMS](https://decapcms.org/) + Netlify Identity for editing content in a
-browser · [Pagefind](https://pagefind.app/) for static search · [Satori](https://github.com/vercel/satori)
+v4 for styling · [Pagefind](https://pagefind.app/) for static search · [Satori](https://github.com/vercel/satori)
 for generated OG images · [Webmention.io](https://webmention.io/) for likes/reposts/replies.
 
 ## Index
@@ -28,7 +27,6 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
 - [Search](./search.md) — Pagefind static search integration.
 - [Webmentions](./webmentions.md) — likes/reposts/replies pulled from webmention.io.
 - [OG images](./og-images.md) — per-post social card images generated at build time.
-- [CMS](./cms.md) — Decap CMS + Netlify Identity, for editing content without a local checkout.
 - [Music listening (Last.fm)](./lastfm.md) — the `/about/music/` page's live now-playing widget and
   Last.fm top-artists/albums/tracks stats.
 - [Record collection](./discogs.md) — the `/about/music/` page's vinyl collection section: Discogs data

@@ -34,7 +34,7 @@ coverImage: # optional
   alt: string
   caption: string | boolean | null # optional — see below, default is to show `alt`
 draft: boolean # default false — filtered out of production build, feeds, og-images
-ogImage: string # optional — skip auto-generation, use this image instead (see og-images.md)
+ogImage: string # optional — site-root path to a file in public/ (or a full URL); skips auto-generation (see og-images.md)
 tags: string[] # default [] — deduped + lowercased automatically
 pinned: boolean # default false
 syndicate: boolean # default false — post to Bluesky/Mastodon on the next production deploy, see syndication.md
@@ -43,8 +43,7 @@ bskyPostUri: string # optional — set by the astro-standard-site-sync integrati
 ```
 
 `publishDate`/`updatedDate` reject anything that isn't full ISO 8601 with an explicit offset — a
-build-time Zod error, not a silent mis-parse. Decap's `datetime` widget already writes this format,
-so this only matters for hand-edited frontmatter; write `"2024-01-14T00:00:00Z"`, not a bare date or
+build-time Zod error, not a silent mis-parse. Write `"2024-01-14T00:00:00Z"`, not a bare date or
 a freeform string like `"14 Jan 2024"`. The schema used to accept anything `new Date()` could parse —
 every existing post happened to resolve fine, but that parsing isn't guaranteed consistent across JS
 engines/versions, so a bad one would have silently mis-parsed rather than failing the build.
@@ -105,11 +104,6 @@ below every cover image unless explicitly turned off:
 | a string           | shows that instead, overriding `alt` |
 | `false` or `null`  | no caption at all                    |
 
-The Decap CMS config (`public/admin/config.yml`) only exposes `caption` as a plain string field, so
-there's no way to opt out (`false`/`null`) from the CMS UI — leaving it blank there gives the
-default (`alt`), same as omitting it. Setting `caption: null` to actually hide the caption needs a
-direct edit to the post's file.
-
 `aspectClass` sometimes appears in existing frontmatter (a leftover from an earlier cover-image
 layout) but isn't part of the current schema — Zod silently drops unrecognized keys, so it's inert.
 Safe to remove when touching a post, not urgent.
@@ -125,9 +119,3 @@ draft flag — notes are meant to be short/disposable enough not to need the ful
 A tag doesn't need an entry in `src/content/tags/` to work — any string in a post's `tags` array
 generates a `/tags/[tag]/` page automatically. A `src/content/tags/<name>.md` file is only needed
 when you want to _override_ that page's intro copy (see `title`/`description` in the table above).
-
-## Editing without a local checkout
-
-All three collections are editable through Decap CMS at `/admin` — see [cms.md](./cms.md). The CMS
-config (`public/admin/config.yml`) mirrors this schema field-for-field; if you add/rename a
-frontmatter field here, update that file too.

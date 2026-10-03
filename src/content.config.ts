@@ -40,8 +40,7 @@ const blog = defineCollection({
 			draft: z.boolean().default(false),
 			ogImage: z.string().optional(),
 			tags: z.array(z.string()).default([]).transform(removeDupsAndLowerCase),
-			// Strict, so a freeform date fails the build instead of silently mis-parsing — hand-edited
-			// frontmatter only; Decap already writes this format. See docs/content-model.md.
+			// Strict, so a freeform date fails the build instead of silently mis-parsing. See docs/content-model.md.
 			publishDate: z.iso.datetime({ offset: true }).transform((val) => new Date(val)),
 			updatedDate: z.iso
 				.datetime({ offset: true })

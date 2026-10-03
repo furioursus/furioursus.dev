@@ -13,8 +13,8 @@
 //      URL.
 //
 // This fixes both: rewrites bare dates to strict ISO, and renames any `YYYY-MM-DD.md(x)` file to
-// a slug derived from its `title` field (matching Decap's own slugify — lowercase, strip
-// diacritics, non-alphanumeric runs collapsed to `-`). Already-correct files are left untouched,
+// a slug derived from its `title` field (lowercase, strip diacritics, non-alphanumeric runs
+// collapsed to `-`). Already-correct files are left untouched,
 // so it's safe to run repeatedly.
 //
 //   npm run sanitize:dates
