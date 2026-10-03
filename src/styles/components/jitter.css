@@ -20,7 +20,18 @@
 	filter: url(#press-jitter-3);
 }
 
-/* Body text — step 2 on desktop, 0.5 on mobile.
+/* Phone opt-out for headings that repeat down a list (card titles), where dozens of raster passes
+   blank tiles on iOS. See docs/theming.md#what-it-costs. */
+@media (width < 40rem) {
+	.jitter-text .jitter-off-mobile {
+		filter: none;
+	}
+}
+
+/* Body text — step 2, desktop only.
+
+   FOOTGUN: keep this behind the `sm` query. Each filtered element is a software raster pass in
+   WebKit, and on iOS a text-heavy page blanks tiles mid-scroll. See docs/theming.md#what-it-costs.
 
    FOOTGUN: the `:not(:has(...))` is load-bearing, not defensive. Filters COMPOUND — a filtered
    element inside another filtered element is displaced twice, at double the intended scale — and
@@ -43,16 +54,6 @@
 			:has(:is(img, picture, svg, video, lightbox-image, .expressive-code))
 		) {
 		filter: url(#press-jitter-2);
-	}
-}
-
-@media (width < 40rem) {
-	.jitter-text
-		:is(p, li, dt, dd, figcaption, caption, th, td, summary, label):not(
-			:has(:is(p, li, dt, dd, figcaption, caption, th, td, summary, label)),
-			:has(:is(img, picture, svg, video, lightbox-image, .expressive-code))
-		) {
-		filter: url(#press-jitter-05);
 	}
 }
 
