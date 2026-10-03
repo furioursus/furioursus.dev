@@ -4,7 +4,7 @@ Posts and notes flagged with `syndicate: true` are posted to Bluesky and Mastodo
 
 ## Flagging an entry
 
-Both the `blog` and `note` collections accept two fields (`src/content.config.ts`), and both are exposed in Decap CMS (`public/admin/config.yml`):
+Both the `blog` and `note` collections accept two fields (`src/content.config.ts`):
 
 ```yaml
 syndicate: true # default false
@@ -12,7 +12,7 @@ syndicateText: "optional custom copy, max 300 characters"
 ```
 
 - Without `syndicateText`, the post text is the title and description separated by a blank line. A note with no description posts just its title.
-- A blank or whitespace-only `syndicateText` counts as unset. Decap can write `""` for an emptied field, so the schema trims it to `undefined`.
+- A blank or whitespace-only `syndicateText` counts as unset. An editor can write `""` for an emptied field, so the schema trims it to `undefined`.
 - The 300-character cap is Bluesky's limit. Exceeding it fails the build rather than truncating silently. Default text that's too long (a long note description) is truncated with `…` per network instead.
 - Draft blog posts never appear in the manifest, flagged or not, because the endpoint uses `getAllPosts()`.
 
