@@ -39,7 +39,6 @@ tags: string[] # default [] — deduped + lowercased automatically
 pinned: boolean # default false
 syndicate: boolean # default false — post to Bluesky/Mastodon on the next production deploy, see syndication.md
 syndicateText: string # optional, max 300 chars — custom post copy instead of title + description
-bskyPostUri: string # optional — set by the astro-standard-site-sync integration, not by hand
 ```
 
 `publishDate`/`updatedDate` reject anything that isn't full ISO 8601 with an explicit offset — a
