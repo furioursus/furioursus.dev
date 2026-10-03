@@ -318,17 +318,18 @@ remains, and `npm run paper:average` tracks it in one command.
 
 **TL;DR — `src/components/TextureFilters.astro` emits an `feTurbulence`/`feDisplacementMap` ladder
 at five displacement steps (0.5, 1, 2, 3, 5px); `src/styles/components/jitter.css` decides what
-wears which. Headings are on step 3. Body text is on step 2 at `sm` and up, 0.5 below it.**
+wears which. Headings are on step 3. Body text is on step 2 at `sm` and up and unfiltered below it.**
 
 |                      | step | displacement          |
 | -------------------- | ---- | --------------------- |
 | headings (`h1`–`h6`) | 3    | 3px, both breakpoints |
+| card-list titles     | 3    | 3px, desktop only     |
 | body text, desktop   | 2    | 2px                   |
-| body text, mobile    | 0.5  | 0.5px                 |
+| body text, mobile    | —    | none                  |
 
-The body step is far apart across the breakpoint because displacement is an absolute px value while
-type is not: 2px against 18px desktop copy is a tooth, but 2px against 14px mobile copy eats the
-letterforms.
+Mobile body text carries no filter at all. Displacement is an absolute px value while type is not, so 2px against 14px mobile copy eats the letterforms, and the 0.5px step that fit the smaller type was barely visible while costing the most: body text is nearly all of a page's filtered area, and on iOS it blanked tiles mid-scroll (see [What it costs](#what-it-costs)). The 0.5 step stays in the ladder with no consumer.
+
+Headings that repeat down a list opt out on phones with `.jitter-off-mobile`, which sets `filter: none` below `sm`. It's on the card titles in `RecordCard.astro` (`/about/music`) and `CardCollection.astro` (`/about/mtg`), where one page stacks dozens of them. The override wins on specificity (`.jitter-text .jitter-off-mobile` is two classes; the heading rule is one class plus elements), so it has to stay a two-class selector.
 
 `feTurbulence` generates a noise field and `feDisplacementMap` pushes each pixel of the source by
 the value it finds there, so glyph edges crumble the way toner does on a bad photocopy. Applied to
@@ -405,8 +406,8 @@ docs, which is a good reason to assume it will show up again.
 - **It rasterizes.** A filtered element is painted to a bitmap, so subpixel antialiasing becomes
   grayscale antialiasing. Filtered text reads very slightly softer and lighter than unfiltered text
   beside it.
-- **It is a raster pass per matched element.** A post body is ~30 filtered elements rather than one
-  large surface, which is the better shape for this, but it is not free.
+- **It is a raster pass per matched element, in software.** WebKit renders SVG reference filters on the CPU and redoes them whenever a tile repaints. A post body is ~30 filtered elements; `/about/music` at desktop width is several hundred.
+- **On iOS it blanks the page mid-scroll.** iOS keeps scrolling while tile paints fall behind, so slow filters show up as empty regions rather than jank. With body text filtered at phone width (368 elements, ~23M device px of noise on `/about/music` at 3x), scrolling on a real iPhone drew blank tiles even on the homepage; a build with the filters stripped scrolled clean. In a WKWebView at 440px, the same page went from 0 frames over 33ms to 14–15 per scroll pass, worst frame 195–428ms. This is why body jitter is desktop-only and card-list titles opt out on phones. **Before widening any jitter rule to mobile, re-test on a physical iPhone**; the iOS Simulator throttles `requestAnimationFrame` and an M-series Mac paints fast enough to hide it.
 
 ### Static on purpose
 
