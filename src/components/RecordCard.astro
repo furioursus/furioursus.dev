@@ -64,7 +64,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 					rel="noopener"
 				>
 					<span class="block">{release.artist}</span>
-					<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">
+					<span class="my-tight-1 text-ink group-hover:text-accent block font-semibold">
 						{release.title}
 					</span>
 					{metaText && <span class="block">{metaText}</span>}
@@ -113,7 +113,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 						rel="noopener"
 					>
 						<span class="block">{release.artist}</span>
-						<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">
+						<span class="my-tight-1 text-ink group-hover:text-accent block font-semibold">
 							{release.title}
 						</span>
 						{metaText && <span class="block">{metaText}</span>}
@@ -121,7 +121,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 				</dialog>
 			</lightbox-image>
 		) : (
-			<div class="border-muted bg-global-bg flex aspect-square w-14 flex-none items-center justify-center rounded border border-dashed p-1 text-center text-[0.6rem] sm:w-full">
+			<div class="border-muted bg-page flex aspect-square w-14 flex-none items-center justify-center rounded border border-dashed p-1 text-center text-[0.6rem] sm:w-full">
 				{release.title}
 			</div>
 		)
@@ -135,7 +135,7 @@ const hasLightbox = Boolean(localImage) || Boolean(release.coverImageUrl);
 		<p class="text-2xs m-0 opacity-70">{release.artist}</p>
 		{
 			// `title` (not just utility classes) is deliberate — it's the same shared heading class
-			// Masthead.astro/Note.astro/etc. use (text-accent-2 text-2xl font-semibold, see
+			// Masthead.astro/Note.astro/etc. use (text-heading text-2xl font-semibold, see
 			// global.css's `@layer components`), just tuned for this compact row with the utilities
 			// alongside it. Dropping the class name here would silently lose that shared styling,
 			// not just this component's own tweaks to it.

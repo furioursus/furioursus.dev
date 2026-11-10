@@ -25,7 +25,7 @@ const toShow = matching
     on the li, `u-url` on the anchor) that likes still had, so parsers couldn't read them. */}
 {!!matching.length && (
 	<div>
-		<p class="text-accent-2 mb-0">
+		<p class="text-heading mb-0">
 			<strong>{matching.length}</strong>
 			{matching.length > 1 ? " People" : " Person"} {verb}
 		</p>
@@ -34,7 +34,7 @@ const toShow = matching
 				{toShow.map((mention) => (
 					<li class:list={[mf2, "h-cite", "-ms-2"]}>
 						<a
-							class="u-url not-prose ring-global-text hover:ring-link focus-visible:ring-link relative inline-block overflow-hidden rounded-full ring-2 hover:z-10 hover:ring-4 focus-visible:z-10 focus-visible:ring-4"
+							class="u-url not-prose ring-ink hover:ring-link focus-visible:ring-link relative inline-block overflow-hidden rounded-full ring-2 hover:z-10 hover:ring-4 focus-visible:z-10 focus-visible:ring-4"
 							href={mention.author?.url}
 							rel="noopener noreferrer"
 							target="_blank"

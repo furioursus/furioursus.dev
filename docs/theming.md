@@ -4,28 +4,56 @@ Dark/light mode plus the design tokens both themes draw from.
 
 ## Design tokens
 
-Defined once in `src/styles/global.css` as CSS custom properties, registered via `@property` (so
-Tailwind can animate them) and given light-mode values under `@theme`:
+The tokens aren't defined in this repo any more. They come from
+[`@furioursus/ui`](https://github.com/furioursus/furioursus-ui), the package shared with the MTG
+tools, installed from GitHub at a pinned tag (`package.json`). Its `src/tokens.json` is the source
+of truth for every colour, type size, spacing step, radius and texture; its
+[`docs/reference.md`](https://github.com/furioursus/furioursus-ui/blob/main/docs/reference.md) lists
+them all with contrast ratios. `src/styles/global.css` pulls them in with two imports:
 
 ```css
---color-global-bg / --color-global-text / --color-muted / --color-link / --color-accent
---color-accent-2 / --color-quote / --color-nav-hover
+@import "@furioursus/ui/tailwind.css";            /* tokens, Tailwind names, dark: variant */
+@import "@furioursus/ui/base.css" layer(base);     /* paper + dots on <html>, theme cross-fade */
 ```
 
-Dark-mode overrides for the same variables live under `html[data-theme="dark"]` in the same file.
-Because every themed color is a variable rather than a hardcoded value, components mostly don't
-need `dark:` variants at all — `bg-global-bg`, `text-global-text`, etc. just resolve differently
-depending on `data-theme`. A `transition` on all of them gives the theme switch its fade instead of
-an instant snap.
-
-Dark mode is implemented as a selector variant, not Tailwind's default media-query strategy:
+The colours this site uses:
 
 ```css
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+--color-page / --color-ink / --color-muted / --color-heading
+--color-accent / --color-link / --color-highlight / --color-hairline
 ```
 
-— so `dark:` utility classes key off the `data-theme` attribute on `<html>`, not
-`prefers-color-scheme` directly. That indirection is what makes a manual toggle possible.
+Every themed colour is a variable registered with `@property`, so components mostly don't need
+`dark:` variants: `bg-page`, `text-ink` and so on resolve differently per theme, and `base.css`
+cross-fades them on a switch.
+
+**Changing a token** means changing the package (edit `src/tokens.json`, `npm run build`,
+`npm test`, tag a release), then bumping the tag in this repo's `package.json`. Don't redefine a
+token here to "fix" it locally: the MTG tools would drift.
+
+**Overriding one for this site only** goes in the unlayered `:root` block in `global.css`, which
+is how the self-hosted fonts replace the package's font stacks:
+
+```css
+:root {
+	--font-mono: var(--font-monolisa);
+	--font-display: var(--font-bricolage);
+}
+```
+
+- **Footgun:** that block must stay unlayered. The package's `tokens.css` is unlayered (so it
+  beats Tailwind's theme layer in both themes), and an unlayered rule beats anything in
+  `@layer base`/`components`, so a layered override silently loses.
+- **Footgun:** don't re-add `fontSize`/`spacing`/`letterSpacing` entries for `2xs`, `title`,
+  `title-lg`, `tight-*` or `label` to `tailwind.config.ts`. They come from the package now, and a
+  second definition can drift from it without anything failing.
+
+Dark mode follows `data-theme` on `<html>`, falling back to `prefers-color-scheme` when the
+attribute is missing. The `dark:` variant is defined by the package with the same rule, so
+`dark:` classes and the tokens can never disagree.
+
+Old names, for reading history: `global-bg` → `page`, `global-text` → `ink`, `accent-2` →
+`heading`, `nav-hover` → `highlight`, `quote` → `link`, literal `#666` → `hairline`.
 
 ### Current palette
 
@@ -34,34 +62,34 @@ light mode is a bleached xerox-paper ground (a faintly warm pink-grey, not a fla
 near-black ink — and that ground is no longer picked by hand, it is the paper texture's own average
 color (see below). Both themes share the same two accent hues rather than mirroring one theme's
 values into the other — `--color-accent` is hot pink (headings-as-links, hover states, focus
-rings) and `--color-link` / `--color-quote` share an acid green (hyperlink text, blockquote
-text). Each hue is retuned per background, not reused verbatim: a pink/green saturated enough to
+rings) and `--color-link` is acid green (link hover underlines, blockquote text, the Updated
+badge). Each hue is retuned per background, not reused verbatim: a pink/green saturated enough to
 read as neon on black goes muddy or fails WCAG AA contrast on paper, so the light-mode values are
-darker and more saturated than their dark-mode counterparts. `--color-accent-2` (the heading
+darker and more saturated than their dark-mode counterparts. `--color-heading` (the heading
 color via `.title`) deliberately stays a plain near-black/near-white in both themes — it's doing
 bold-gothic-type contrast, not carrying a hue.
 
-`--color-nav-hover` is the exception to "both themes share the same hues": it's a no-op in light
-mode (defined as the same literal value as `--color-accent`, so `hover:text-nav-hover` there
+`--color-highlight` is the exception to "both themes share the same hues": it's a no-op in light
+mode (defined as the same literal value as `--color-accent`, so `hover:text-highlight` there
 changes nothing) and a vivid caution-tape yellow in dark mode — a third, distinct interaction color
 for the header nav links (`Header.astro`) rather than a tint of the pink/green pair, applied via
-`hover:text-nav-hover active:text-nav-hover` alongside their normal `text-accent`. Not tuned to a
+`hover:text-highlight active:text-highlight` alongside their normal `text-accent`. Not tuned to a
 specific contrast ratio the way `--color-muted` is — at this lightness/chroma against the
 dark-mode near-black bg, contrast clears WCAG AAA (~14:1) by such a wide margin that hue-specific
 tuning wasn't necessary.
 
 ### The flat background color is derived, not chosen
 
-`--color-global-bg` is **not a hand-picked paper white**. It is each paper tile's own average
+`--color-page` is **not a hand-picked paper white**. It is each paper tile's own average
 color, so the flat fill and the texture painted over it are the same tone:
 
-| theme | tile               | `--color-global-bg`                   |
+| theme | tile               | `--color-page`                   |
 | ----- | ------------------ | ------------------------------------- |
 | light | `paper-light.webp` | `hsla(10, 12%, 89.8%, 1)` — `#e8e3e2` |
 | dark  | `paper-dark.webp`  | `hsla(0, 0%, 7.8%, 1)` — `#141414`    |
 
 That matters in the two places the flat color shows on its own: before the tile has decoded, and
-on any surface using `bg-global-bg` that sits _over_ the textured page (the mobile nav panel, the
+on any surface using `bg-page` that sits _over_ the textured page (the mobile nav panel, the
 lightbox controls, the missing-artwork placeholders in the record/card grids). Pick the color by
 eye instead and those panels read as slightly brighter patches floating on the texture; derive it
 and they sit flush.
@@ -73,12 +101,12 @@ npm run paper:average
 ```
 
 [`scripts/paper-average.mjs`](../scripts/paper-average.mjs) prints both a hex and an hsla literal
-for each tile. Paste the result into **all three** hand-synced locations:
-
-- `--color-global-bg` in `global.css` (the `@property` initial-value, the `@theme` block, and the
-  `[data-theme="dark"]` override)
-- the `theme-color` meta in `BaseHead.astro` (light only — the pre-JS fallback)
-- the `themeColors` map in `ThemeProvider.astro` (both themes)
+for each tile. Paste the hsla into the `page` token in `@furioursus/ui`'s `src/tokens.json` and
+release the package. That's now the only place it's written: the package generates the
+`@property` registration, both theme blocks and `theme.js`'s theme-color map from it, and
+`BaseHead.astro` reads the light hex from the package's `tokens.json`. (Until the script moves into
+the package, it still reads this repo's copies of the tiles in `src/assets/images/`. Keep them
+identical to the package's `assets/`.)
 
 Two gotchas worth knowing:
 
@@ -104,19 +132,21 @@ are deliberately two techniques rather than one: this half is **ambient** — gl
 underneath everything — while that half is **local and chromatic**, applied to a handful of marks
 on purpose.
 
-The whole implementation is now four declarations:
+The whole implementation is four declarations, in `@furioursus/ui`'s `base.css` (imported into
+`@layer base` by `global.css`):
 
 ```css
 html {
-	background-color: var(--color-global-bg);
-	background-image: var(--dots-image), var(--paper-image);
-	background-repeat: repeat, repeat;
-	background-size: var(--dots-size), auto;
+	background-color: var(--color-page);
+	background-image: var(--texture-dots), var(--texture-paper);
+	background-repeat: repeat;
+	background-size: var(--texture-dots-size) var(--texture-dots-size), auto;
 }
 ```
 
 Four files back it, and nothing else: `paper-light.webp` / `paper-dark.webp` and
-`grid-dots-light.svg` / `grid-dots-dark.svg`. Swapping theme swaps those two URLs. There is no
+`grid-dots-light.svg` / `grid-dots-dark.svg`, in the package's `assets/`. Swapping theme swaps
+those two URLs. There is no
 pseudo-element, no `mix-blend-mode`, no `filter`, no `mask`, no per-layer `opacity`, and no
 media-queried image tier anywhere in the stack.
 
@@ -132,12 +162,12 @@ from CSS.** Changing the grain's strength or the dot color means regenerating a 
 the runtime cost is two ordinary background layers instead of two composited pseudo-elements, and
 the theme switch is a URL swap rather than a blend-mode flip.
 
-The dot fills are not arbitrary — each is exactly its theme's `--color-global-text`:
+The dot fills are not arbitrary — each is exactly its theme's `--color-ink`:
 
 | theme | dot fill  | `fill-opacity` | equals                                          |
 | ----- | --------- | -------------- | ----------------------------------------------- |
-| light | `#1C1821` | `0.75`         | `--color-global-text`, `hsla(273, 16%, 11%, 1)` |
-| dark  | `#F3F1E8` | `0.25`         | `--color-global-text`, `hsla(49, 31%, 93%, 1)`  |
+| light | `#1C1821` | `0.75`         | `--color-ink`, `hsla(273, 16%, 11%, 1)` |
+| dark  | `#F3F1E8` | `0.25`         | `--color-ink`, `hsla(49, 31%, 93%, 1)`  |
 
 The alpha is deliberately **not** symmetric, and that asymmetry long predates the bake: light
 speckles on a near-black ground are simply more visually assertive than dark speckles on a
@@ -156,7 +186,7 @@ overscroll region is `background-repeat: repeat`. **This only works because both
 either for a non-repeating image and the seam comes straight back.
 
 FOOTGUN: **`body` must stay background-transparent.** `Base.astro`'s `<body>` dropped its
-`bg-global-bg` class for this. Put any opaque background back on `body` and it paints over both
+`bg-page` class for this. Put any opaque background back on `body` and it paints over both
 layers everywhere _except_ the overscroll sliver — the exact inverse of the bug this fixed, and a
 confusing one to read, because the only textured part left is the strip you can only see mid-bounce.
 
@@ -170,7 +200,7 @@ Both paper tiles are 500x200 and repeat at native size, so the grain's scale is 
 and does not change with the viewport. `paper-light.webp` is 4.7 KB, `paper-dark.webp` 2.6 KB.
 
 The dot SVGs are a **single 24x24 cell holding one circle** at `cx="1.2" cy="1.2" r="0.48"`, tiled by
-`--dots-size: 24px 24px`. Because the file is one cell rather than a grid, `--dots-size` _is_ the
+`--texture-dots-size: 24px`. Because the file is one cell rather than a grid, that value _is_ the
 pitch: change it and the spacing changes, not just the scale. The dot is sub-pixel at that pitch
 (0.96px), which is why `fill-opacity` is the sensitive knob rather than its size.
 
@@ -233,7 +263,7 @@ eye at normal contrast; judge seams by the local-average step.
 ### Regenerating a tile
 
 `sharp` is already in devDependencies, so no CLI tool is needed. After regenerating, you must also
-re-derive `--color-global-bg` — see [the flat background color](#the-flat-background-color-is-derived-not-chosen)
+re-derive `--color-page` — see [the flat background color](#the-flat-background-color-is-derived-not-chosen)
 above and run `npm run paper:average`, because the flat color is that tile's own average and will
 otherwise no longer match it.
 
@@ -250,6 +280,9 @@ change didn't take, and never rewrite CSS on the strength of a hot-reloaded meas
 Nothing imports these any more, so they don't ship, but they're still on disk and will mislead a
 search:
 
+- `paper-light.webp`, `paper-dark.webp`, `grid-dots-light.svg`, `grid-dots-dark.svg` — the live
+  textures now ship from `@furioursus/ui`. These copies stay only because `paper:average` reads the
+  two paper tiles; delete all four once that script moves into the package.
 - `grain-tiled.webp` — the loose grain that got composited into the paper tiles. Keep it if you
   intend to re-bake; it is the input, not an output.
 - `grain-960w.webp`, `grain-1600w.webp`, `grain-portrait.webp`, `grain-master.webp` — the entire
@@ -478,19 +511,29 @@ as a blur effect instead of a printing error. The bear's own two steps are decla
 
 ## Switching themes
 
-- **`src/components/ThemeProvider.astro`** — inlined, parser-blocking script (`is:inline`, to avoid
-  a flash of the wrong theme) in `Base.astro`'s `<head>`. On load: reads `localStorage.theme`,
-  falling back to `prefers-color-scheme`, and sets `data-theme` on `<html>`. Also listens for
-  `pageshow` (bfcache restores) and `prefers-color-scheme` changes, and for a `theme-change`
-  `CustomEvent` on `document`.
-- **`src/components/ThemeToggle.astro`** — the header button. A `<theme-toggle>` custom element
-  whose click handler dispatches that `theme-change` event rather than touching `data-theme`
-  directly — `ThemeProvider`'s listener is what actually applies it. Keeps "decide the new theme"
-  and "apply the new theme" as two separate concerns.
+- **`src/components/ThemeProvider.astro`** — inlines `@furioursus/ui`'s `theme.js` (imported with
+  `?raw`) as a parser-blocking `is:inline` script in `Base.astro`'s `<head>`, so the theme is set
+  before first paint. It sets `data-theme` on `<html>` from a saved choice or
+  `prefers-color-scheme`, updates the `theme-color` meta, and re-applies on bfcache restores, OS
+  changes and changes in other tabs. The package's
+  [`docs/theming.md`](https://github.com/furioursus/furioursus-ui/blob/main/docs/theming.md) has
+  the full contract.
+- **`src/components/ThemeToggle.astro`** — the header button. Its click dispatches a
+  `theme-change` `CustomEvent` on `document` rather than touching `data-theme` itself; `theme.js`
+  applies it. It updates `aria-checked` from the `theme-changed` event `theme.js` fires after every
+  switch, so the switch state stays right when the OS or another tab changes the theme.
 
-To change the toggle's own visual state from somewhere else, fire the same event rather than
-reaching into `ThemeProvider` — anything dispatching `theme-change` on `document` participates
-correctly, including the toggle's own `aria-checked` bookkeeping.
+**A saved choice only sticks when it differs from the system.** Picking the theme the OS already
+uses clears `localStorage.theme`, so the site goes back to following the OS. Before the shared
+package, every click was stored, which pinned the theme even after the OS switched.
+
+- **Footgun:** `ThemeProvider` must stay `is:inline` and after `BaseHead`'s `theme-color` meta. A
+  bundled (module) script runs after first paint, so dark-mode visitors see a flash of paper; before
+  the meta, the script can't find it to update.
+
+Anything else that needs to switch the theme should dispatch `theme-change` on `document` (or call
+`window.furioursusTheme.set()`) rather than set `data-theme` directly, so the choice is saved and
+the toggle stays in sync.
 
 ## Typography
 
@@ -550,8 +593,7 @@ Math.round(
 ```
 
 **`.title` is two scales, and two of its call sites opt out.** `.title` means _page title_ — it
-resolves to `text-title sm:text-title-lg` (36/48px, both registered in `tailwind.config.ts`'s
-`fontSize`). Call sites that want something smaller override it with an ordinary `text-*` utility,
+resolves to `text-title sm:text-title-lg` (36/48px, both tokens from `@furioursus/ui`). Call sites that want something smaller override it with an ordinary `text-*` utility,
 which wins because `.title` lives in `@layer components`. **FOOTGUN: `RecordCard.astro` and
 `CardCollection.astro` carry an explicit `text-3xl`** — they use `.title` for _card_ titles, not
 page titles, and without that pin a change to the page-title scale silently drags every vinyl

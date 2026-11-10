@@ -9,7 +9,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 	inside it — without a z-index here, any positioned element in <main> paints over the open menu.
 	See docs/navigation.md. */}
 <header
-	class="group breakout-container relative z-40 mb-6 motion-reduce:transition-none max-sm:[transition:background-color_0.15s_ease-in] max-sm:[&.menu-open]:bg-global-bg max-sm:[&.menu-open]:[transition:background-color_0.3s_ease-out]"
+	class="group breakout-container relative z-40 mb-6 motion-reduce:transition-none max-sm:[transition:background-color_0.15s_ease-in] max-sm:[&.menu-open]:bg-page max-sm:[&.menu-open]:[transition:background-color_0.3s_ease-out]"
 	id="main-header"
 >
 	<div class="relative mx-auto max-w-3xl px-4 py-8 sm:px-8">
@@ -39,12 +39,12 @@ import { menuLinks, siteConfig } from "@/site.config";
 								<g id="Ear2">
 									<path
 										id="BackEar2"
-										class="text-global-text"
+										class="text-ink"
 										d="M64.56,5.14c-.1-3.39-5.74-6.03-9.29-4.72-2.48,1.36-2.7,2.44-3.27,7.07-1.64,13.45,12.62,8.14,12.55-2.35Z"
 									/>
 									<path
 										id="FrontEar2"
-										class="text-global-bg"
+										class="text-page"
 										d="M57.51,3.9c2.03,1.35,2.61,4.95,2.08,7.19-.12.47-.46.66-.89.32-1.09-.96-2.64-1.65-3.86-2.48-.2-.16-.45-.35-.48-.61.13-1.52.99-4.94,3.02-4.49l.13.06Z"
 									/>
 								</g>
@@ -53,25 +53,25 @@ import { menuLinks, siteConfig } from "@/site.config";
 								<g id="Ear1">
 									<path
 										id="BackEar1"
-										class="text-global-text"
+										class="text-ink"
 										d="M12.94,10.49c-.76-3.47-1.62-6.76-5.98-6.62-8.89.28-8.92,8.9-1.75,14.99,4.58,3.9,9.43-1.14,7.74-8.37Z"
 									/>
 									<path
 										id="FrontEar1"
-										class="text-global-bg"
+										class="text-page"
 										d="M5.16,16.15c-.89-.6-1.06-3.39-1.12-4.72.03-1.8.08-4.72,2.62-4.37,1.17.15,2.34.68,2.86,1.74.44,1.03.83,2.28.18,3.23-.72,1.04-1.72,1.66-2.62,2.57-.69.62-1.41,1.53-1.84,1.56h-.09Z"
 									/>
 								</g>
 							</g>
 							<path
 								id="Head"
-								class="text-global-text"
+								class="text-ink"
 								d="M50.84,7.62C33.33-1.02,1.71,9.36.07,30.87c-1.58,25.42,23,40.31,45.97,31.1,25.73-9.37,31.45-41.71,4.98-54.26l-.18-.08Z"
 							/>
 							<g id="MuzzleTrack">
 								<path
 									id="Muzzle"
-									class="text-global-bg"
+									class="text-page"
 									d="M43.41,27.44c-.52,1.18-2.1,1.97-3.54,2.2-.39.08-.9.13-1.19.43-.18.18-.26.46-.27.78.15,2.62.46,5.12.76,7.54.37,2.8.78,5.67,1.31,8.59.12.71.33,1.67.21,2.38-.33.99-1.1-.35-1.16-.89-1.08-5.63-1.74-11.64-2.27-17.32-.03-.26-.07-.51-.15-.73-.22-.84-1.33-.83-2.05-1.09-.57-.21-1.21-.68-1.73-1.1-6.47-5.37,11.04-8.14,10.15-.96l-.06.16Z"
 								/>
 							</g>
@@ -79,21 +79,21 @@ import { menuLinks, siteConfig } from "@/site.config";
 								<g id="Eye2Track">
 									<path
 										id="Eye2"
-										class="text-global-bg"
+										class="text-page"
 										d="M50.74,25c-1.88,1.31-2.23-2.95-1.92-3.96.7-2.35,1.57-2.02,2.13-.84.57,1.38.92,3.51-.12,4.72l-.09.08Z"
 									/>
 								</g>
 								<g id="Eye1Track">
 									<path
 										id="Eye1"
-										class="cls-1 text-global-bg"
+										class="cls-1 text-page"
 										d="M24.07,28.36c-2.44.8-1.99-4.3-1.35-5.16,2.52-2.22,2.66,4.19,1.45,5.11l-.09.05Z"
 									/>
 								</g>
 							</g>
 						</svg>
 					)}
-					<span class="text-accent-2 text-xl font-bold sm:text-2xl sm:grayscale sm:group-hover:filter-none">
+					<span class="text-heading text-xl font-bold sm:text-2xl sm:grayscale sm:group-hover:filter-none">
 						{siteConfig.title}
 					</span>
 				</a>
@@ -106,7 +106,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 				}
 				<nav
 					aria-label="Main"
-					class="bg-global-bg divide-muted absolute -inset-x-4 top-full flex-col divide-y px-4 py-4 max-sm:-mt-4 group-[.menu-open]:z-50 motion-reduce:transition-none max-sm:hidden max-sm:transform-[scale(0.92)_translateY(-0.5rem)] max-sm:opacity-0 max-sm:[transition:opacity_0.15s_ease-in,transform_0.15s_ease-in,display_0.15s_allow-discrete] group-[.menu-open]:max-sm:flex group-[.menu-open]:max-sm:transform-[scale(1)_translateY(0)] group-[.menu-open]:max-sm:opacity-100 group-[.menu-open]:max-sm:[transition:opacity_0.3s_cubic-bezier(0.34,1.56,0.64,1),transform_0.3s_cubic-bezier(0.34,1.56,0.64,1),display_0.3s_allow-discrete] sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0 group-[.menu-open]:max-sm:starting:transform-[scale(0.92)_translateY(-0.5rem)] group-[.menu-open]:max-sm:starting:opacity-0"
+					class="bg-page divide-muted absolute -inset-x-4 top-full flex-col divide-y px-4 py-4 max-sm:-mt-4 group-[.menu-open]:z-50 motion-reduce:transition-none max-sm:hidden max-sm:transform-[scale(0.92)_translateY(-0.5rem)] max-sm:opacity-0 max-sm:[transition:opacity_0.15s_ease-in,transform_0.15s_ease-in,display_0.15s_allow-discrete] group-[.menu-open]:max-sm:flex group-[.menu-open]:max-sm:transform-[scale(1)_translateY(0)] group-[.menu-open]:max-sm:opacity-100 group-[.menu-open]:max-sm:[transition:opacity_0.3s_cubic-bezier(0.34,1.56,0.64,1),transform_0.3s_cubic-bezier(0.34,1.56,0.64,1),display_0.3s_allow-discrete] sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:divide-x sm:divide-y-0 sm:bg-transparent sm:p-0 group-[.menu-open]:max-sm:starting:transform-[scale(0.92)_translateY(-0.5rem)] group-[.menu-open]:max-sm:starting:opacity-0"
 					id="navigation-menu"
 				>
 					{
@@ -117,7 +117,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 							.map((link) => (
 								<a
 									aria-current={Astro.url.pathname === link.path ? "page" : false}
-									class="text-accent hover:text-nav-hover active:text-nav-hover px-4 py-4 font-semibold max-sm:font-display max-sm:py-5 max-sm:text-4xl max-sm:font-bold max-sm:tracking-tight max-sm:[font-variation-settings:'opsz'_60] sm:py-0 sm:underline-offset-2 sm:hover:underline"
+									class="text-accent hover:text-highlight active:text-highlight px-4 py-4 font-semibold max-sm:font-display max-sm:py-5 max-sm:text-4xl max-sm:font-bold max-sm:tracking-tight max-sm:[font-variation-settings:'opsz'_60] sm:py-0 sm:underline-offset-2 sm:hover:underline"
 									href={link.path}
 								>
 									{link.title}

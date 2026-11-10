@@ -60,7 +60,7 @@ element in the page body drew straight through the open menu.
 
 It was visible on any page with positioned content high up: `/about/music/` rendered its
 `nav.subnav` (About · Music · MTG) and the Last.fm now-playing widget on top of the open dropdown,
-even though the nav has an opaque `bg-global-bg`. `document.elementFromPoint()` at the dropdown's
+even though the nav has an opaque `bg-page`. `document.elementFromPoint()` at the dropdown's
 own midpoint returned a subnav `<a>`, not a nav link — the menu was unclickable there, not just
 ugly. `relative z-40` on `<header>` gives that stacking context a real z-index and the whole subtree
 lifts above `<main>` in one move.
@@ -89,7 +89,7 @@ overshoot, lands the text on the same 16px gutter as `<main>`.
 
 ### The solid mobile masthead
 
-`max-sm:bg-global-bg` on `<header>` paints the same flat paper colour the open dropdown uses, so the
+`max-sm:bg-page` on `<header>` paints the same flat paper colour the open dropdown uses, so the
 two read as one continuous slab the moment the menu opens rather than a textured bar with a flat
 panel hanging off it. `.breakout-container` already stretches `<header>` to `100dvw`, so the fill
 goes genuinely edge-to-edge without any extra negative-margin work.
@@ -99,19 +99,19 @@ runs straight through the masthead, which is the look that section was designed 
 
 Two consequences worth knowing:
 
-- **The texture does not show in that strip on mobile.** `--color-global-bg` is the solid colour
+- **The texture does not show in that strip on mobile.** `--color-page` is the solid colour
   _derived from_ the paper texture (see `docs/theming.md`), not the texture itself, so the band is
   flat while everything under it stays grainy. With the menu closed this reads as a deliberate
   masthead plate; it is the intended trade, not a rendering bug.
 - **It lines up with the browser chrome for free.** The `theme-color` meta is the same token, so on
   iOS Safari the address bar and the header slab are now literally the same colour with no seam.
-  That also means the `theme-color` footgun in `global.css` now has visible consequences in one more
-  place — change the token, check the masthead too.
+  Both come from the `page` token in `@furioursus/ui`, so they can't drift apart; when the token
+  changes, check the masthead too.
 
 ### The solid masthead while the menu is open
 
 `<header>` is transparent by default, so the root paper/dot texture runs straight through the
-masthead. `max-sm:[&.menu-open]:bg-global-bg` fills it with the same flat colour the dropdown uses,
+masthead. `max-sm:[&.menu-open]:bg-page` fills it with the same flat colour the dropdown uses,
 but **only while the menu is open**, so the header and the open panel read as one continuous slab
 instead of a textured bar with a flat panel hanging off it. `.breakout-container` already stretches
 `<header>` to `100dvw`, so the fill goes edge-to-edge with no extra negative-margin work.
@@ -245,8 +245,8 @@ The nav filters `link.path !== "/"`: the logo link immediately before the `<nav>
 so a "Home" item here would be an **adjacent link to the same destination**, which WAVE flags as a
 failure. The footer's copy of `menuLinks` keeps "Home" — it has no adjacent logo link.
 
-Nav links carry `hover:text-nav-hover active:text-nav-hover` alongside their normal `text-accent`.
-`--color-nav-hover` is a no-op in light mode and a vivid yellow in dark — see
+Nav links carry `hover:text-highlight active:text-highlight` alongside their normal `text-accent`.
+`--color-highlight` is a no-op in light mode and a vivid yellow in dark — see
 [theming](./theming.md#current-palette).
 
 ## Search and theme toggle
