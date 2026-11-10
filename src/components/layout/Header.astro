@@ -1,6 +1,6 @@
 ---
+import { ThemeToggle } from "@furioursus/ui/vue";
 import Search from "@/components/Search.astro";
-import ThemeToggle from "@/components/ThemeToggle.astro";
 import { menuLinks, siteConfig } from "@/site.config";
 ---
 
@@ -127,7 +127,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 				</nav>
 			</div>
 			<Search />
-			<ThemeToggle />
+			<ThemeToggle class="ms-2 sm:ms-4" />
 			<mobile-button>
 				<button
 					aria-expanded="false"

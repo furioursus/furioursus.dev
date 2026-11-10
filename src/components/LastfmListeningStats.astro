@@ -1,10 +1,14 @@
 ---
-// The /about/music/ page's Last.fm top-artists/albums/tracks stats, tabbed by time range. Defines the
-// <lastfm-period-tabs> custom element (colocated with its markup, following the ThemeToggle.astro
-// pattern — see docs/README.md's conventions section); switching tabs just toggles which
-// pre-rendered panel is visible, no re-fetch. See docs/lastfm.md for the wider feature.
-import LastfmRankedList from "@/components/LastfmRankedList.astro";
-import { LASTFM_PERIODS, type LastfmPeriod, type MusicStatsPeriod } from "@/utils/lastfm";
+// The /about/music/ page's Last.fm top artists/albums/tracks, tabbed by time range. Panels and lists render
+// here on the server; only ListeningStatsTabs.vue (the shared PeriodTabs) hydrates. See docs/lastfm.md.
+import { RankedList } from "@furioursus/ui/vue";
+import ListeningStatsTabs from "@/components/ListeningStatsTabs.vue";
+import {
+	LASTFM_PERIODS,
+	type LastfmPeriod,
+	type LastfmTopItem,
+	type MusicStatsPeriod,
+} from "@/utils/lastfm";
 
 interface Props {
 	periods: Partial<Record<LastfmPeriod, MusicStatsPeriod>>;
@@ -12,31 +16,31 @@ interface Props {
 
 const { periods } = Astro.props;
 const DEFAULT_PERIOD = LASTFM_PERIODS[0].value;
+const ID = "listening-stats";
+const EMPTY = "Nothing scrobbled in this range yet.";
+
+const rows = (items: LastfmTopItem[] = [], withArtist = false) =>
+	items.map((item) => ({
+		name: item.name,
+		subtitle: withArtist ? item.artist : undefined,
+		count: item.playcount,
+		url: item.url,
+	}));
 ---
 
-<lastfm-period-tabs>
+<div>
 	<h2 class="mt-10 mb-3 text-lg font-semibold">Listening stats</h2>
-	<div class="mb-4 flex flex-wrap gap-2" role="tablist">
-		{LASTFM_PERIODS.map(({ value, label }, index) => (
-			<button
-				class="border-muted bg-page px-tight-6 py-tight-4 text-2xs text-ink hover:border-accent hover:text-accent aria-selected:border-accent aria-selected:text-accent cursor-pointer rounded-xs border border-dashed [font:inherit] focus-visible:[outline:2px_solid_var(--color-accent)] focus-visible:outline-offset-1 aria-selected:border-solid"
-				aria-selected={index === 0}
-				data-period-tab={value}
-				role="tab"
-				type="button"
-			>
-				{label}
-			</button>
-		))}
-	</div>
+	<ListeningStatsTabs client:visible class="mb-4" idPrefix={ID} options={[...LASTFM_PERIODS]} />
 
 	{LASTFM_PERIODS.map(({ value }) => {
 		const period = periods[value];
 		return (
-			// No display override needed for the [hidden] state here (unlike LastfmNowPlaying's
-			// custom element) — this panel has no competing `display` utility of its own to lose
-			// a specificity fight against, so the browser's native `[hidden]` default just works.
-			<div data-period-panel={value} hidden={value !== DEFAULT_PERIOD}>
+			<div
+				aria-labelledby={`${ID}-tab-${value}`}
+				hidden={value !== DEFAULT_PERIOD}
+				id={`${ID}-panel-${value}`}
+				role="tabpanel"
+			>
 				<p class="text-muted mb-3 text-sm">
 					{(period?.totalArtists ?? 0).toLocaleString()} artists &middot;{" "}
 					{(period?.totalAlbums ?? 0).toLocaleString()} albums &middot;{" "}
@@ -45,32 +49,13 @@ const DEFAULT_PERIOD = LASTFM_PERIODS[0].value;
 				<div class="breakout-container">
 					<div class="mx-auto max-w-7xl px-4 sm:px-8">
 						<div class="mb-8 grid gap-6 sm:grid-cols-3">
-							<LastfmRankedList title="Top Artists" items={period?.artists ?? []} />
-							<LastfmRankedList title="Top Albums" items={period?.albums ?? []} showArtist />
-							<LastfmRankedList title="Top Tracks" items={period?.tracks ?? []} showArtist />
+							<RankedList emptyText={EMPTY} items={rows(period?.artists)} newTab title="Top Artists" />
+							<RankedList emptyText={EMPTY} items={rows(period?.albums, true)} newTab title="Top Albums" />
+							<RankedList emptyText={EMPTY} items={rows(period?.tracks, true)} newTab title="Top Tracks" />
 						</div>
 					</div>
 				</div>
 			</div>
 		);
 	})}
-</lastfm-period-tabs>
-
-<script>
-	class LastfmPeriodTabs extends HTMLElement {
-		connectedCallback() {
-			const tabs = Array.from(this.querySelectorAll<HTMLButtonElement>("[data-period-tab]"));
-			const panels = Array.from(this.querySelectorAll<HTMLElement>("[data-period-panel]"));
-
-			for (const tab of tabs) {
-				tab.addEventListener("click", () => {
-					const period = tab.dataset.periodTab;
-					for (const t of tabs) t.setAttribute("aria-selected", String(t === tab));
-					for (const panel of panels) panel.hidden = panel.dataset.periodPanel !== period;
-				});
-			}
-		}
-	}
-
-	customElements.define("lastfm-period-tabs", LastfmPeriodTabs);
-</script>
+</div>

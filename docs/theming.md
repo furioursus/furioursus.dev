@@ -518,10 +518,12 @@ as a blur effect instead of a printing error. The bear's own two steps are decla
   changes and changes in other tabs. The package's
   [`docs/theming.md`](https://github.com/furioursus/furioursus-ui/blob/main/docs/theming.md) has
   the full contract.
-- **`src/components/ThemeToggle.astro`** — the header button. Its click dispatches a
-  `theme-change` `CustomEvent` on `document` rather than touching `data-theme` itself; `theme.js`
-  applies it. It updates `aria-checked` from the `theme-changed` event `theme.js` fires after every
-  switch, so the switch state stays right when the OS or another tab changes the theme.
+- **The header button** is `@furioursus/ui`'s `ThemeToggle`, rendered as static HTML with no
+  `client:` directive: a `role="switch"` marked `data-theme-toggle`. `theme.js` handles its click and
+  keeps its `aria-checked` and `title` in sync on every switch, including OS changes and other tabs.
+  See [components.md](./components.md).
+- **Footgun:** don't hydrate it or give it a click handler. Hydrating ships the Vue runtime to every
+  page; a second click handler switches the theme twice, so it appears to do nothing.
 
 **A saved choice only sticks when it differs from the system.** Picking the theme the OS already
 uses clears `localStorage.theme`, so the site goes back to following the OS. Before the shared
@@ -531,9 +533,9 @@ package, every click was stored, which pinned the theme even after the OS switch
   bundled (module) script runs after first paint, so dark-mode visitors see a flash of paper; before
   the meta, the script can't find it to update.
 
-Anything else that needs to switch the theme should dispatch `theme-change` on `document` (or call
-`window.furioursusTheme.set()`) rather than set `data-theme` directly, so the choice is saved and
-the toggle stays in sync.
+Anything else that needs to switch the theme should be a `data-theme-toggle` button, call
+`window.furioursusTheme.set()`, or dispatch `theme-change` on `document`, rather than set
+`data-theme` directly, so the choice is saved and the toggle stays in sync.
 
 ## Typography
 

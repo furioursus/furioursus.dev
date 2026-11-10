@@ -53,7 +53,7 @@ rather than kept partial; simpler and more compact besides.
 ## Live now-playing widget
 
 `src/components/LastfmNowPlaying.astro` defines a `<lastfm-now-playing>` custom element (same
-pattern as `ThemeToggle.astro` / `record-collection` — see `docs/README.md`'s conventions section).
+pattern as `record-collection` — see `docs/README.md`'s conventions section).
 
 - Starts `hidden`; the first successful `fetchNowPlaying()` reveals it. Renders nothing (stays
   hidden) if the fetch fails or Last.fm has no scrobbles at all — this is a quiet corner of the
@@ -72,11 +72,11 @@ pattern as `ThemeToggle.astro` / `record-collection` — see `docs/README.md`'s 
 
 `src/components/LastfmListeningStats.astro` (rendered by `music.astro`, which does the
 `loadMusicStats()` fetch and passes `musicStats.periods` down as a prop) renders one panel
-(`[data-period-panel]`) per `LASTFM_PERIODS` entry (each holding three `LastfmRankedList.astro`
-lists — artists/albums/tracks), all server-rendered up front. A `<lastfm-period-tabs>` custom element,
-colocated with that markup in the same file (same `ThemeToggle.astro` pattern as
-`record-collection` — see `docs/README.md`'s conventions section), just toggles which panel is
-visible on tab click — no re-fetch, same "everything's already in the DOM, JS only shows/hides"
+(`role="tabpanel"`, `id="listening-stats-panel-<period>"`) per `LASTFM_PERIODS` entry, each holding
+three shared `RankedList` components (artists/albums/tracks), all server-rendered up front.
+`ListeningStatsTabs.vue` wraps the shared `PeriodTabs` and is the only part that hydrates
+(`client:visible`): it shows the selected panel and hides the rest by id (see
+[`docs/components.md`](./components.md)). No re-fetch, same "everything's already in the DOM, JS only shows/hides"
 philosophy as the vinyl grid's client-side filtering (see [`docs/discogs.md`](./discogs.md)'s
 "Search/filter/sort" section). That keeps the build-time API call count fixed at 4 periods × 3
 endpoints = 12 calls regardless of how often a visitor flips between tabs — there's no per-track
