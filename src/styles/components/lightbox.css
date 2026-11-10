@@ -79,7 +79,7 @@ html.lightbox-locked {
 	}
 
 	&::backdrop {
-		@apply bg-global-bg/80 backdrop-blur-sm;
+		@apply bg-page/80 backdrop-blur-sm;
 		opacity: 0;
 		transition:
 			opacity 0.15s ease-in,
@@ -138,10 +138,10 @@ html.lightbox-locked {
 /* Shared by .lightbox-close and the two gallery-nav buttons below — a circular icon button
    pinned to a corner/edge of the dialog. Each subclass only adds its own position + icon. */
 .lightbox-icon-button {
-	@apply bg-global-bg/80 absolute top-2 z-10 h-8 w-8 cursor-pointer appearance-none rounded-full border-0 p-1.5;
+	@apply bg-page/80 absolute top-2 z-10 h-8 w-8 cursor-pointer appearance-none rounded-full border-0 p-1.5;
 
 	&:before {
-		@apply bg-global-text block h-full w-full content-[''];
+		@apply bg-ink block h-full w-full content-[''];
 	}
 }
 
