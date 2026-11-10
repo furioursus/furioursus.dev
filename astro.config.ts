@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { satteri, satteriHeadingIdsPlugin } from "@astrojs/markdown-satteri";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
+import vue from "@astrojs/vue";
 import tailwind from "@tailwindcss/vite";
 import { defineConfig, envField, fontProviders } from "astro/config";
 import discogsCollection from "astro-discogs-collection";
@@ -89,6 +90,8 @@ export default defineConfig({
 		},
 	],
 	integrations: [
+		// Shared components from @furioursus/ui (docs/components.md).
+		vue(),
 		expressiveCode(expressiveCodeOptions),
 		icon({
 			iconDir: "src/assets/icons",

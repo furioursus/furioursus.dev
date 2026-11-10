@@ -251,7 +251,7 @@ Nav links carry `hover:text-highlight active:text-highlight` alongside their nor
 
 ## Search and theme toggle
 
-`<Search />` and `<ThemeToggle />` are unconditionally inline in the masthead at every breakpoint,
+`<Search />` and `<ThemeToggle />` (the shared one, unhydrated; see [components.md](./components.md)) are unconditionally inline in the masthead at every breakpoint,
 never hidden or duplicated on mobile. `Search.astro` wraps Pagefind's
 `<pagefind-modal-trigger>`/`<pagefind-modal>` web components, which share a single default instance
 keyed by name (`getInstanceManager().getInstance("default")`); a second `<pagefind-modal>` on the

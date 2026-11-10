@@ -98,7 +98,7 @@ Because the whole collection is static at build time, filtering doesn't need a s
 sort and passes the result down as props) renders every release into the grid up front, each `<li>`
 carrying lowercased `data-*` attributes (`data-search`, `data-genres`, `data-formats`,
 `data-artist`, `data-title`, `data-year`, `data-date-added`) that a `<record-collection>` custom
-element (colocated with that markup in the same file, following the `ThemeToggle.astro` pattern
+element (colocated with that markup in the same file, following the `LastfmNowPlaying.astro` pattern
 documented in [`docs/README.md`](./README.md)) reads to show/hide and reorder items in response to
 the search box, genre/format `<select>`s, and sort `<select>`. Nothing is removed from the DOM —
 filtering just toggles the `hidden` attribute — so the "N of M records" count and the empty-state

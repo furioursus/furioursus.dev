@@ -21,6 +21,8 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   cursor tracking, and its static edge-distortion filter.
 - [Navigation](./navigation.md) — the static (non-sticky) header and its plain mobile dropdown,
   the nested `menuLinks` / About-section subnav, how the footer mirrors the header, and why the sticky/dialog-based versions that came before the current header were reverted.
+- [Shared components](./components.md) — the Vue components from `@furioursus/ui`, the `@astrojs/vue`
+  setup and its version pin, and which ones hydrate (almost none).
 - [Theming](./theming.md) — the dark/light mode system, the design tokens shared with the MTG tools
   via `@furioursus/ui` (and how to override one locally), and the baked paper +
   dot-grid texture on the root element (including why `--color-page` is derived from the
@@ -54,9 +56,12 @@ for generated OG images · [Webmention.io](https://webmention.io/) for likes/rep
   themes, menu links) live in `src/site.config.ts`, not scattered across components.
 - **Global vs. scoped behavior.** Small stateful widgets are custom elements (`class extends
 HTMLElement`) defined in a `<script>` tag, either colocated with their markup (e.g.
-  `ThemeToggle.astro`) or registered once globally in `src/layouts/Base.astro` when the markup
+  `LastfmNowPlaying.astro`) or registered once globally in `src/layouts/Base.astro` when the markup
   they operate on doesn't have a natural `.astro` file to live in (e.g. `Lightbox.astro`, whose
   markup mostly comes from a markdown transform, not a component template).
+- **Shared components come from `@furioursus/ui`** (Vue, rendered by Astro): `ThemeToggle`,
+  `PeriodTabs`, `RankedList`. Hydrate only what must respond to input; see
+  [components.md](./components.md).
 - **Runtime state CSS needs but can't see (pointer position, viewport size, and more) goes through
   `prop-for-that`.** `PropsForAuto.astro`, included once in `Base.astro`, registers it site-wide —
   any element can opt in with a `data-props-for="<key>"` attribute, no further JS. First (and so

@@ -7,6 +7,8 @@
    shared package. See docs/theming.md. */
 @import "@furioursus/ui/tailwind.css";
 @import "@furioursus/ui/base.css" layer(base);
+/* Shared Vue components' styles; already inside @layer components. See docs/components.md. */
+@import "@furioursus/ui/vue/style.css";
 
 /* tailwind to ignore satori generated og-image */
 @source not "../pages/og-image";
