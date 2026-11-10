@@ -3,165 +3,30 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css" layer(utilities);
+/* Colours, type, spacing, textures, the light/dark rules and the dark: variant all come from the
+   shared package. See docs/theming.md. */
+@import "@furioursus/ui/tailwind.css";
+@import "@furioursus/ui/base.css" layer(base);
 
 /* tailwind to ignore satori generated og-image */
 @source not "../pages/og-image";
 /* config for tailwindcss-typography plugin */
 @config "../../tailwind.config.ts";
 
-/* use a selector-based strategy for dark mode */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
-/* register custom colour properties */
-@property --color-global-bg {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: hsla(10, 12%, 89.8%, 1);
-}
-@property --color-global-text {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: hsla(273, 16%, 11%, 1);
-}
-@property --color-muted {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: hsla(279, 10%, 34%, 1);
-}
-@property --color-link {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: oklch(47.83% 0.1176 125.71);
-}
-@property --color-accent {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: oklch(53.11% 0.2159 356.46);
-}
-@property --color-accent-2 {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: oklch(18.15% 0 0);
-}
-@property --color-quote {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: oklch(47.83% 0.1176 125.71);
-}
-@property --color-nav-hover {
-	syntax: "<color>";
-	inherits: true;
-	/* Same literal as --color-accent's own light-mode value below — light mode's hover state is
-	   meant to be a no-op (unchanged from the link's own resting color), not a distinct color of
-	   its own; only dark mode overrides this to something different. See the [data-theme="dark"]
-	   block and the nav-link comment further down for why. */
-	initial-value: oklch(53.11% 0.2159 356.46);
-}
-
-/* you could refactor below to use light-dark(), depending on your target audience */
-/* Queer-punk repaint, SILENCE=DEATH-inspired: xerox-paper light mode, near-black dark mode,
-   hot pink + acid green as the two accent colors in both themes instead of a naive per-theme
-   invert — see docs/theming.md and the furioursus-dev-color-texture-redesign memory. */
-@theme {
-	/* Not a hand-picked paper white: this is paper-light.webp's own average color, so the flat
-	   fill and the texture over it are the same tone. Re-derive with `npm run paper:average`
-	   whenever the tile changes. */
-	--color-global-bg: hsla(10, 12%, 89.8%, 1);
-	--color-global-text: hsla(273, 16%, 11%, 1);
-	/* Purple-leaning grey (not the old warm brown) so the muted tone reads as chosen alongside
-	   the pink/green accents rather than a leftover neutral. 34% clears WCAG AA's 4.5:1 against
-	   this bg at ~6.6:1 — dark mode needs a different L for the same reason as before (tuned
-	   per-background, not shared), see the [data-theme="dark"] block below. */
-	--color-muted: hsla(279, 10%, 34%, 1);
-	--color-link: oklch(47.83% 0.1176 125.71);
-	--color-accent: oklch(53.11% 0.2159 356.46);
-	--color-accent-2: oklch(18.15% 0 0);
-	--color-quote: oklch(47.83% 0.1176 125.71);
-	/* No-op in light mode by design — same value as --color-accent, see that @property's comment. */
-	--color-nav-hover: oklch(53.11% 0.2159 356.46);
+/* Site overrides of shared tokens: the self-hosted fonts from astro.config.ts, with their
+   metric-matched fallbacks. FOOTGUN: keep this unlayered, or the package's tokens win. */
+:root {
 	--font-mono: var(--font-monolisa);
-	/* Headline face — see astro.config.ts's fonts entry for why Bricolage Grotesque specifically,
-	   and docs/theming.md for how it splits with MonoLisa. */
 	--font-display: var(--font-bricolage);
 }
 
 @layer base {
 	html {
-		color-scheme: light dark;
-		accent-color: var(--color-accent);
 		scrollbar-gutter: stable;
-		/* FOOTGUN: duplicated by hand in BaseHead.astro's theme-color meta and ThemeProvider.astro's
-		   themeColors map — change one, change all three. It has to be right because iOS Safari's
-		   rubber-band bounce scrolls past `body` entirely and reveals `html`'s own background. */
-		background-color: var(--color-global-bg);
-		/* Paper and dot grid live on the ROOT element, so they paint across the whole canvas —
-		   including the rubber-band overscroll region, which a viewport-pinned layer can never reach.
-		   That was the visible seam above the footer on iOS. This only works because both images tile:
-		   the root's background positioning area is still its own box, and `repeat` is what carries
-		   them past it. See docs/theming.md.
-		   FOOTGUN: `body` must stay background-transparent (Base.astro dropped its `bg-global-bg`) or
-		   it paints over all of this everywhere except the overscroll sliver — i.e. exactly inverted. */
-		background-image: var(--dots-image), var(--paper-image);
-		background-repeat: repeat, repeat;
-		background-size: var(--dots-size), auto;
 		/* FOOTGUN: `clip`, not `hidden`. iOS Safari scrolls <html>, so body's overflow-x alone
 		   can't stop the drag -- but `hidden` on both makes each its own scroll container and the
 		   momentum thread stalls, an intermittent mid-scroll freeze. See docs/lightbox.md. */
 		overflow-x: clip;
-
-		&[data-theme="light"] {
-			color-scheme: light;
-		}
-
-		&[data-theme="dark"] {
-			color-scheme: dark;
-			--color-global-bg: hsla(0, 0%, 7.8%, 1);
-			--color-global-text: hsla(49, 31%, 93%, 1);
-			/* Lighter, not darker, since this sits on a near-black bg instead of a near-white
-			   one — same purple-grey hue family as the light-mode muted above, tuned to its own
-			   background rather than shared: 62% clears AA at ~6.8:1 here. */
-			--color-muted: hsla(264, 8%, 62%, 1);
-			--color-link: oklch(92.85% 0.2158 125.25);
-			--color-accent: oklch(66.46% 0.2457 359.43);
-			--color-accent-2: oklch(94.66% 0 0);
-			--color-quote: oklch(92.85% 0.2158 125.25);
-			/* Vivid caution-tape yellow, not another pink/green — nav hover/active in dark mode is
-			   meant to read as a distinct third interaction color, not a tint of the two existing
-			   accents. 90% L / 0.18 C clears WCAG AAA (~14:1) against this theme's near-black bg
-			   with enormous margin — high-L, high-C yellows are simply that far from near-black
-			   regardless of exact hue, so precision tuning like --color-muted's AA-clearing values
-			   above isn't needed here. See the nav-link comment in Header.astro for where this is
-			   actually used. */
-			--color-nav-hover: oklch(90% 0.18 95);
-			/* Dark's paper tile is the same grain inverted and composited over the dark page color, and
-			   its dot SVG carries the light fill. Nothing swaps at runtime beyond these two URLs. */
-			--paper-image: url("../assets/images/paper-dark.webp");
-			--dots-image: url("../assets/images/grid-dots-dark.svg");
-		}
-
-		/* Both textures are BAKED: the paper tiles already contain the page color with the grain
-		   composited in at the intensity that used to come from mix-blend-mode + opacity, and the dot
-		   SVGs carry their own fill color and alpha. Background layers have no per-layer opacity, no
-		   filter and no mask, so anything that used to be a live knob now lives in the asset.
-		   Regenerating them: docs/theming.md carries the exact compositing maths. */
-		--paper-image: url("../assets/images/paper-light.webp");
-		--dots-image: url("../assets/images/grid-dots-light.svg");
-		/* The dot SVG is a single 24x24 cell holding one dot, so this value *is* the grid pitch —
-		   change it and the spacing changes, not just the scale. The grain tile is unaffected (`auto`). */
-		--dots-size: 24px 24px;
-
-		--color-mode-transition-duration: 300ms;
-		--color-mode-transition-easing: ease-in-out;
-
-		transition:
-			--color-global-bg var(--color-mode-transition-duration) var(--color-mode-transition-easing),
-			--color-global-text var(--color-mode-transition-duration) var(--color-mode-transition-easing),
-			--color-muted var(--color-mode-transition-duration) var(--color-mode-transition-easing),
-			--color-link var(--color-mode-transition-duration) var(--color-mode-transition-easing),
-			--color-accent var(--color-mode-transition-duration) var(--color-mode-transition-easing),
-			--color-accent-2 var(--color-mode-transition-duration) var(--color-mode-transition-easing),
-			--color-quote var(--color-mode-transition-duration) var(--color-mode-transition-easing),
-			--color-nav-hover var(--color-mode-transition-duration) var(--color-mode-transition-easing);
 	}
 
 	:target {
@@ -206,10 +71,10 @@
 	}
 
 	.title {
-		@apply text-accent-2 text-title font-bold sm:text-title-lg;
+		@apply text-heading text-title font-bold sm:text-title-lg;
 		font-family: var(--font-display);
-		letter-spacing: -0.01em;
-		font-variation-settings: "opsz" 60;
+		letter-spacing: var(--tracking-display);
+		font-variation-settings: var(--font-display--font-variation-settings);
 	}
 
 	/* `.title` marks a headline everywhere — except inside a `.prose` block, where markdown-
@@ -225,13 +90,13 @@
 }
 
 @utility prose {
-	--tw-prose-body: var(--color-global-text);
-	--tw-prose-bold: var(--color-global-text);
-	--tw-prose-bullets: var(--color-global-text);
-	--tw-prose-code: var(--color-global-text);
-	--tw-prose-headings: var(--color-accent-2);
-	--tw-prose-hr: 0.5px dashed #666;
-	--tw-prose-links: var(--color-global-text);
-	--tw-prose-quotes: var(--color-quote);
-	--tw-prose-th-borders: #666;
+	--tw-prose-body: var(--color-ink);
+	--tw-prose-bold: var(--color-ink);
+	--tw-prose-bullets: var(--color-ink);
+	--tw-prose-code: var(--color-ink);
+	--tw-prose-headings: var(--color-heading);
+	--tw-prose-hr: 0.5px dashed var(--color-hairline);
+	--tw-prose-links: var(--color-ink);
+	--tw-prose-quotes: var(--color-link);
+	--tw-prose-th-borders: var(--color-hairline);
 }

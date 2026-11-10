@@ -211,8 +211,8 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 				button[data-reset-button] {
 					font: inherit;
 					font-size: 0.875rem;
-					color: var(--color-global-text);
-					background: var(--color-global-bg);
+					color: var(--color-ink);
+					background: var(--color-page);
 					border: 1px dashed var(--color-muted);
 					border-radius: 2px;
 					padding: 0.4rem 0.6rem;
@@ -276,8 +276,8 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 				.pagination button {
 					font: inherit;
 					font-size: 0.875rem;
-					color: var(--color-global-text);
-					background: var(--color-global-bg);
+					color: var(--color-ink);
+					background: var(--color-page);
 					border: 1px solid var(--color-muted);
 					border-radius: 2px;
 					padding: 0.4rem 0.8rem;
@@ -389,12 +389,12 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 									<button type="button" class="lightbox-icon-button lightbox-nav-next" aria-label="Next image" hidden></button>
 									<a class="lightbox-caption group block text-inherit no-underline"${entry.href ? ` href="${escapeHtml(entry.href)}" target="_blank" rel="noopener"` : ""}>
 										<span class="block">${name}</span>
-										<span class="my-tight-1 text-global-text group-hover:text-accent block font-semibold">${meta}</span>
+										<span class="my-tight-1 text-ink group-hover:text-accent block font-semibold">${meta}</span>
 										${entry.priceText ? `<span class="block">${escapeHtml(entry.priceText)}</span>` : ""}
 									</a>
 								</dialog>
 							</lightbox-image>`
-						: `<div class="border-muted bg-global-bg flex aspect-square w-14 flex-none items-center justify-center rounded border border-dashed p-1 text-center text-[0.6rem] sm:aspect-card sm:w-full">${name}</div>`;
+						: `<div class="border-muted bg-page flex aspect-square w-14 flex-none items-center justify-center rounded border border-dashed p-1 text-center text-[0.6rem] sm:aspect-card sm:w-full">${name}</div>`;
 
 					const textClass = `block min-w-0 sm:mt-2${entry.img ? " sm:hidden" : ""}`;
 					const textInner = `<p class="text-2xs m-0 opacity-70">${meta}</p>

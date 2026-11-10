@@ -25,7 +25,7 @@ const links = section ? [section, ...(section.children ?? [])] : [];
 				<li>
 					<a
 						aria-current={current === withSlash(link.path) ? "page" : false}
-						class="text-accent hover:text-nav-hover active:text-nav-hover aria-[current=page]:text-accent-2 relative inline-block px-4 py-1 font-semibold underline-offset-2 hover:underline"
+						class="text-accent hover:text-highlight active:text-highlight aria-[current=page]:text-heading relative inline-block px-4 py-1 font-semibold underline-offset-2 hover:underline"
 						href={link.path}
 					>
 						{link.title}
