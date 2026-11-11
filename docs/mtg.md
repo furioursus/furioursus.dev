@@ -145,6 +145,18 @@ performance win, not an oversight.
   `[data-pagination]` (the Prev/Next controls — one copy above the grid, one below, so a full page's
   scroll never leaves you far from either) hides itself whenever the current filtered set fits on one
   page, same `hidden`-attribute convention as `[data-empty]` above it.
+- **The Prev/Next bars are `@furioursus/ui`'s `Pager` markup, copied.** The list is a custom
+  element, not Vue, so it can't render the component; it uses the same `fu-pager` classes and
+  buttons-mode markup instead, and the styles come from the package's `vue/style.css`, which
+  `global.css` already loads. Keep the markup in step with the package's `src/vue/Pager.vue`.
+  - **Footgun:** the ends are `aria-disabled`, not `disabled`. A disabled button drops focus to
+    `<body>` when Next reaches the last page. The click handlers check for `aria-disabled` and do
+    nothing.
+  - **Footgun:** each button stays on one line under `<!-- prettier-ignore -->`. Prettier would
+    otherwise put the arrow and the word on separate lines, and the whitespace between them renders
+    as a space that the hover underline runs under.
+  - **Footgun:** `.fu-pager[hidden] { display: none }` in the scoped styles is needed, because
+    `.fu-pager`'s `display: grid` beats the `hidden` attribute.
 - **The grid's height is floored, not just its card count kept constant.** A short last page
   (different cards wrap their name/price text over a different number of lines, so it's not purely a
   card-count thing) would otherwise visibly shrink `.grid` and yank the pagination bar/footer up to

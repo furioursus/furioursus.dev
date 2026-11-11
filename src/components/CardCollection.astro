@@ -171,26 +171,20 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 				</button>
 			</div>
 
-			<div class="pagination" data-pagination hidden>
-				<button data-page-prev type="button">
-					Previous
-				</button>
-				<span data-page-label></span>
-				<button data-page-next type="button">
-					Next
-				</button>
+			<!-- prettier-ignore -->
+			<div class="fu-pager" role="group" aria-label="Pages" data-pagination hidden>
+				<button class="fu-pager__step fu-pager__step--prev" data-page-prev type="button"><span class="fu-pager__arrow" aria-hidden="true">←</span>Previous</button>
+				<span class="fu-pager__label" data-page-label></span>
+				<button class="fu-pager__step fu-pager__step--next" data-page-next type="button">Next<span class="fu-pager__arrow" aria-hidden="true">→</span></button>
 			</div>
 
 			<ul class="grid" data-lightbox-gallery role="list"></ul>
 
-			<div class="pagination" data-pagination hidden>
-				<button data-page-prev type="button">
-					Previous
-				</button>
-				<span data-page-label></span>
-				<button data-page-next type="button">
-					Next
-				</button>
+			<!-- prettier-ignore -->
+			<div class="fu-pager" role="group" aria-label="Pages" data-pagination hidden>
+				<button class="fu-pager__step fu-pager__step--prev" data-page-prev type="button"><span class="fu-pager__arrow" aria-hidden="true">←</span>Previous</button>
+				<span class="fu-pager__label" data-page-label></span>
+				<button class="fu-pager__step fu-pager__step--next" data-page-next type="button">Next<span class="fu-pager__arrow" aria-hidden="true">→</span></button>
 			</div>
 
 			<script type="application/json" data-card-json is:inline set:html={cardDataJson}></script>
@@ -259,46 +253,15 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 					}
 				}
 
-				.pagination {
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					gap: 1rem;
-					/* Shorthand, not margin-top — this same block sits both above and below the grid now. */
+				/* The markup and styles are @furioursus/ui's Pager (buttons mode), copied because this list is a
+				   custom element, not Vue. Keep it in step with the package's Pager.vue: docs/mtg.md. */
+				.fu-pager {
 					margin: 1.5rem 0;
-					font-size: 0.875rem;
 				}
 
-				.pagination[hidden] {
+				/* FOOTGUN: .fu-pager sets display: grid, which beats the hidden attribute's display: none. */
+				.fu-pager[hidden] {
 					display: none;
-				}
-
-				.pagination button {
-					font: inherit;
-					font-size: 0.875rem;
-					color: var(--color-ink);
-					background: var(--color-page);
-					border: 1px solid var(--color-muted);
-					border-radius: 2px;
-					padding: 0.4rem 0.8rem;
-					cursor: pointer;
-				}
-
-				.pagination button:hover:not(:disabled) {
-					color: var(--color-accent);
-					border-color: var(--color-accent);
-					text-decoration: underline;
-					text-underline-offset: 2px;
-				}
-
-				.pagination button:focus-visible {
-					outline: 2px solid var(--color-accent);
-					outline-offset: 1px;
-				}
-
-				.pagination button:disabled {
-					opacity: 0.4;
-					cursor: not-allowed;
 				}
 			</style>
 
@@ -473,11 +436,17 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 							this.#applyFilters();
 						});
 
+						// The ends are aria-disabled, not disabled, so they keep focus (see #renderPage()) and
+						// still receive clicks, which have to be ignored here.
 						for (const button of prevButtons) {
-							button.addEventListener("click", () => this.#goToPage(this.#page - 1));
+							button.addEventListener("click", () => {
+								if (button.getAttribute("aria-disabled") !== "true") this.#goToPage(this.#page - 1);
+							});
 						}
 						for (const button of nextButtons) {
-							button.addEventListener("click", () => this.#goToPage(this.#page + 1));
+							button.addEventListener("click", () => {
+								if (button.getAttribute("aria-disabled") !== "true") this.#goToPage(this.#page + 1);
+							});
 						}
 
 						// Establishes page one on first connect and does the first real render — nothing is
@@ -588,12 +557,19 @@ const cardDataJson = JSON.stringify(entries.map(toClientCard)).replace(/</g, "\\
 						const pageLabels = this.querySelectorAll("[data-page-label]");
 						for (const el of pageLabels) el.textContent = `Page ${this.#page + 1} of ${totalPages}`;
 
+						// aria-disabled, not disabled: a disabled button drops focus to <body> when Next reaches
+						// the last page. The package's Pager does the same.
 						const prevButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-prev]");
-						for (const button of prevButtons) button.disabled = this.#page === 0;
+						for (const button of prevButtons) setEnd(button, this.#page === 0);
 
 						const nextButtons = this.querySelectorAll<HTMLButtonElement>("[data-page-next]");
-						for (const button of nextButtons) button.disabled = this.#page >= totalPages - 1;
+						for (const button of nextButtons) setEnd(button, this.#page >= totalPages - 1);
 					}
+				}
+
+				function setEnd(button: HTMLButtonElement, atEnd: boolean) {
+					if (atEnd) button.setAttribute("aria-disabled", "true");
+					else button.removeAttribute("aria-disabled");
 				}
 
 				customElements.define("card-collection", CardCollectionElement);

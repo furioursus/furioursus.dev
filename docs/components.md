@@ -37,8 +37,8 @@ island still load about 6 KB of JavaScript.
 - **`Pager` gets no directive.** Given `prevHref`/`nextHref` it renders plain links, so the paged
   lists work with no JavaScript. Each page passes Astro's `page` straight in:
   `page={page.currentPage} pages={page.lastPage} prevHref={page.url.prev} nextHref={page.url.next}`.
-  CardCollection's in-page pager on `/about/mtg/` is still its own (its list is a custom element,
-  not Vue).
+  CardCollection's pagers on `/about/mtg/` copy its buttons-mode markup instead, because that list
+  is a custom element, not Vue (see [mtg.md](./mtg.md)).
 - **`RankedList` gets no directive.** It's a list; nothing in it responds. It also formats counts
   with `toLocaleString()`, which would differ between the server and a reader's browser and cause a
   hydration mismatch.
