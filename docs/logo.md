@@ -235,7 +235,7 @@ same composition the Chrome bug above breaks when both live on one element, work
 because they're on two.
 
 **Clamped defensively, not just conceptually.** prop-for-that's `pointerLocal` doesn't clamp
-`--live-local-pointer-x/y-ratio` to `[0, 1]` — confirmed by reading its source directly, it maths
+`--live-local-pointer-x/y-ratio` to `[0, 1]` — confirmed by reading its source directly, it does the math on
 raw `clientX`/`clientY` against the tracking element's rect with no cap. The last `pointermove`
 right as the cursor exits the window can land slightly outside the viewport, so `--x`/`--y` clamp
 every value before it reaches any `calc()` below — the muzzle can't overshoot past its

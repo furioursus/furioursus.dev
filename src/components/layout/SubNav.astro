@@ -38,7 +38,7 @@ const links = section ? [section, ...(section.children ?? [])] : [];
 
 <style>
 	/* The active marker is a bar rather than `text-decoration` so it can sit flush under the text
-		regardless of descenders, and so its colour is independent of the link's own. */
+		regardless of descenders, and so its color is independent of the link's own. */
 	.subnav a[aria-current="page"]::after {
 		background: var(--color-accent);
 		block-size: 2px;

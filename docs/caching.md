@@ -49,7 +49,7 @@ up rather than deadlocked against a cached loader.
 ## Verifying
 
 `_headers` only takes effect once deployed — it is a Netlify directive, not something the dev server
-or `astro preview` honours. Check it against production directly:
+or `astro preview` honors. Check it against production directly:
 
 ```sh
 curl -sI https://www.furioursus.dev/_astro/Base.Crc0ifEm.css | grep -i cache-control

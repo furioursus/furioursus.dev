@@ -27,7 +27,7 @@
 	border: 0;
 	border-radius: 0;
 
-	/* Hover thickens the glyph as well as turning pink: a hover is never colour alone (docs/theming.md). */
+	/* Hover thickens the glyph as well as turning pink: a hover is never color alone (docs/theming.md). */
 	&:hover {
 		@media (hover: hover) {
 			--pf-text-muted: var(--color-accent);

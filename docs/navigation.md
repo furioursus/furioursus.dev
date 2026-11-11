@@ -42,7 +42,7 @@ the header edge is the correct _anchor_ but too generous as a _gap_: the row's `
 wordmark and the first link. Keeping `top-full` and offsetting from it — rather than hardcoding a
 smaller `top-*` — means the panel still tracks the header's real height, and the 16px is visible as
 the deliberate design decision it is instead of being buried inside a magic offset. The overlap is
-seamless because `<header>` is filled with the same colour while the menu is open (see below); on a
+seamless because `<header>` is filled with the same color while the menu is open (see below); on a
 transparent header this same nudge would show the panel edge cutting into the texture.
 
 `-inset-x-4` on the nav cancels the padded row's own `px-4`, so the open dropdown spans edge-to-edge
@@ -89,7 +89,7 @@ overshoot, lands the text on the same 16px gutter as `<main>`.
 
 ### The solid mobile masthead
 
-`max-sm:bg-page` on `<header>` paints the same flat paper colour the open dropdown uses, so the
+`max-sm:bg-page` on `<header>` paints the same flat paper color the open dropdown uses, so the
 two read as one continuous slab the moment the menu opens rather than a textured bar with a flat
 panel hanging off it. `.breakout-container` already stretches `<header>` to `100dvw`, so the fill
 goes genuinely edge-to-edge without any extra negative-margin work.
@@ -99,19 +99,19 @@ runs straight through the masthead, which is the look that section was designed 
 
 Two consequences worth knowing:
 
-- **The texture does not show in that strip on mobile.** `--color-page` is the solid colour
+- **The texture does not show in that strip on mobile.** `--color-page` is the solid color
   _derived from_ the paper texture (see `docs/theming.md`), not the texture itself, so the band is
   flat while everything under it stays grainy. With the menu closed this reads as a deliberate
   masthead plate; it is the intended trade, not a rendering bug.
 - **It lines up with the browser chrome for free.** The `theme-color` meta is the same token, so on
-  iOS Safari the address bar and the header slab are now literally the same colour with no seam.
+  iOS Safari the address bar and the header slab are now literally the same color with no seam.
   Both come from the `page` token in `@furioursus/ui`, so they can't drift apart; when the token
   changes, check the masthead too.
 
 ### The solid masthead while the menu is open
 
 `<header>` is transparent by default, so the root paper/dot texture runs straight through the
-masthead. `max-sm:[&.menu-open]:bg-page` fills it with the same flat colour the dropdown uses,
+masthead. `max-sm:[&.menu-open]:bg-page` fills it with the same flat color the dropdown uses,
 but **only while the menu is open**, so the header and the open panel read as one continuous slab
 instead of a textured bar with a flat panel hanging off it. `.breakout-container` already stretches
 `<header>` to `100dvw`, so the fill goes edge-to-edge with no extra negative-margin work.
@@ -210,7 +210,7 @@ emits `/about/mtg/`, but an internal link may omit the trailing slash, and a bar
 against an unslashed `/about` would also match a hypothetical `/aboutish/`.
 
 The subnav's active marker is an `::after` bar rather than an underline, so it sits flush under the
-text regardless of descenders and takes its colour independently of the link's own state.
+text regardless of descenders and takes its color independently of the link's own state.
 
 There is deliberately **no dropdown under About in the header**. A disclosure menu there means hover
 intent, `aria-expanded`, Escape handling, a focus decision for About itself, and a nested list
@@ -235,7 +235,7 @@ There is exactly one deliberate difference:
 
 **Nested `children` are deliberately not flattened into the footer.** An earlier version did splice
 them back in (`menuLinks.flatMap((link) => [link, ...(link.children ?? [])])`) so that Music and MTG
-stayed one click from anywhere on the site. That was dropped in favour of the footer matching the
+stayed one click from anywhere on the site. That was dropped in favor of the footer matching the
 header exactly. The consequence is real and intended: those two pages are reachable only through
 About.
 

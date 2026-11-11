@@ -7,7 +7,7 @@ Dark/light mode plus the design tokens both themes draw from.
 The tokens aren't defined in this repo any more. They come from
 [`@furioursus/ui`](https://github.com/furioursus/furioursus-ui), the package shared with the MTG
 tools, installed from GitHub at a pinned tag (`package.json`). Its `src/tokens.json` is the source
-of truth for every colour, type size, spacing step, radius and texture; its
+of truth for every color, type size, spacing step, radius and texture; its
 [`docs/reference.md`](https://github.com/furioursus/furioursus-ui/blob/main/docs/reference.md) lists
 them all with contrast ratios. `src/styles/global.css` pulls them in with two imports:
 
@@ -16,14 +16,14 @@ them all with contrast ratios. `src/styles/global.css` pulls them in with two im
 @import "@furioursus/ui/base.css" layer(base);     /* paper + dots on <html>, theme cross-fade */
 ```
 
-The colours this site uses:
+The colors this site uses:
 
 ```css
 --color-page / --color-ink / --color-muted / --color-heading
 --color-accent / --color-link / --color-highlight / --color-hairline
 ```
 
-Every themed colour is a variable registered with `@property`, so components mostly don't need
+Every themed color is a variable registered with `@property`, so components mostly don't need
 `dark:` variants: `bg-page`, `text-ink` and so on resolve differently per theme, and `base.css`
 cross-fades them on a switch.
 
@@ -58,7 +58,7 @@ Old names, for reading history: `global-bg` → `page`, `global-text` → `ink`,
 ### Current palette
 
 Queer-punk direction, SILENCE=DEATH-inspired: dark mode is near-black with warm off-white ink;
-light mode is a bleached xerox-paper ground (a faintly warm pink-grey, not a flat white/cream) with
+light mode is a bleached xerox-paper ground (a faintly warm pink-gray, not a flat white/cream) with
 near-black ink — and that ground is no longer picked by hand, it is the paper texture's own average
 color (see below). Both themes share the same two accent hues rather than mirroring one theme's
 values into the other — `--color-accent` is hot pink (headings-as-links, hover states, focus
@@ -78,9 +78,9 @@ specific contrast ratio the way `--color-muted` is — at this lightness/chroma 
 dark-mode near-black bg, contrast clears WCAG AAA (~14:1) by such a wide margin that hue-specific
 tuning wasn't necessary.
 
-### Hover is never colour alone
+### Hover is never color alone
 
-christopher has protanopia, so every hover pairs its colour change with a change of shape, the rule
+christopher has protanopia, so every hover pairs its color change with a change of shape, the rule
 `@furioursus/ui`'s `docs/components.md` sets for the shared components. On this site the shape is an
 underline, with no boxes, shadows or lifts:
 
@@ -259,7 +259,7 @@ that SVG inlines percent-encoded rather than base64 — Vite picks the shorter e
 
 **The seam metric this doc used to quote does not survive the bake, and will lie to you.** The old
 test was a ratio: mean absolute delta across the wrap edge over the mean delta between typical
-interior neighbours, with "near 1.0 is seamless, past ~1.5 reads as an edge". Run it on the current
+interior neighbors, with "near 1.0 is seamless, past ~1.5 reads as an edge". Run it on the current
 tiles and it condemns them:
 
 | tile               | ratio H | ratio V | mean wrap delta | **local-average step across the join** |
@@ -268,7 +268,7 @@ tiles and it condemns them:
 | `paper-dark.webp`  | 2.57x   | 3.93x   | 0.61 / 0.92 lv  | **0.03 / 0.09 lv**                     |
 
 The ratios are meaningless here. These tiles are far smoother than the old grain — interior
-neighbours differ by ~0.55 luma levels against the old asset's ~1.45 — so the denominator collapsed
+neighbors differ by ~0.55 luma levels against the old asset's ~1.45 — so the denominator collapsed
 and inflated every ratio with it. What matters is the **absolute step in local average** across the
 join, because that is what a seam actually is: a visible step in the local mean, not a spike in
 per-pixel noise. At 0.05–0.33 luma levels out of 255, these joins are far below the visible
@@ -338,7 +338,7 @@ crop did not because they are _authored_ to be seamless rather than cropped from
 **Every avenue for shrinking the `cover` asset was measured and failed.** AVIF is larger than WebP
 here at every quality (254 KB at `q=50` against WebP's 252 KB, rising to 426 KB at `q=80`) — AVIF's
 advantage is smooth gradients and this is maximum-entropy speckle. The source is already pure
-greyscale, so there is no chroma to strip. Density switching actively destroys the texture:
+grayscale, so there is no chroma to strip. Density switching actively destroys the texture:
 downscaling _averages the noise away_ and upscaling cannot recover it, and it makes the grain **more**
 expensive per pixel, not less — 0.286 bytes/px at 800x450 against 0.179 at 1600x900, because
 averaging concentrates the entropy. The general rule this is a case of: responsive images assume

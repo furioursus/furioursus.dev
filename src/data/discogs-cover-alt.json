@@ -18,7 +18,7 @@
 	"746295": {
 		"artist": "Sneaker Pimps",
 		"title": "Spin Spin Sugar",
-		"alt": "A purely typographic black-and-white vinyl record label, with a white circular center bearing bold grey and black text, two small logos at the top, and a black spindle hole in the middle against a black background.",
+		"alt": "A purely typographic black-and-white vinyl record label, with a white circular center bearing bold gray and black text, two small logos at the top, and a black spindle hole in the middle against a black background.",
 		"reviewed": false,
 		"model": "claude-opus-5",
 		"generatedAt": "2026-08-24T18:02:02.393Z"
@@ -42,7 +42,7 @@
 	"2505382": {
 		"artist": "The Cure",
 		"title": "Faith",
-		"alt": "A heavily blurred, sepia-toned photograph of a distant ruined stone archway or abbey window rising above faint grasses in the lower right, rendered in hazy grey-brown monochrome.",
+		"alt": "A heavily blurred, sepia-toned photograph of a distant ruined stone archway or abbey window rising above faint grasses in the lower right, rendered in hazy gray-brown monochrome.",
 		"reviewed": false,
 		"model": "claude-opus-5",
 		"generatedAt": "2026-08-24T17:59:41.288Z"
@@ -130,7 +130,7 @@
 	"7954216": {
 		"artist": "David Bowie",
 		"title": "★ (Blackstar)",
-		"alt": "A large five-pointed star cut out of a translucent, faintly iridescent vinyl record — its circular label and center hole visible at the middle — set against a flat grey background.",
+		"alt": "A large five-pointed star cut out of a translucent, faintly iridescent vinyl record — its circular label and center hole visible at the middle — set against a flat gray background.",
 		"reviewed": false,
 		"model": "claude-opus-5",
 		"generatedAt": "2026-08-24T18:00:01.679Z"
@@ -154,7 +154,7 @@
 	"9100480": {
 		"artist": "Mitski",
 		"title": "Bury Me At Make Out Creek",
-		"alt": "A photograph of a grid-like glass office building facade in muted grey and brown tones, with one small window ajar, mounted on an off-white background and overlaid with a cut-out white paper strip bearing black serif text.",
+		"alt": "A photograph of a grid-like glass office building facade in muted gray and brown tones, with one small window ajar, mounted on an off-white background and overlaid with a cut-out white paper strip bearing black serif text.",
 		"reviewed": false,
 		"model": "claude-opus-5",
 		"generatedAt": "2026-08-24T18:01:25.095Z"
@@ -210,7 +210,7 @@
 	"11604962": {
 		"artist": "Various",
 		"title": "Steven Universe, Vol. 1 (Original Soundtrack)",
-		"alt": "A flat, geometric illustration in muted pinks, teals and greys of a large open hand cradling a sparkling faceted gem, a washing machine, a small house and a clothesline strung with tiny shirts, set against a stylized mountain landscape.",
+		"alt": "A flat, geometric illustration in muted pinks, teals and grays of a large open hand cradling a sparkling faceted gem, a washing machine, a small house and a clothesline strung with tiny shirts, set against a stylized mountain landscape.",
 		"reviewed": false,
 		"model": "claude-opus-5",
 		"generatedAt": "2026-08-24T18:02:54.787Z"
@@ -266,7 +266,7 @@
 	"15924347": {
 		"artist": "Trent Reznor, Atticus Ross",
 		"title": "The Social Network",
-		"alt": "A heavily blurred, digitally glitched close-up portrait of a face fills the frame, streaked with vertical smears of vivid blue, red, and teal against muted grey-brown tones, with white sans-serif text overlaid across the upper third.",
+		"alt": "A heavily blurred, digitally glitched close-up portrait of a face fills the frame, streaked with vertical smears of vivid blue, red, and teal against muted gray-brown tones, with white sans-serif text overlaid across the upper third.",
 		"reviewed": false,
 		"model": "claude-opus-5",
 		"generatedAt": "2026-08-24T18:02:22.253Z"
@@ -282,7 +282,7 @@
 	"16029294": {
 		"artist": "Kraftwerk",
 		"title": "Computer World",
-		"alt": "A vintage grey computer terminal with keyboard sits against a bright yellow background, its screen displaying four stylized yellow-and-black profile portraits of men in a row, framed by dotted-matrix lettering above and below.",
+		"alt": "A vintage gray computer terminal with keyboard sits against a bright yellow background, its screen displaying four stylized yellow-and-black profile portraits of men in a row, framed by dotted-matrix lettering above and below.",
 		"reviewed": false,
 		"model": "claude-opus-5",
 		"generatedAt": "2026-08-24T18:01:11.629Z"
