@@ -77,18 +77,17 @@ so it is unrelated to
 [the Chrome repaint bug documented below](#the-chrome-bug-behind-the-track-wrappers), which is about
 the `transform`/`translate`/`rotate`/`scale` properties specifically.
 
-## The filter chain (riso + grayscale)
+## The grayscale filter
 
-`.logo-mark` carries `filter: grayscale(1) var(--riso-fringe)` at `sm` and up, declared in
-`logo.css`. The grayscale used to be `sm:grayscale sm:group-hover:filter-none` on the `<svg>` in
-`Header.astro` and moved here when the riso misregistration was added, because the two are a single
-`filter` chain whose **order is the mechanism** and Tailwind has no way to say "drop only the first
-function on hover." Full write-up, including why hover clears the grayscale but keeps the fringe:
-`docs/theming.md`.
+`.logo-mark` carries `filter: grayscale(1)` at `sm` and up, cleared on hover of the home link
+(`.group:hover .logo-mark`), declared in `logo.css`. It used to be chained with a riso
+misregistration fringe, which was removed on 2026-11-11 (see "Print effects (removed)" in
+`docs/theming.md`). The rule stays in `logo.css` rather than going back to Tailwind utilities on the
+`<svg>`, so a future print treatment can join the same `filter` chain.
 
-Relevant to this file: a CSS `drop-shadow()` filter does not displace geometry the way the removed
-`#logo-melt` did, so it does not swamp `logo-breathe`. All five idle animations keep running
-underneath it.
+**Footgun:** the filter stays on `.logo-mark`, never on the wrapping `<a>`. A filter makes an element
+the containing block for absolutely positioned descendants, which breaks the mark's vertical
+centering (`docs/navigation.md`, "The masthead logo").
 
 ## Cursor tracking
 
