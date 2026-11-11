@@ -65,8 +65,6 @@
 	@import "./components/github-card.css";
 	@import "./components/lightbox.css";
 	@import "./components/logo.css";
-	@import "./components/jitter.css";
-	@import "./components/riso.css";
 
 	.site-link {
 		@apply hover:decoration-link underline underline-offset-2 hover:decoration-2;

@@ -258,29 +258,15 @@
 	}
 }
 
-/* Riso misregistration on the mark, and the grayscale that used to live on the element as
-   `sm:grayscale sm:group-hover:filter-none` in Header.astro. It had to move here: the two are one
-   `filter` chain and the ORDER is the whole trick — `grayscale()` first desaturates the bear
-   itself, then the fringes are laid on in full-strength ink, so the mark reads as grey stock with
-   the color passes missing their register. Reverse them and grayscale eats the fringes.
-
-   FOOTGUN: keep `filter` on `.logo-mark` and never on the wrapping `<a>` — a filter makes an
-   element a containing block for abspos descendants, and the mark's own `sm:absolute` vertical
-   centering resolves against that `<a>`. See Header.astro's comment and docs/logo.md. */
-.logo-mark {
-	--riso-offset: 2px;
-	filter: var(--riso-fringe);
-}
-
+/* Grayscale until hover, from sm up. FOOTGUN: keep `filter` on `.logo-mark`, never on the wrapping
+   `<a>`: a filter makes an element the containing block for abspos descendants, and the mark's
+   `sm:absolute` vertical centering resolves against that `<a>`. See docs/navigation.md. */
 @media (width >= 40rem) {
 	.logo-mark {
-		--riso-offset: 3px;
-		filter: grayscale(1) var(--riso-fringe);
+		filter: grayscale(1);
 	}
 
-	/* Hover drops only the grayscale — the misregistration is the mark's resting character, not a
-	   hover flourish, so it stays put and the bear simply regains its ink underneath. */
 	.group:hover .logo-mark {
-		filter: var(--riso-fringe);
+		filter: none;
 	}
 }

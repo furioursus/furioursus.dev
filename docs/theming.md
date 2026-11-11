@@ -149,11 +149,8 @@ move the tiles much further.
 ## The paper + dot texture
 
 Two tiling background layers on the **root element**, giving the site a photocopy-grain tooth under
-a fine dot grid. This is one of the two texture "roles" from the queer-punk direction above; the
-other is [riso misregistration](#riso-misregistration-the-moments-half) on individual marks. They
-are deliberately two techniques rather than one: this half is **ambient** — global, colorless, and
-underneath everything — while that half is **local and chromatic**, applied to a handful of marks
-on purpose.
+a fine dot grid. It's **ambient**: global, colorless, and underneath everything. It's the only print
+treatment on the site now; see [Print effects (removed)](#print-effects-removed).
 
 The whole implementation is four declarations, in `@furioursus/ui`'s `base.css` (imported into
 `@layer base` by `global.css`):
@@ -370,167 +367,21 @@ the grain's average was rejected as "an average that changes per theme, per brea
 blend mode." The breakpoint images and the blend modes no longer exist. Only the per-theme axis
 remains, and `npm run paper:average` tracks it in one command.
 
-## Photocopy jitter on page titles
+## Print effects (removed)
 
-**TL;DR — `src/components/TextureFilters.astro` emits an `feTurbulence`/`feDisplacementMap` ladder
-at five displacement steps (0.5, 1, 2, 3, 5px); `src/styles/components/jitter.css` decides what
-wears which. Headings are on step 3. Body text is on step 2 at `sm` and up and unfiltered below it.**
+The photocopy jitter (an SVG displacement filter on page titles and headings) and the riso
+misregistration (pink and green `drop-shadow` fringes on the header bear) were taken out on
+2026-11-11, so the print look can be rethought from scratch. The paper and dot texture above stays.
 
-|                      | step | displacement          |
-| -------------------- | ---- | --------------------- |
-| headings (`h1`–`h6`) | 3    | 3px, both breakpoints |
-| card-list titles     | 3    | 3px, desktop only     |
-| body text, desktop   | 2    | 2px                   |
-| body text, mobile    | —    | none                  |
-
-Mobile body text carries no filter at all. Displacement is an absolute px value while type is not, so 2px against 14px mobile copy eats the letterforms, and the 0.5px step that fit the smaller type was barely visible while costing the most: body text is nearly all of a page's filtered area, and on iOS it blanked tiles mid-scroll (see [What it costs](#what-it-costs)). The 0.5 step stays in the ladder with no consumer.
-
-Headings that repeat down a list opt out on phones with `.jitter-off-mobile`, which sets `filter: none` below `sm`. It's on the card titles in `RecordCard.astro` (`/about/music`) and `CardCollection.astro` (`/about/mtg`), where one page stacks dozens of them. The override wins on specificity (`.jitter-text .jitter-off-mobile` is two classes; the heading rule is one class plus elements), so it has to stay a two-class selector.
-
-`feTurbulence` generates a noise field and `feDisplacementMap` pushes each pixel of the source by
-the value it finds there, so glyph edges crumble the way toner does on a bad photocopy. Applied to
-HTML via `filter: url(#press-jitter-2)`, the text stays real DOM text — selectable, screen-reader
-accessible and Pagefind-indexable — which is the whole reason to do this rather than ship an image.
-
-All five steps are emitted whether or not anything references them, so trying a different one means
-swapping a single id in `jitter.css`. A filter nothing references is never evaluated, so the unused
-ones cost a few hundred bytes of markup and no runtime. `.jitter-05` … `.jitter-5` utility classes
-exist for trying a step straight from markup; **none of them currently have a consumer.**
-
-Every step shares one noise field (same `baseFrequency`, `numOctaves`, `seed`), so the steps differ
-only in how hard that field pushes — switching steps changes the _amount_ of the artifact, not its
-character.
-
-### Three things that will break it
-
-**`color-interpolation-filters="sRGB"` is not optional.** The SVG default is linearRGB, which shifts
-every color passing through the filter. On the hot-pink headings this applies to, the shift is
-glaring rather than subtle.
-
-**The filter region is widened to `x="-20%" width="140%"`.** The default region is -10%/+120% of the
-bounding box, and the heading anchor `::before` sits at `margin-left: -16px` — outside the element's
-own box. The default region clips it.
-
-**A child cannot opt out of its parent's filter**, which is why `jitter.css` has three selectors
-instead of one. The homepage greeting `h1` contains a 👋 `<button>`: filtering the `h1` would
-displace a color emoji into mud, and that button's `group-hover:animate-[wobble]` transform would
-force the entire filter to re-rasterize on every frame of the hover. The greeting therefore wears
-the filter on its inner `.title-text` span. Anything else mixing text with emoji or icons needs the
-same split.
-
-### Filters compound, so only the innermost text block is matched
-
-**FOOTGUN: a filtered element inside another filtered element is displaced twice, at double the
-intended scale.** This is not hypothetical in real content — a loose markdown list emits `li > p`, a
-table cell can hold a paragraph, a `dd` can hold a list. Hand-curating a list of "leaf-ish" elements
-does not survive that, because the nesting is a property of the content, not of the selector.
-
-The rule therefore repeats its own element list inside `:not(:has(...))`, which structurally
-guarantees that only the innermost match ever takes the filter:
-
-```css
-.jitter-text
-	:is(p, li, dt, dd, figcaption, caption, th, td, summary, label):not(
-		:has(:is(p, li, dt, dd, figcaption, caption, th, td, summary, label)),
-		:has(:is(img, picture, svg, video, lightbox-image, .expressive-code))
-	)
-```
-
-**Keep the two lists identical.** Verified against injected `li > p`, `li > ul > li`, `td > p` and
-`dd > p`: in every case the inner element takes the filter and the outer one does not.
-
-### Media is exempt, and the combinator is the bug that gets you
-
-A child cannot opt out of its parent's filter, so a paragraph containing an image has to lose the
-filter **entirely** — the image cannot be spared on its own. The `:has()` match is a _descendant_
-one, with no `>`: the webmention avatars are `img` inside `a` inside `p`, and a child-combinator
-version matched none of the ten of them and warped every avatar. Code blocks are exempt for the
-inverse reason — Expressive Code's output is already a dense grid of small glyphs, and displacement
-turns it to noise.
-
-### `.jitter-text` is a scope hook, never a filter target
-
-The class on `Base.astro`'s page wrapper exists only to scope the descendant selectors. **It must
-never carry a `filter` itself.** A filter makes an element a containing block for absolutely
-positioned descendants, and the mobile nav dropdown, the masthead logo and the heading anchors all
-resolve against ancestors inside that wrapper — filtering it relocates every one of them. This is
-the same footgun that governs `.logo-mark` and the nav; it is the third time it shows up in these
-docs, which is a good reason to assume it will show up again.
-
-### What it costs
-
-- **It rasterizes.** A filtered element is painted to a bitmap, so subpixel antialiasing becomes
-  grayscale antialiasing. Filtered text reads very slightly softer and lighter than unfiltered text
-  beside it.
-- **It is a raster pass per matched element, in software.** WebKit renders SVG reference filters on the CPU and redoes them whenever a tile repaints. A post body is ~30 filtered elements; `/about/music` at desktop width is several hundred.
-- **On iOS it blanks the page mid-scroll.** iOS keeps scrolling while tile paints fall behind, so slow filters show up as empty regions rather than jank. With body text filtered at phone width (368 elements, ~23M device px of noise on `/about/music` at 3x), scrolling on a real iPhone drew blank tiles even on the homepage; a build with the filters stripped scrolled clean. In a WKWebView at 440px, the same page went from 0 frames over 33ms to 14–15 per scroll pass, worst frame 195–428ms. This is why body jitter is desktop-only and card-list titles opt out on phones. **Before widening any jitter rule to mobile, re-test on a physical iPhone**; the iOS Simulator throttles `requestAnimationFrame` and an M-series Mac paints fast enough to hide it.
-
-### Static on purpose
-
-There is no animation and therefore no `prefers-reduced-motion` wiring. If the `scale` is ever
-animated it must be driven by CSS, not SMIL: SMIL ignores that media query entirely, which is the
-exact problem the removed `#logo-melt` filter had (`docs/logo.md`). It would also be the only moving
-thing in an otherwise static texture stack.
-
-## Riso misregistration (the "moments" half)
-
-**TL;DR — `src/styles/components/riso.css`. Two hard-edged `drop-shadow()` copies of a mark, offset
-left and right in the palette's pink and acid green, imitating a risograph's color passes missing
-their register. Currently on the header bear alone — 2px on mobile, 3px at `sm` and up.**
-
-A risograph lays each color down in its own pass and the paper shifts between them, so a two-color
-print has its layers slightly out of alignment. The digital equivalent is one declaration:
-
-```css
-filter: drop-shadow(calc(var(--riso-offset) * -1) 0 0 var(--riso-ink-1))
-	drop-shadow(var(--riso-offset) 0 0 var(--riso-ink-2));
-```
-
-`drop-shadow` rather than duplicated markup because it follows the **alpha channel** of what it is
-applied to, so an SVG glyph fringes along its actual outline rather than its bounding box. The inks
-are `--color-accent` and `--color-link`, so it re-themes for free.
-
-### Two footguns
-
-**`--riso-fringe` is declared on its consumers, never on `:root`.** A custom property holding
-`var()` is substituted at computed-value time **on the element it is declared on**. A `:root`-level
-`--riso-fringe` therefore bakes in `:root`'s `--riso-offset`, and every per-element override of that
-offset silently does nothing — the chain still resolves and still renders, just always at the root
-value, which is exactly why it is easy to ship without noticing. Add a new consumer to the
-`.riso, .logo-mark` selector list in `riso.css`; do not hoist the declaration.
-
-**Filter order decides whether the effect survives.** `.logo-mark` composes
-`grayscale(1) var(--riso-fringe)` — grayscale **first**, desaturating the bear itself, then the
-fringes laid on at full ink. Put the `grayscale()` after the drop-shadows and it eats them, leaving
-two grey smudges. That ordering is the only reason the mark can keep the muted-until-hover
-treatment it has always had and still carry color misregistration.
-
-That grayscale used to be `sm:grayscale sm:group-hover:filter-none` in `Header.astro`; it moved into
-`logo.css` because the two are one chain and Tailwind cannot express "drop only the first function."
-Hover now clears the grayscale and keeps the fringe, since the misregistration is the mark's resting
-character rather than a hover flourish. **FOOTGUN: the `filter` stays on `.logo-mark` and never on
-the wrapping `<a>`** — a filter makes an element a containing block for absolutely positioned
-descendants, and the mark's `sm:absolute` vertical centering resolves against that `<a>`.
-
-Unlike the removed `#logo-melt` SVG filter (see `docs/logo.md`), this one does not displace
-geometry, so it does not swamp `logo-breathe` — all five idle animations were confirmed still
-`running` under it.
-
-### Why the bear only
-
-The `SocialList` glyphs carried this at 1px briefly and it came back off: five fringed icons in a
-row reads as chromatic noise rather than a printing artifact, and those glyphs are wayfinding, not
-marks. The treatment earns its place on something that is _already_ a logo. `.riso` / `.riso-1` /
-`.riso-2` stay in `riso.css` as the ready-made hook for the next one — a pull-quote is the obvious
-candidate from the original direction — so **they currently have no consumers**; `.logo-mark`
-composes `--riso-fringe` itself rather than using them.
-
-### Scale is deliberately not relative
-
-The offset is a plain `px` length, not an `em`. A real press misses register by a fixed fraction of
-a millimetre no matter how large the artwork is, so an offset that scaled with the glyph would read
-as a blur effect instead of a printing error. The bear's own two steps are declared directly in
-`logo.css`; `.riso-1` and `.riso-2` mirror them for future consumers.
+- Gone: `src/styles/components/jitter.css`, `src/styles/components/riso.css`,
+  `src/components/TextureFilters.astro` (the filter ladder `Base.astro` mounted), the `.jitter-text`
+  scope class on the page wrapper and the `.jitter-off-mobile` opt-outs on card titles. The bear
+  keeps only its grayscale-until-hover (`logo.css`).
+- The design system dropped both effects and their tokens on 2026-11-10.
+- Both lived with long write-ups of their footguns: filters compounding through nested text, iOS
+  blanking the page mid-scroll, `--riso-fringe` having to be declared on its consumers, and the
+  grayscale-then-fringe filter order. Read them in git (`git show f940c34:docs/theming.md`, the last
+  commit with both) before building the next version, because each one cost real debugging.
 
 ## Switching themes
 
