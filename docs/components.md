@@ -8,6 +8,7 @@ this page covers how this site wires them in.
 | Component | Used in | Hydrated? |
 | --- | --- | --- |
 | `ThemeToggle` | `src/components/layout/Header.astro` | No. `theme.js` handles its click. |
+| `Pager` | `src/pages/blog/`, `notes/` and `tags/[tag]/` `[...page].astro` | No. Links mode, from Astro's `page`. |
 | `RankedList` | `src/components/LastfmListeningStats.astro` | No. Static HTML. |
 | `PeriodTabs` | `src/components/ListeningStatsTabs.vue` | Yes, `client:visible`, on the music page only. |
 
@@ -33,6 +34,11 @@ island still load about 6 KB of JavaScript.
   any `[data-theme-toggle]` click and keeps `aria-checked` and `title` in sync (see
   [theming.md](./theming.md#switching-themes)). Hydrating it would put Vue on every page, since the
   header is on every page.
+- **`Pager` gets no directive.** Given `prevHref`/`nextHref` it renders plain links, so the paged
+  lists work with no JavaScript. Each page passes Astro's `page` straight in:
+  `page={page.currentPage} pages={page.lastPage} prevHref={page.url.prev} nextHref={page.url.next}`.
+  CardCollection's in-page pager on `/about/mtg/` is still its own (its list is a custom element,
+  not Vue).
 - **`RankedList` gets no directive.** It's a list; nothing in it responds. It also formats counts
   with `toLocaleString()`, which would differ between the server and a reader's browser and cause a
   hydration mismatch.

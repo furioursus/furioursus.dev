@@ -84,7 +84,7 @@ christopher has protanopia, so every hover pairs its colour change with a change
 `@furioursus/ui`'s `docs/components.md` sets for the shared components. On this site the shape is an
 underline, with no boxes, shadows or lifts:
 
-- Text links add `hover:underline` (`underline-offset-2`): nav, footer, Paginator, the TOC links,
+- Text links add `hover:underline` (`underline-offset-2`): nav, footer, the TOC links,
   NowPlaying's track, the tags link on `/blog/`, and the record and card captions in the lightbox
   (`group-hover:underline`). Body links (`.site-link`, prose) already thicken theirs to 2px green.
 - Bigger type takes a 2px underline (`decoration-2 underline-offset-4`): the header wordmark, the
