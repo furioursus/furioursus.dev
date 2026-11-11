@@ -1,10 +1,10 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import { Pager } from "@furioursus/ui/vue";
 import type { GetStaticPaths, Page } from "astro";
 import { Icon } from "astro-icon/components";
 import PinnedPosts from "@/components/blog/PinnedPosts.astro";
 import PostPreview from "@/components/blog/PostPreview.astro";
-import Pagination from "@/components/Paginator.astro";
 import { getAllPosts, getUniqueTags, groupPostsByYear } from "@/data/blog";
 import PageLayout from "@/layouts/Base.astro";
 import { collectionDateSort } from "@/utils/date";
@@ -70,7 +70,13 @@ const descYearKeys = Object.keys(groupedByYear).sort((a, b) => +b - +a);
 					</ul>
 				</section>
 			))}
-			<Pagination page={page} />
+			<Pager
+				class="mt-8"
+				page={page.currentPage}
+				pages={page.lastPage}
+				prevHref={page.url.prev}
+				nextHref={page.url.next}
+			/>
 		</div>
 		{!!uniqueTags.length && (
 			<aside>

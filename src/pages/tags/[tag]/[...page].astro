@@ -1,9 +1,9 @@
 ---
 import { render } from "astro:content";
+import { Pager } from "@furioursus/ui/vue";
 import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
 import { Icon } from "astro-icon/components";
 import PostPreview from "@/components/blog/PostPreview.astro";
-import Pagination from "@/components/Paginator.astro";
 import { getAllPosts, getTagMeta, getUniqueTags } from "@/data/blog";
 import PageLayout from "@/layouts/Base.astro";
 import { collectionDateSort } from "@/utils/date";
@@ -63,5 +63,11 @@ const meta = {
 			</li>
 		))}
 	</ul>
-	<Pagination page={page} />
+	<Pager
+		class="mt-8"
+		page={page.currentPage}
+		pages={page.lastPage}
+		prevHref={page.url.prev}
+		nextHref={page.url.next}
+	/>
 </PageLayout>

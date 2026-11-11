@@ -28,7 +28,7 @@
 		"@astrojs/rss": "4.0.19",
 		"@astrojs/sitemap": "3.7.4",
 		"@astrojs/vue": "7.1.2",
-		"@furioursus/ui": "github:furioursus/furioursus-ui#v0.4.1",
+		"@furioursus/ui": "github:furioursus/furioursus-ui#v0.5.0",
 		"@pagefind/component-ui": "^1.6.0",
 		"@tailwindcss/vite": "4.3.5",
 		"animate.css": "^4.1.1",
