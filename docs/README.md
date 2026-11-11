@@ -60,7 +60,7 @@ HTMLElement`) defined in a `<script>` tag, either colocated with their markup (e
   they operate on doesn't have a natural `.astro` file to live in (e.g. `Lightbox.astro`, whose
   markup mostly comes from a markdown transform, not a component template).
 - **Shared components come from `@furioursus/ui`** (Vue, rendered by Astro): `ThemeToggle`,
-  `PeriodTabs`, `RankedList`. Hydrate only what must respond to input; see
+  `Pager`, `PeriodTabs`, `RankedList`. Hydrate only what must respond to input; see
   [components.md](./components.md).
 - **Runtime state CSS needs but can't see (pointer position, viewport size, and more) goes through
   `prop-for-that`.** `PropsForAuto.astro`, included once in `Base.astro`, registers it site-wide —
