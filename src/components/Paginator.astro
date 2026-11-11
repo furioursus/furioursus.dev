@@ -19,12 +19,18 @@ const { page, prevText = "← Previous Page", nextText = "Next Page →" } = Ast
 {(page.url.prev || page.url.next) && (
 	<nav class="mt-8 flex items-center gap-x-4">
 		{page.url.prev && (
-			<a class="hover:text-accent me-auto py-2" href={page.url.prev}>
+			<a
+				class="hover:text-accent me-auto py-2 underline-offset-2 hover:underline"
+				href={page.url.prev}
+			>
 				{prevText}
 			</a>
 		)}
 		{page.url.next && (
-			<a class="hover:text-accent ms-auto py-2" href={page.url.next}>
+			<a
+				class="hover:text-accent ms-auto py-2 underline-offset-2 hover:underline"
+				href={page.url.next}
+			>
 				{nextText}
 			</a>
 		)}

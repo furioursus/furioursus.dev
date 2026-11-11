@@ -78,6 +78,23 @@ specific contrast ratio the way `--color-muted` is — at this lightness/chroma 
 dark-mode near-black bg, contrast clears WCAG AAA (~14:1) by such a wide margin that hue-specific
 tuning wasn't necessary.
 
+### Hover is never colour alone
+
+christopher has protanopia, so every hover pairs its colour change with a change of shape, the rule
+`@furioursus/ui`'s `docs/components.md` sets for the shared components. On this site the shape is an
+underline, with no boxes, shadows or lifts:
+
+- Text links add `hover:underline` (`underline-offset-2`): nav, footer, Paginator, the TOC links,
+  NowPlaying's track, the tags link on `/blog/`, and the record and card captions in the lightbox
+  (`group-hover:underline`). Body links (`.site-link`, prose) already thicken theirs to 2px green.
+- Bigger type takes a 2px underline (`decoration-2 underline-offset-4`): the header wordmark, the
+  TOC summary and post headings (their `#` link).
+- Icon-only links (SocialList, a webmention's source link) can't underline, so they get a 2px bar
+  under the icon: `border-b-2 border-transparent hover:border-current`. The border is always there,
+  so nothing shifts on hover.
+- **Footgun:** `hover:text-accent` (or `-link`, `-highlight`) on its own fails the rule. Add the
+  underline in the same change.
+
 ### The flat background color is derived, not chosen
 
 `--color-page` is **not a hand-picked paper white**. It is each paper tile's own average
