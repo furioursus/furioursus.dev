@@ -92,6 +92,12 @@ underline, with no boxes, shadows or lifts:
 - Icon-only links (SocialList, a webmention's source link) can't underline, so they get a 2px bar
   under the icon: `border-b-2 border-transparent hover:border-current`. The border is always there,
   so nothing shifts on hover.
+- The header's icon buttons thicken their strokes from 1.5 to 2 instead, and press 1px down: the
+  theme toggle (from `@furioursus/ui`), the menu button (`group-hover:stroke-2`) and the search
+  button. Search's glyph is a CSS mask, so `src/styles/blocks/search.css` swaps `--pf-icon-search`
+  for a copy drawn at stroke 2 on hover. **Footgun:** change the glyph in both copies.
+- Tailwind's `hover:` only applies under `@media (hover: hover)`, so touch devices never see these.
+  The pane's phone emulation reports no hover too; check them at a desktop width.
 - **Footgun:** `hover:text-accent` (or `-link`, `-highlight`) on its own fails the rule. Add the
   underline in the same change.
 
