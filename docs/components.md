@@ -19,10 +19,10 @@ this page covers how this site wires them in.
   `ThemeToggle`) override them.
 - `src/furioursus-ui.d.ts` declares the components' props, because the package doesn't ship types
   yet. Delete it once it does.
-- **Footgun:** `@astrojs/vue` is pinned to exactly `7.0.3`. Releases from 7.1.3 on import
-  `virtual:astro:app-entrypoint/…`, which Astro 7.3.x doesn't provide, so the build fails with
-  "Rolldown failed to resolve import". Their `astro: ^7.0.0` peer range doesn't catch it. Upgrade
-  Astro to the matching 7.4.x first, then `@astrojs/vue`.
+- **Footgun:** `astro` (7.4.7) and `@astrojs/vue` (7.1.2) are pinned exactly and move together.
+  `@astrojs/vue` 7.1.3 and later import `virtual:astro:app-entrypoint/…`, which Astro 7.3.x doesn't
+  provide, so the build fails with "Rolldown failed to resolve import". Their `astro: ^7.0.0` peer
+  range doesn't catch it. Upgrade Astro first, then `@astrojs/vue`.
 
 ## Only hydrate what has to respond
 
