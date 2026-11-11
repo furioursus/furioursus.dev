@@ -49,7 +49,7 @@ const socialLinks: Array<{
 		{socialLinks.map(({ friendlyName, isWebmention, link, name }) => (
 			<li class="flex">
 				<a
-					class="hover:text-link inline-block"
+					class="hover:text-link inline-block border-b-2 border-transparent hover:border-current"
 					href={link}
 					rel={`noreferrer ${isWebmention ? "me authn" : ""}`}
 					target="_blank"
