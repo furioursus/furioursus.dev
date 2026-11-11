@@ -4,6 +4,15 @@ declare module "@furioursus/ui/vue" {
 	import type { DefineComponent } from "vue";
 
 	export const ThemeToggle: DefineComponent<{ label?: string }>;
+	export const Pager: DefineComponent<{
+		page: number;
+		pages: number;
+		prevHref?: string | undefined;
+		nextHref?: string | undefined;
+		prevText?: string;
+		nextText?: string;
+		label?: string;
+	}>;
 	export const PeriodTabs: DefineComponent<{
 		options: { value: string | number; label: string }[];
 		modelValue?: string | number;
