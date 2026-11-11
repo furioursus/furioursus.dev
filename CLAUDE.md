@@ -72,3 +72,10 @@ When a URL can't be reached (status check, docs fetch, download, `curl`, package
 | Local Bash in the sandbox (`curl`, `npm`, `git`) | `sandbox.network.allowedDomains` | `.claude/settings.json` (committed, so cloud sees it too) or `~/.claude/settings.json` | `["api.example.com", "*.example.com"]` |
 | WebFetch prompts or is denied | `permissions.allow` rule | Same files | `"WebFetch(domain:example.com)"` |
 | MCP connector needs auth | Connector authorization | claude.ai connector settings, or `/mcp` in a terminal `claude` | n/a |
+
+## Commits
+
+Every commit is christopher's: author and committer `Christopher Kennedy-Nuñez <yo@git.furioursus.dev>`, never `yo@github.furioursus.dev` or a Claude address.
+
+- No AI attribution: no `Co-Authored-By`, "Generated with" or session links. `.claude/settings.json` turns Claude Code's off, including in cloud sessions.
+- Conventional Commits with a lowercase imperative subject. Add a body only when the why isn't obvious: one line per paragraph or bullet, never hard-wrapped, American spelling.
