@@ -132,14 +132,14 @@ import { menuLinks, siteConfig } from "@/site.config";
 				<button
 					aria-expanded="false"
 					aria-haspopup="menu"
-					class="group relative ms-4 h-7 w-7 sm:invisible sm:hidden"
+					class="group relative ms-4 h-7 w-7 active:translate-y-px sm:invisible sm:hidden"
 					id="toggle-navigation-menu"
 					type="button"
 				>
 					<span class="sr-only">Open main menu</span>
 					<svg
 						aria-hidden="true"
-						class="absolute inset-s-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 transition-all group-aria-expanded:scale-0 group-aria-expanded:opacity-0"
+						class="absolute inset-s-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 transition-all group-hover:stroke-2 group-aria-expanded:scale-0 group-aria-expanded:opacity-0"
 						fill="none"
 						focusable="false"
 						stroke="currentColor"
@@ -155,7 +155,7 @@ import { menuLinks, siteConfig } from "@/site.config";
 					</svg>
 					<svg
 						aria-hidden="true"
-						class="text-accent absolute inset-s-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-all group-aria-expanded:scale-100 group-aria-expanded:opacity-100"
+						class="text-accent absolute inset-s-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-0 group-hover:stroke-2 opacity-0 transition-all group-aria-expanded:scale-100 group-aria-expanded:opacity-100"
 						fill="none"
 						focusable="false"
 						stroke="currentColor"
