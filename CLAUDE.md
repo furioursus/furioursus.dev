@@ -56,3 +56,19 @@ it is a wall between the reader and the code.
 
 When moving rationale out, the test is "would someone about to break this see the warning in time?"
 If yes, the docs are the right home. If no, it's a footgun — keep it inline and make it short.
+
+## Blocked URLs
+
+When a URL can't be reached (status check, docs fetch, download, `curl`, package install), tell christopher exactly what to change so access works: which environment blocked it, the setting, where it lives, and a paste-ready value. Then carry on with whatever doesn't need that host. Never silently route around the block or quietly drop the step. This section is here because cloud sessions don't load christopher's global `~/.claude/CLAUDE.md`.
+
+- First confirm it's a block, not a dead site: read the tool's error or run `curl -sI <url>` and quote the status. Don't call a 404 or an outage a config gap.
+- If a setting below doesn't match what you see, re-check the docs (code.claude.com/docs/en/cloud-environments, /sandboxing, /permissions) before advising.
+- Cloud sessions read only this repo's committed `.claude/settings.json` and managed settings, not `~/.claude/settings.json` or `.claude/settings.local.json`. WebFetch refuses `localhost` and dotless hosts by design.
+
+| Where it failed | Setting | Where to change it | Example value |
+|---|---|---|---|
+| Cloud session (claude.ai/code or a Desktop cloud env) | Network access → **Custom**, **Allowed domains**, keep "Also include default list of common package managers" checked | Environment selector above the message box → **Cloud** → hover the env → gear icon | One host per line; `*.example.com` covers subdomains |
+| Cloud session, GitHub repo or API | GitHub App installed on the repo, or `/web-setup` from a terminal; the domain allowlist doesn't govern GitHub | claude.ai/code onboarding, or local terminal | `gh pr` / `gh issue` (GraphQL) are blocked; use `gh api repos/{owner}/{repo}/...` |
+| Local Bash in the sandbox (`curl`, `npm`, `git`) | `sandbox.network.allowedDomains` | `.claude/settings.json` (committed, so cloud sees it too) or `~/.claude/settings.json` | `["api.example.com", "*.example.com"]` |
+| WebFetch prompts or is denied | `permissions.allow` rule | Same files | `"WebFetch(domain:example.com)"` |
+| MCP connector needs auth | Connector authorization | claude.ai connector settings, or `/mcp` in a terminal `claude` | n/a |
