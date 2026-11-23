@@ -489,7 +489,7 @@ const latestNotes = allNotes
 				greetingEl?.addEventListener("click", setRandomGreeting);
 			})();
 		</script>
-		<p class="mb-4">
+		<p class="font-read text-read text-ink-2 mb-6 max-w-[36em]">
 			Hey there, i’m Christopher, a frontend web developer living in New York City by way of
 			Oakland, San Francisco, and Houston. i moved here in June of 2023 with my spouse Nahi and our
 			two cats, Dante and Tybalt.
@@ -503,7 +503,7 @@ const latestNotes = allNotes
 		</h2>
 		<ul class="space-y-4" role="list">
 			{latestPosts.map((p) => (
-				<li class="sm:grid-cols-auto-1fr grid gap-1">
+				<li class="sm:grid-cols-auto-1fr grid gap-x-6 gap-y-1 sm:items-baseline">
 					<PostPreview post={p} />
 				</li>
 			))}

@@ -38,6 +38,7 @@ is how the self-hosted fonts replace the package's font stacks:
 :root {
 	--font-mono: var(--font-monolisa);
 	--font-display: var(--font-bricolage);
+	--font-read: var(--font-bricolage);
 }
 ```
 
@@ -62,8 +63,7 @@ light mode is a bleached xerox-paper ground (a faintly warm pink-gray, not a fla
 near-black ink — and that ground is no longer picked by hand, it is the paper texture's own average
 color (see below). Both themes share the same two accent hues rather than mirroring one theme's
 values into the other — `--color-accent` is hot pink (headings-as-links, hover states, focus
-rings) and `--color-link` is acid green (link hover underlines, blockquote text, the Updated
-badge). Each hue is retuned per background, not reused verbatim: a pink/green saturated enough to
+rings and the blockquote's 2px left rule) and `--color-link` is acid green (link hover underlines). Each hue is retuned per background, not reused verbatim: a pink/green saturated enough to
 read as neon on black goes muddy or fails WCAG AA contrast on paper, so the light-mode values are
 darker and more saturated than their dark-mode counterparts. `--color-heading` (the heading
 color via `.title`) deliberately stays a plain near-black/near-white in both themes — it's doing
@@ -87,8 +87,8 @@ underline, with no boxes, shadows or lifts:
 - Text links add `hover:underline` (`underline-offset-2`): nav, footer, the TOC links,
   NowPlaying's track, the tags link on `/blog/`, and the record and card captions in the lightbox
   (`group-hover:underline`). Body links (`.site-link`, prose) already thicken theirs to 2px green.
-- Bigger type takes a 2px underline (`decoration-2 underline-offset-4`): the header wordmark, the
-  TOC summary and post headings (their `#` link).
+- Bigger type takes a 2px underline (`decoration-2 underline-offset-4`): the header wordmark and
+  post headings (their `#` link).
 - Icon-only links (SocialList, a webmention's source link) can't underline, so they get a 2px bar
   under the icon: `border-b-2 border-transparent hover:border-current`. The border is always there,
   so nothing shifts on hover.
@@ -411,6 +411,17 @@ Anything else that needs to switch the theme should be a `data-theme-toggle` but
 `window.furioursusTheme.set()`, or dispatch `theme-change` on `document`, rather than set
 `data-theme` directly, so the choice is saved and the toggle stays in sync.
 
+## Layout
+
+The page is a 1440px container (`--container-page`) with a side rail from 1100px (the `rail:` breakpoint, `--breakpoint-rail` in `global.css`). Below 1100px nothing changes: one centered 768px column.
+
+- From 1100px `main.shell` is a grid of `minmax(11rem, 1fr) 4fr` with a 24px gap. Every page's content sits in the second column; the header and footer span the full container.
+- Pages other than posts are wrapped in `.shell-body`, capped at 768px (`--container-column`), so their own layouts are the same width as before and only move left.
+- A post passes `rail` to `Base.astro`, and its `<article class="shell-full">` spans both columns as a subgrid: title and cover in the second column, `.post-rail` (meta from `PostMeta.astro`, then the table of contents) in the first, sticky at 48px, beside the prose. Below 1100px the rail stacks between the cover and the prose.
+- The cover image and the stacked rail are capped at the prose's width (`calc(var(--text-prose) * 34)`), so their edges and the 2px rules above the meta and the prose line up.
+
+Verified at 393, 820, 1100, 1512 and 2560px with no sideways scroll. **Not verified:** the table of contents in the rail, because no post has headings yet.
+
 ## Typography
 
 Prose content (post/note bodies, the About page, tag descriptions) is styled by Tailwind's
@@ -421,52 +432,39 @@ weight (no matching config, so it generated no CSS).
 
 ### The type scale
 
-**TL;DR — two steps, breaking at `sm` (640px). Body is 14px on mobile and 18px on desktop; page
-titles are 36px and 48px. The gap between the two body sizes is wide on purpose: headings run at
-the larger scale at both breakpoints, but mobile body copy stays at 14px because the measure cannot
-afford more.**
+Sentences are set in Bricolage Grotesque and everything that labels or counts is set in MonoLisa. Prose and post titles are fluid; the page chrome outside a prose block still steps once at `sm` (640px).
 
-| role               | mobile | desktop | ×body       | set by                                       |
-| ------------------ | ------ | ------- | ----------- | -------------------------------------------- |
-| page title (`h1`)  | 36px   | 48px    | 2.25 / 2.67 | `.title`, and prose `h1`                     |
-| section (`h2`)     | 30px   | 36px    | 1.88 / 2.00 | prose `h2`                                   |
-| sub-section (`h3`) | 20px   | 24px    | 1.25 / 1.33 | prose `h3`                                   |
-| body               | 14px   | 18px    | 1.00        | `text-sm sm:text-lg`, `prose-sm sm:prose-lg` |
-| small UI text      | 12.8px | 12.8px  | 0.91 / 0.71 | `text-2xs`                                   |
+| role | size | face | set by |
+| --- | --- | --- | --- |
+| post title | 40px to 112px, `clamp(2.5rem, 7vw, 7rem)`, line height 0.95 | Bricolage 800 | `.title-hero` |
+| page title (`h1`) | 36px, 48px from `sm` | Bricolage 700 | `.title`, and prose `h1` |
+| prose body | 18px to 23px, line height 1.55 | Bricolage 400 | `--text-prose`, on `prose-sm` and `prose-lg` |
+| post lede | 1.2em of the body, line height 1.45 | Bricolage 400 | `.post-prose > p:first-child` |
+| prose `h2` / `h3` | 1.6em / 1.25em of the body | Bricolage | `tailwind.config.ts` |
+| blockquote | 0.82em of the body, line height 1.6, italic | MonoLisa | `tailwind.config.ts` |
+| post-list title | 18px to 21px | Bricolage 600 | `font-read text-read` in `PostPreview.astro` |
+| dates, meta values | 13px | MonoLisa | `text-data` |
+| meta labels | 11px, uppercase, tracked 0.08em | MonoLisa | `--text-label`, `--tracking-label` |
+| page chrome outside prose | 14px, 18px from `sm` | MonoLisa | `text-sm sm:text-lg` on `Base.astro`'s wrapper |
+| small UI text | 12.8px | MonoLisa | `text-2xs` |
 
-Body size is set in two places that must agree: `text-sm sm:text-lg` on `Base.astro`'s page
-wrapper (everything outside a prose block) and `prose prose-sm sm:prose-lg` at each of the 12
-`.prose` call sites. Changing one without the other splits the scale in half.
+`--text-prose`, `--text-read`, `--text-data`, `--text-label` and `--font-read` come from `@furioursus/ui`. `prose-sm` and `prose-lg` now set the same body size and the same heading sizes; they differ only in the plugin's own `em`-based margins, and in prose `h1`, which follows `.title` (`--text-title` on `sm`, `--text-title-lg` on `lg`). The 12 call sites still read `prose prose-sm sm:prose-lg`.
 
-**The measure, and what it costs.** Characters per line, not font size, is the readability metric,
-and MonoLisa is a monospace — roughly 0.6em per character where a proportional face averages nearer
-0.5em. Measured on a post body:
+The home page intro is `font-read text-read`, capped at 36em. Chrome stays MonoLisa on purpose: the header and footer nav, post dates, labels and note cards' meta are labels and data, not reading text. Bricolage Grotesque ships no italic, so `<em>` in prose is the browser's slant of the upright face; blockquotes use MonoLisa's real italic.
 
-|                 | column | CPL    |
-| --------------- | ------ | ------ |
-| mobile (375px)  | 343px  | **38** |
-| desktop (900px) | 704px  | **61** |
+**The measure.** Prose is capped at `34em` (`maxWidth` in the typography `DEFAULT` block). Characters per line, measured on a post body by dividing a paragraph's length by its rendered lines:
 
-Desktop sits comfortably inside the 45–75 ideal band. **FOOTGUN: that band is not reachable on a
-phone with this face at all.** At 375px the column is 343px, so 14px yields 38 CPL, 13px yields 41,
-and hitting 44 would need a ~12px body — too small to read. 38 is the practical ceiling, which is
-why mobile body does not follow the rest of the scale upward; raising it to 16px drops the measure
-to 33, which was tried and walked back. `text-2xs` is likewise held at 0.8rem rather than following
-the bump: at 0.9rem it rendered 14.4px, fractionally _larger_ than the 14px mobile body, which
-inverts what that token is for. Note also that at 18px the desktop prose column is no longer capped by `prose`'s own `65ch`;
-it now fills `max-w-3xl` (704px) instead, which is why CPL reads 61 rather than 65.
+| viewport | column | body | CPL |
+| --- | --- | --- | --- |
+| 393px | 361px | 18px | **38** |
+| 820px | 655px | 19.3px | **63** |
+| 1512px | 725px | 21.3px | **63** |
+| 2560px | 782px | 23px | **63** |
 
-Verify a change to any of this by measuring the rendered text, not by eye:
+Tablet and up sit inside the 45 to 75 band. A phone can't reach it at a readable size: 38 is the same count the 14px MonoLisa body gave, now at 18px.
 
-```js
-const p = document.querySelector(".prose p");
-const cs = getComputedStyle(p);
-const ctx = document.createElement("canvas").getContext("2d");
-ctx.font = `${cs.fontSize} ${cs.fontFamily}`;
-Math.round(
-	p.getBoundingClientRect().width / (ctx.measureText("0123456789").width / 10),
-);
-```
+- `max-w-page` is `--container-page` and `px-gutter-fluid` is its fluid side padding. Up to v0.6.0 the padding token was `--spacing-page`, which made `max-w-page` resolve to a 48px gutter; v0.7.0 renamed it.
+- **Footgun:** Bricolage has no italic face loaded (`styles: ["normal"]` in `astro.config.ts`), so an `<em>` in prose is a synthesized slant. Blockquotes and post-list descriptions are MonoLisa italic for that reason.
 
 **`.title` is two scales, and two of its call sites opt out.** `.title` means _page title_ — it
 resolves to `text-title sm:text-title-lg` (36/48px, both tokens from `@furioursus/ui`). Call sites that want something smaller override it with an ordinary `text-*` utility,
@@ -478,11 +476,6 @@ sleeve and Magic card heading up with it.
 Prose `h1` deliberately matches `.title` rather than taking the plugin's own default, so a
 markdown-level `h1` — the CV's name heading is the only one in the content today — reads as the
 same rank as every other page title.
-
-Heading sizes live in the `sm` and `base` typography blocks rather than `DEFAULT` because they are
-`em`-relative: the same `em` resolves against prose-sm's 14px body and prose-lg's 18px, so one
-shared value cannot hit both targets. Note the size-modifier names no longer match the breakpoints
-they serve — `sm` is the **mobile** step here and `lg` is the desktop one.
 
 ### Two type families: MonoLisa (body) and Bricolage Grotesque (headline)
 
@@ -510,7 +503,7 @@ then has to be driven explicitly in CSS with `font-variation-settings: "opsz" 60
 below) since nothing sets it automatically.
 
 **`.title` marks a headline, full stop — except inside `.prose`.** Every `.title` usage
-(`RecordCard`, `CardCollection`, `Note` previews, the TOC summary, every page-level `h1`/`h2`) gets
+(`RecordCard`, `CardCollection`, `Note` previews, every page-level `h1`/`h2`) gets
 Bricolage Grotesque, bold, `opsz 60`, and tight tracking directly — there's no separate opt-in
 class. The one carve-out is `.prose .title`, which reverts to MonoLisa at its old `font-semibold`:
 a `.title`-classed element that ends up embedded inside markdown-rendered content (an MDX-embedded

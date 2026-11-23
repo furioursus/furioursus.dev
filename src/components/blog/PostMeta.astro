@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from "astro:content";
+import FormattedDate from "@/components/FormattedDate.astro";
+
+interface Props {
+	content: CollectionEntry<"blog">;
+	readingTime: string;
+}
+
+const {
+	content: { data },
+	readingTime,
+} = Astro.props;
+---
+
+<dl class="post-meta">
+	<div>
+		<dt>Published</dt>
+		<dd><FormattedDate date={data.publishDate} /></dd>
+	</div>
+	{data.updatedDate && (
+		<div>
+			<dt>Updated</dt>
+			<dd><FormattedDate date={data.updatedDate} /></dd>
+		</div>
+	)}
+	<div>
+		<dt>Reading time</dt>
+		<dd>{readingTime}</dd>
+	</div>
+	{!!data.tags?.length && (
+		<div>
+			<dt>Tags</dt>
+			<dd class="flex flex-wrap gap-x-3">
+				{data.tags.map((tag) => (
+					// prettier-ignore
+					<a class="site-link before:content-['#']" data-pagefind-filter={`tag:${tag}`} href={`/tags/${tag}/`}><span class="sr-only">View more blogs with the tag&nbsp;</span>{tag}</a>
+				))}
+			</dd>
+		</div>
+	)}
+</dl>

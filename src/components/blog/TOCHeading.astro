@@ -10,9 +10,9 @@ const {
 } = Astro.props;
 ---
 
-<li class={`${depth > 2 ? "ms-2" : ""}`}>
+<li class={`${depth > 2 ? "ms-3" : ""}`}>
 	<a
-		class={`line-clamp-2 hover:text-accent underline-offset-2 hover:underline ${depth <= 2 ? "mt-3" : "mt-2 text-xs"}`}
+		class={`line-clamp-2 py-1 hover:text-accent underline-offset-2 hover:underline ${depth <= 2 ? "text-data font-medium" : "text-meta"}`}
 		href={`#${slug}`}
 	>
 		<span aria-hidden="true" class="me-0.5">

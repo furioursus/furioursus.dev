@@ -21,7 +21,7 @@ Only elements carrying `data-pagefind-body` are indexed — present on the `<art
 `data-pagefind-body` element when at least one exists on the page.
 
 Tag filtering piggybacks on the same mechanism: the `data-pagefind-filter="tag"` attribute on tag
-links in `src/components/blog/Masthead.astro` lets the search UI facet by tag without extra config.
+links in `src/components/blog/PostMeta.astro` lets the search UI facet by tag without extra config.
 
 ## Removing it
 

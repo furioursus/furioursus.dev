@@ -32,6 +32,8 @@ export default {
 						// Headline face, everywhere `.prose` shows up (post/note bodies, About, tag
 						// descriptions) — not just BlogPost.astro's own `prose-headings:*` utilities,
 						// which only cover weight/color/anchor-link chrome for that one usage.
+						fontFamily: "var(--font-read)",
+						maxWidth: "34em",
 						"h1, h2, h3, h4, h5, h6": {
 							fontFamily: "var(--font-display)",
 						},
@@ -45,7 +47,15 @@ export default {
 							},
 						},
 						blockquote: {
-							borderLeftWidth: "0",
+							borderLeftWidth: "2px",
+							borderLeftColor: "var(--color-accent)",
+							fontFamily: "var(--font-mono)",
+							fontSize: "0.82em",
+							fontWeight: "400",
+							lineHeight: "1.6",
+						},
+						table: {
+							fontFamily: "var(--font-mono)",
 						},
 						code: {
 							border: "1px dotted var(--color-hairline)",
@@ -107,11 +117,9 @@ export default {
 						},
 					},
 				},
-				// Heading sizes are set per size-modifier rather than in DEFAULT because they are
-				// `em`-relative: the same em value resolves differently against prose-sm's 14px
-				// body and prose-lg's 18px. `sm` is the MOBILE step and `lg` is the desktop one
-				// (the call sites read `prose-sm sm:prose-lg`). Targets are 36/30/20px on mobile
-				// and 48/36/24px on desktop — see docs/theming.md.
+				// `sm` is the MOBILE step and `lg` is the desktop one (the call sites read
+				// `prose-sm sm:prose-lg`). Both set the same fluid body; only h1 differs. See
+				// docs/theming.md#the-type-scale.
 				sm: {
 					css: {
 						code: {
@@ -121,17 +129,19 @@ export default {
 						// Matches `.title`'s 36px so a markdown-level h1 (the CV's name heading is the
 						// only one in the content today) reads as the same rank as every other page
 						// title, rather than landing on the typography plugin's own smaller default.
+						fontSize: "var(--text-prose)",
+						lineHeight: "var(--text-prose--line-height)",
 						h1: {
-							fontSize: "2.5714em",
-							lineHeight: "1.1111",
+							fontSize: "var(--text-title)",
+							lineHeight: "var(--text-title--line-height)",
 						},
 						h2: {
-							fontSize: "2.1429em",
-							lineHeight: "1.2",
+							fontSize: "1.6em",
+							lineHeight: "1.15",
 						},
 						h3: {
-							fontSize: "1.4286em",
-							lineHeight: "1.3",
+							fontSize: "1.25em",
+							lineHeight: "1.25",
 						},
 					},
 				},
@@ -142,16 +152,18 @@ export default {
 							fontWeight: "400",
 						},
 						// Matches `.title`'s 48px — see the base block above.
+						fontSize: "var(--text-prose)",
+						lineHeight: "var(--text-prose--line-height)",
 						h1: {
-							fontSize: "2.6667em",
-							lineHeight: "1.0833",
+							fontSize: "var(--text-title-lg)",
+							lineHeight: "var(--text-title-lg--line-height)",
 						},
 						h2: {
-							fontSize: "2em",
-							lineHeight: "1.2222",
+							fontSize: "1.6em",
+							lineHeight: "1.15",
 						},
 						h3: {
-							fontSize: "1.3333em",
+							fontSize: "1.25em",
 							lineHeight: "1.25",
 						},
 					},

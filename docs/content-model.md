@@ -83,12 +83,7 @@ aspectRatio="16/9"`), so it's still click-to-enlarge, and shares the same captio
 crop only affects the on-page thumbnail — enlarging it shows the full, uncropped photo, via a second
 image `LightboxImage.astro` renders specifically for this case (see [lightbox.md](./lightbox.md)).
 
-The cover image is also the one place on the site that breaks out of the normal content column —
-`md:-ms-[100px] md:-me-[100px]` on the `LightboxImage` widens it ~200px past the surrounding text at
-tablet sizes and up (unchanged on mobile). `<body>` carries `overflow-x-clip` (in `Base.astro`) as a
-safety net for this — without it, a viewport just past the `md:` breakpoint has essentially no slack
-around the centered `max-w-3xl` container yet, and the breakout would create a horizontal scrollbar
-until the viewport is comfortably past 768px. `overflow-x-clip` (not `overflow-x-hidden`) is the deliberate choice — `hidden` on one axis has a
+The cover image sits under the post title and is capped at the prose's width (`.post-cover`, see [theming.md](./theming.md#layout)); it no longer breaks out of the column. `<body>` still carries `overflow-x-clip` (in `Base.astro`). `overflow-x-clip` (not `overflow-x-hidden`) is the deliberate choice — `hidden` on one axis has a
 well-known risk of coercing the other axis's computed overflow away from `visible` on some browsers,
 which can silently break `position: sticky` on a distant descendant; `clip` doesn't carry that risk.
 The sticky table of contents (`TOC.astro`) was re-tested after adding this and still works correctly.

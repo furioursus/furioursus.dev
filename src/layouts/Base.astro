@@ -13,9 +13,11 @@ import "animate.css";
 
 interface Props {
 	meta: SiteMeta;
+	rail?: boolean;
 }
 
 const {
+	rail = false,
 	meta: { articleDate, description = siteConfig.description, ogImage, title },
 } = Astro.props;
 ---
@@ -50,11 +52,11 @@ const {
 			unit, purpose-built for exactly this ambiguity: it tracks whatever's actually visible
 			right now as the toolbar animates, so there's no longer a metric mismatch for a gap
 			to open up in. */}
-		<div class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 font-mono text-sm font-normal antialiased sm:px-8 sm:text-lg md:pt-8">
+		<div class="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 font-mono text-sm font-normal antialiased sm:px-8 sm:text-lg md:pt-8 rail:max-w-page rail:px-gutter-fluid">
 			<SkipLink />
 			<Header />
-			<main id="main">
-				<slot />
+			<main id="main" class="shell">
+				{rail ? <slot /> : <div class="shell-body"><slot /></div>}
 			</main>
 			<Footer />
 		</div>
